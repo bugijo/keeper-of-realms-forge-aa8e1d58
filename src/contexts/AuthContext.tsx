@@ -21,7 +21,7 @@ import { toast } from "sonner";
 export interface DungeonKeeperUser extends User {
   // We don't need to redefine properties that are already in User
   // Just add any additional properties we need
-  metadata?: {
+  customMetadata?: {
     lastLogin: Date;
     characterLevel: number;
   };
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: user.email,
           displayName: user.displayName,
           emailVerified: user.emailVerified,
-          metadata: {
+          customMetadata: {
             createdAt: serverTimestamp(),
             lastLogin: serverTimestamp(),
             characterLevel: 1
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       try {
         await updateDoc(userRef, {
-          "metadata.lastLogin": serverTimestamp()
+          "customMetadata.lastLogin": serverTimestamp()
         });
       } catch (error) {
         console.error("Error updating last login:", error);
