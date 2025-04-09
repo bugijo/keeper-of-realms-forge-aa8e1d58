@@ -14,29 +14,29 @@ interface EmailVerificationModalProps {
 
 export function EmailVerificationModal({ isOpen, onClose, email }: EmailVerificationModalProps) {
   const { verifyEmail } = useAuth();
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutos
   const [resendDisabled, setResendDisabled] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
 
-  // Format the countdown time
+  // Formata o tempo do contador
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle resend email
+  // Manipula reenvio de email
   const handleResend = async () => {
     try {
       await verifyEmail();
       setResendDisabled(true);
       setResendCountdown(60);
     } catch (error) {
-      console.error("Error resending verification email:", error);
+      console.error("Erro ao reenviar email de verificação:", error);
     }
   };
 
-  // Countdown timer for verification expiry
+  // Temporizador para expiração da verificação
   useEffect(() => {
     if (!isOpen) return;
     
@@ -53,7 +53,7 @@ export function EmailVerificationModal({ isOpen, onClose, email }: EmailVerifica
     return () => clearInterval(timer);
   }, [isOpen]);
 
-  // Countdown timer for resend button
+  // Temporizador para o botão de reenvio
   useEffect(() => {
     if (resendCountdown <= 0) {
       setResendDisabled(false);
