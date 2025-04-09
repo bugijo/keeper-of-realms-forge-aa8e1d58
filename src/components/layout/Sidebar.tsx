@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { Home, Sword, Book, Shield, ChestIcon, Map, Compass, LayoutGrid } from "lucide-react";
+import { Home, Sword, Book, Shield, Package, Map, Compass, LayoutGrid } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -31,7 +31,7 @@ const menuItems = [
   },
   {
     title: "Inventory",
-    icon: ChestIcon,
+    icon: Package, 
     path: "/inventory" 
   },
   {

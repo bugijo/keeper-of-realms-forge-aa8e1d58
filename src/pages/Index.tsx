@@ -1,9 +1,8 @@
-
 import MainLayout from "@/components/layout/MainLayout";
 import QuestCard from "@/components/game/QuestCard";
 import CharacterCard from "@/components/game/CharacterCard";
 import TreasureChest from "@/components/game/TreasureChest";
-import { Scroll, Sword, HandMetal, Brain, Heart, Activity } from "lucide-react";
+import { Scroll, Sword, HandMetal, Brain, Heart, Activity, Shield } from "lucide-react";
 
 const quests = [
   {

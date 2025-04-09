@@ -2,7 +2,7 @@
 import MainLayout from "@/components/layout/MainLayout";
 import CharacterCard from "@/components/game/CharacterCard";
 import InventoryItem from "@/components/game/InventoryItem";
-import { Sword, Shield, ChestIcon, Book, Scroll } from "lucide-react";
+import { Sword, Shield, Package, Book, Scroll } from "lucide-react";
 
 const characterStats = [
   { name: "Health", value: 250, max: 250 },
@@ -19,7 +19,7 @@ const equippedItems = [
   {
     name: "Arcane Staff",
     description: "A powerful staff that channels magical energies.",
-    rarity: "rare",
+    rarity: "rare" as const,
     type: "Weapon - Staff",
     stats: {
       intelligence: 5,
@@ -31,7 +31,7 @@ const equippedItems = [
   {
     name: "Elven Robes",
     description: "Light robes woven with enchanted elven silk.",
-    rarity: "common",
+    rarity: "common" as const,
     type: "Armor - Cloth",
     stats: {
       defense: 8,
@@ -43,7 +43,7 @@ const equippedItems = [
   {
     name: "Amulet of Wisdom",
     description: "Ancient amulet that enhances the wearer's magical abilities.",
-    rarity: "epic",
+    rarity: "epic" as const,
     type: "Accessory - Necklace",
     stats: {
       intelligence: 8,
@@ -55,7 +55,7 @@ const equippedItems = [
   {
     name: "Boots of Swiftness",
     description: "Enchanted boots that allow the wearer to move with incredible speed.",
-    rarity: "rare",
+    rarity: "rare" as const,
     type: "Armor - Boots",
     stats: {
       movementSpeed: 15,
@@ -131,7 +131,7 @@ const Character = () => {
         {/* Equipment Section */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <ChestIcon className="text-fantasy-gold" size={18} />
+            <Package className="text-fantasy-gold" size={18} />
             <h3 className="text-xl font-medievalsharp text-white">Equipped Items</h3>
           </div>
           

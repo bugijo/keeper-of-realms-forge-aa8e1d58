@@ -1,7 +1,7 @@
 
 import MainLayout from "@/components/layout/MainLayout";
 import InventoryItem from "@/components/game/InventoryItem";
-import { ChestIcon, Search, Filter } from "lucide-react";
+import { Package, Search, Filter } from "lucide-react";
 import { useState } from "react";
 
 // Inventory data
@@ -9,7 +9,7 @@ const inventoryItems = [
   {
     name: "Arcane Staff",
     description: "A powerful staff that channels magical energies.",
-    rarity: "rare",
+    rarity: "rare" as const,
     type: "Weapon - Staff",
     stats: {
       intelligence: 5,
@@ -21,7 +21,7 @@ const inventoryItems = [
   {
     name: "Elven Robes",
     description: "Light robes woven with enchanted elven silk.",
-    rarity: "common",
+    rarity: "common" as const,
     type: "Armor - Cloth",
     stats: {
       defense: 8,
@@ -33,7 +33,7 @@ const inventoryItems = [
   {
     name: "Amulet of Wisdom",
     description: "Ancient amulet that enhances the wearer's magical abilities.",
-    rarity: "epic",
+    rarity: "epic" as const,
     type: "Accessory - Necklace",
     stats: {
       intelligence: 8,
@@ -45,7 +45,7 @@ const inventoryItems = [
   {
     name: "Boots of Swiftness",
     description: "Enchanted boots that allow the wearer to move with incredible speed.",
-    rarity: "rare",
+    rarity: "rare" as const,
     type: "Armor - Boots",
     stats: {
       movementSpeed: 15,
@@ -57,7 +57,7 @@ const inventoryItems = [
   {
     name: "Dragonscale Shield",
     description: "A shield forged from the scales of an ancient dragon.",
-    rarity: "epic",
+    rarity: "epic" as const,
     type: "Armor - Shield",
     stats: {
       defense: 25,
@@ -68,7 +68,7 @@ const inventoryItems = [
   {
     name: "Enchanted Dagger",
     description: "A small but deadly dagger with arcane runes carved into the blade.",
-    rarity: "rare",
+    rarity: "rare" as const,
     type: "Weapon - Dagger",
     stats: {
       damage: 12,
@@ -79,7 +79,7 @@ const inventoryItems = [
   {
     name: "Ring of Protection",
     description: "A simple ring that provides magical protection to the wearer.",
-    rarity: "common",
+    rarity: "common" as const,
     type: "Accessory - Ring",
     stats: {
       defense: 5,
@@ -90,7 +90,7 @@ const inventoryItems = [
   {
     name: "Phoenix Feather Cloak",
     description: "A majestic cloak made from the feathers of a phoenix, providing protection against fire and cold.",
-    rarity: "legendary",
+    rarity: "legendary" as const,
     type: "Armor - Cloak",
     stats: {
       defense: 15,
@@ -127,7 +127,7 @@ const Inventory = () => {
     <MainLayout>
       <div className="container mx-auto">
         <div className="flex items-center gap-2 mb-6">
-          <ChestIcon className="text-fantasy-gold" size={24} />
+          <Package className="text-fantasy-gold" size={24} />
           <h2 className="text-2xl font-medievalsharp text-white">Inventory</h2>
         </div>
         
@@ -187,7 +187,7 @@ const Inventory = () => {
             ))
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-12">
-              <ChestIcon className="text-muted-foreground mb-2" size={48} />
+              <Package className="text-muted-foreground mb-2" size={48} />
               <p className="text-muted-foreground">No items found matching your criteria</p>
             </div>
           )}
