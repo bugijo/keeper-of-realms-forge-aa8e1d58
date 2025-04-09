@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StrictMode, useEffect } from "react";
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import { SwipeableView } from "@/components/mobile/SwipeableView";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile"; // Changed from useMobile to useIsMobile
 
 // Pages
 import Index from "./pages/Index";
@@ -26,7 +26,7 @@ const queryClient = new QueryClient();
 const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile(); // Changed from useMobile() to useIsMobile()
   
   const routes = ['/', '/character', '/inventory'];
   
