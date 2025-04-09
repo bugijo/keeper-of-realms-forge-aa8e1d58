@@ -7,9 +7,9 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-ro
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StrictMode, useEffect } from "react";
-import { MobileNavigation } from "@/components/mobile/MobileNavigation";
+import { FooterTabs } from "@/components/rpg/FooterTabs";
 import { SwipeableView } from "@/components/mobile/SwipeableView";
-import { useIsMobile } from "@/hooks/use-mobile"; // Changed from useMobile to useIsMobile
+import { useResponsive } from "@/hooks/useResponsive";
 
 // Pages
 import Index from "./pages/Index";
@@ -26,7 +26,7 @@ const queryClient = new QueryClient();
 const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile(); // Changed from useMobile() to useIsMobile()
+  const { isMobile } = useResponsive();
   
   const routes = ['/', '/character', '/inventory'];
   
@@ -60,7 +60,7 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   
   return isMobile ? (
     <>
-      <MobileNavigation />
+      <FooterTabs />
       <SwipeableView 
         onSwipeLeft={handleSwipeLeft} 
         onSwipeRight={handleSwipeRight}
@@ -108,6 +108,22 @@ const App = () => (
                 <ProtectedRoute>
                   <MobileRouteHandler>
                     <Inventory />
+                  </MobileRouteHandler>
+                </ProtectedRoute>
+              } />
+              
+              {/* Rotas adicionais */}
+              <Route path="/skills" element={
+                <ProtectedRoute>
+                  <MobileRouteHandler>
+                    <NotFound />
+                  </MobileRouteHandler>
+                </ProtectedRoute>
+              } />
+              <Route path="/achievements" element={
+                <ProtectedRoute>
+                  <MobileRouteHandler>
+                    <NotFound />
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />

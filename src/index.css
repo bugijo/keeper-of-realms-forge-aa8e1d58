@@ -38,20 +38,25 @@
     --radius: 0.5rem;
 
     --sidebar-background: 225 25% 15%;
-
     --sidebar-foreground: 240 5.3% 90%;
-
     --sidebar-primary: 263 60% 50%;
-
     --sidebar-primary-foreground: 0 0% 100%;
-
     --sidebar-accent: 275 80% 30%;
-
     --sidebar-accent-foreground: 0 0% 100%;
-
     --sidebar-border: 240 5% 34%;
-
     --sidebar-ring: 263 60% 50%;
+
+    /* Cores específicas RPG */
+    --fantasy-dark: #2b1b36;
+    --fantasy-gold: #ffd700;
+    --fantasy-scroll: #1a1423;
+    --fantasy-red: #8b0000;
+    --fantasy-purple: #6a4c93;
+    --fantasy-stone: #d4d4d8;
+    --fantasy-gem: #9333ea;
+    --fantasy-rare: #38bdf8;
+    --fantasy-legendary: #f59e0b;
+    --fantasy-accent: #b45dd9;
   }
 }
 
@@ -72,6 +77,7 @@
 @layer components {
   .fantasy-card {
     @apply bg-card relative overflow-hidden rounded-lg border border-fantasy-purple/20 shadow-md hover:shadow-lg transition-all duration-300 hover:border-fantasy-purple/40 p-4;
+    background: var(--fantasy-dark);
   }
   
   .fantasy-card::before {
@@ -120,6 +126,38 @@
   
   .rarity-legendary {
     @apply text-fantasy-legendary;
+  }
+
+  /* Efeitos de brilho */
+  .glow-border {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.2);
+    animation: pulse-border 2s infinite alternate;
+  }
+
+  .medieval-text-shadow {
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+  }
+
+  .dungeon-card {
+    border: 2px solid var(--fantasy-purple);
+    background-color: var(--fantasy-dark);
+    border-radius: 0.5rem;
+    box-shadow: 0 0 15px rgba(106, 76, 147, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .dungeon-card:hover {
+    border-color: var(--fantasy-gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+  }
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3);
   }
 }
 

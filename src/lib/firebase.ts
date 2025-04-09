@@ -10,10 +10,9 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Configuração do Firebase para o app
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // Replace with your Firebase API key
+  apiKey: "YOUR_API_KEY", // Substitua com sua chave de API Firebase
   authDomain: "YOUR_AUTH_DOMAIN.firebaseapp.com",
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_STORAGE_BUCKET.appspot.com",
@@ -22,15 +21,15 @@ const firebaseConfig = {
   measurementId: "YOUR_MEASUREMENT_ID"
 };
 
-// Initialize Firebase
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth with persistence
+// Inicializa Auth com persistência
 export const auth = initializeAuth(app, {
   persistence: [browserLocalPersistence, browserSessionPersistence]
 });
 
-// Auth providers
+// Provedores de autenticação
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: "select_account",
@@ -39,8 +38,11 @@ googleProvider.setCustomParameters({
 
 export const facebookProvider = new FacebookAuthProvider();
 facebookProvider.addScope("public_profile");
+facebookProvider.setCustomParameters({
+  display: "popup"
+});
 
-// Initialize Firestore
+// Inicializa Firestore
 export const db = getFirestore(app);
 
 export { app };
