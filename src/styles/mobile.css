@@ -1,0 +1,97 @@
+
+/* Mobile-specific styles */
+@media (max-width: 320px) {
+  .fantasy-card {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .sidebar-container {
+    display: none;
+  }
+  
+  .hamburger-menu {
+    display: block;
+  }
+}
+
+@media (min-width: 321px) and (max-width: 768px) {
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 10;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar-container {
+    position: fixed;
+    display: flex;
+  }
+  
+  .main-content {
+    margin-left: 250px;
+  }
+}
+
+/* Enhanced touch targets for mobile */
+.mobile-touch-target {
+  position: relative;
+}
+
+.mobile-touch-target:before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  z-index: -1;
+}
+
+/* Swipe gesture area */
+.swipe-container {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Accessibility enhancements */
+[role="header"],
+[role="main"],
+[role="navigation"] {
+  /* Ensure these have proper contrast and semantics */
+  outline: none;
+}
+
+/* Medieval style enhancements for mobile */
+.mobile-medieval-header {
+  background-color: #2b1b36;
+  border-bottom: 2px solid #ffd700;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 15px;
+}
+
+.mobile-medieval-button {
+  background-color: #6a4c93;
+  padding: 15px;
+  border-radius: 8px;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 0 10px #ffd700;
+}
+
+.mobile-medieval-button span {
+  color: white;
+  font-family: 'MedievalSharp', cursive;
+}

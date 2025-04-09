@@ -3,10 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
+import { MobileNavigation } from "@/components/mobile/MobileNavigation";
+import { SwipeableView } from "@/components/mobile/SwipeableView";
+import { useMobile } from "@/hooks/use-mobile";
 
 // Pages
 import Index from "./pages/Index";
@@ -18,6 +21,60 @@ import Register from "./pages/Register";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
+
+// Mobile route handler with swipe navigation
+const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isMobile } = useMobile();
+  
+  const routes = ['/', '/character', '/inventory'];
+  
+  const handleSwipeLeft = () => {
+    if (!isMobile) return;
+    
+    const currentIndex = routes.indexOf(location.pathname);
+    if (currentIndex < routes.length - 1) {
+      navigate(routes[currentIndex + 1]);
+    }
+  };
+  
+  const handleSwipeRight = () => {
+    if (!isMobile) return;
+    
+    const currentIndex = routes.indexOf(location.pathname);
+    if (currentIndex > 0) {
+      navigate(routes[currentIndex - 1]);
+    }
+  };
+  
+  useEffect(() => {
+    // Adjust viewport for mobile
+    if (isMobile) {
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+      }
+    }
+  }, [isMobile]);
+  
+  return isMobile ? (
+    <>
+      <MobileNavigation />
+      <SwipeableView 
+        onSwipeLeft={handleSwipeLeft} 
+        onSwipeRight={handleSwipeRight}
+        className="min-h-[calc(100vh-4rem)]"
+      >
+        <main role="main" className="pb-16">
+          {children}
+        </main>
+      </SwipeableView>
+    </>
+  ) : (
+    <>{children}</>
+  );
+};
 
 const App = () => (
   <StrictMode>
@@ -35,17 +92,23 @@ const App = () => (
               {/* Protected routes */}
               <Route path="/" element={
                 <ProtectedRoute>
-                  <Index />
+                  <MobileRouteHandler>
+                    <Index />
+                  </MobileRouteHandler>
                 </ProtectedRoute>
               } />
               <Route path="/character" element={
                 <ProtectedRoute>
-                  <Character />
+                  <MobileRouteHandler>
+                    <Character />
+                  </MobileRouteHandler>
                 </ProtectedRoute>
               } />
               <Route path="/inventory" element={
                 <ProtectedRoute>
-                  <Inventory />
+                  <MobileRouteHandler>
+                    <Inventory />
+                  </MobileRouteHandler>
                 </ProtectedRoute>
               } />
               
