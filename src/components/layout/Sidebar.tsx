@@ -102,7 +102,7 @@ const Sidebar = () => {
         </SidebarContent>
       </ShadcnSidebar>
       <div className="fixed bottom-4 right-4 md:hidden z-50">
-        <SidebarTrigger asChild>
+        <SidebarTrigger>
           <button className="h-12 w-12 rounded-full bg-fantasy-purple text-white flex items-center justify-center shadow-lg">
             <LayoutGrid size={20} />
           </button>
