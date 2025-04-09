@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { 
   User, 
@@ -20,6 +19,7 @@ import { toast } from "sonner";
 // Define the user type that includes Firestore data
 export interface DungeonKeeperUser extends User {
   displayName: string | null;
+  emailVerified: boolean;
   metadata?: {
     lastLogin: Date;
     characterLevel: number;
@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
+          emailVerified: user.emailVerified,
           metadata: {
             createdAt: serverTimestamp(),
             lastLogin: serverTimestamp(),
