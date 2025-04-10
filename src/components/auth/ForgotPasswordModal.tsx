@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { DungeonFormInput } from "./DungeonFormInput";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,8 +36,14 @@ export function ForgotPasswordModal({ isOpen, onClose }: ForgotPasswordModalProp
   const handleSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
-      await resetPassword(values.email);
-      setIsSuccess(true);
+      const { error } = await resetPassword(values.email);
+      if (!error) {
+        setIsSuccess(true);
+      } else {
+        form.setError("email", { 
+          message: "Feitiço falhou! Tente novamente ou contate um mestre mago." 
+        });
+      }
     } catch (error) {
       console.error("Error resetting password:", error);
       form.setError("email", { 
