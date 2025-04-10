@@ -12,7 +12,7 @@ describe('Footer Navigation', () => {
       </BrowserRouter>
     );
     
-    fireEvent.press(getByTestId('quests-tab'));
+    fireEvent.click(getByTestId('quests-tab'));
     await waitFor(() => {
       expect(getByTestId('quests-screen')).toBeVisible();
     });
