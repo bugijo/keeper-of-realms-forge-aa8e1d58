@@ -18,6 +18,7 @@ import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import SupabaseConfigDemo from "./pages/SupabaseConfigDemo";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ const App = () => (
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/config-supabase" element={<SupabaseConfigDemo />} />
               
               {/* Protected routes */}
               <Route path="/" element={
