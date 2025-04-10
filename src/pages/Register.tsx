@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { motion } from "framer-motion";
 import { Sword, Mail, Lock, User } from "lucide-react";
+import { toast } from "sonner";
 
 // Form schema
 const formSchema = z.object({
@@ -63,9 +64,24 @@ export default function Register() {
     setStep(Math.max(1, step - 1));
   };
 
+  // Function to check and update tables if needed
+  const ensureTablesExist = async () => {
+    try {
+      const { data, error } = await fetch('/api/ensure-tables', {
+        method: 'POST',
+      });
+      if (error) console.error('Error ensuring tables exist:', error);
+    } catch (err) {
+      console.error('Failed to ensure tables exist:', err);
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
+      
+      // Attempt to ensure tables exist first
+      await ensureTablesExist();
       
       // First, create the user account with Supabase
       const { error } = await signUp(values.email, values.password);
@@ -77,17 +93,21 @@ export default function Register() {
         // Show verification modal
         setRegisteredEmail(values.email);
         setVerificationModalOpen(true);
+        toast.success("Conta criada com sucesso! Verifique seu email.");
       } else {
+        console.error("Signup error:", error.message);
         // Handle Supabase auth errors
         if (error.message.includes("already registered")) {
           form.setError("email", { 
             message: "Este email já está em uso" 
           });
           setStep(1);
+          toast.error("Este email já está cadastrado. Tente outro email.");
         } else {
           form.setError("email", { 
             message: "Erro ao criar conta. Tente novamente." 
           });
+          toast.error("Erro ao criar conta. Tente novamente.");
         }
       }
     } catch (error: any) {

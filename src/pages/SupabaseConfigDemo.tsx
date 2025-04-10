@@ -7,38 +7,44 @@ import { toast } from 'sonner';
 export default function SupabaseConfigDemo() {
   const [tablesInfo, setTablesInfo] = useState<{name: string, exists: boolean}[]>([]);
   const [loading, setLoading] = useState(true);
+  const [migrationStatus, setMigrationStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
 
-  useEffect(() => {
-    async function checkTables() {
-      try {
-        setLoading(true);
-        
-        // Verificar tabela profiles
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id')
-          .limit(1);
-        
-        setTablesInfo([
-          { name: 'profiles', exists: !profilesError }
-        ]);
-      } catch (error) {
-        console.error('Erro ao verificar tabelas:', error);
-        toast.error('Erro ao verificar tabelas. Veja o console para mais detalhes.');
-      } finally {
-        setLoading(false);
-      }
+  const checkTables = async () => {
+    try {
+      setLoading(true);
+      
+      // Verificar tabela profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+      
+      setTablesInfo([
+        { name: 'profiles', exists: !profilesError }
+      ]);
+      
+      return !profilesError;
+    } catch (error) {
+      console.error('Erro ao verificar tabelas:', error);
+      toast.error('Erro ao verificar tabelas. Veja o console para mais detalhes.');
+      return false;
+    } finally {
+      setLoading(false);
     }
-    
+  };
+  
+  useEffect(() => {
     checkTables();
   }, []);
 
   const executarMigracoes = async () => {
     try {
       setLoading(true);
+      setMigrationStatus('running');
       toast.info('Executando migrações do Supabase...');
       
-      const { error } = await supabase.rpc('execute_migrations', {
+      // Tente executar as migrações usando RPC (stored procedure)
+      const { error: rpcError } = await supabase.rpc('execute_migrations', {
         migration_sql: `
 -- Verificar se a tabela de perfis existe, se não, criar
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -106,20 +112,120 @@ CREATE TRIGGER on_auth_user_created
         `
       });
       
-      if (error) {
-        console.error('Erro ao executar migrações:', error);
-        toast.error('Erro ao executar migrações. Verifique o Editor SQL do Supabase.');
+      if (rpcError) {
+        console.error('Erro ao executar migrações via RPC:', rpcError);
+        
+        // Se o RPC falhar, tente criar as tabelas diretamente
+        try {
+          // Verificar se a tabela profiles existe
+          const { error: createTableError } = await supabase.query(`
+            CREATE TABLE IF NOT EXISTS public.profiles (
+              id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+              display_name TEXT,
+              email TEXT,
+              custom_metadata JSONB DEFAULT '{}'::jsonb,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+              updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+            );
+            
+            ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+          `);
+          
+          if (createTableError) {
+            throw createTableError;
+          }
+          
+          // Criar políticas de segurança
+          const { error: policyError } = await supabase.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_policies 
+                    WHERE tablename = 'profiles' 
+                    AND policyname = 'Users can view their own profile'
+                ) THEN
+                    CREATE POLICY "Users can view their own profile"
+                      ON public.profiles
+                      FOR SELECT
+                      USING (auth.uid() = id);
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_policies 
+                    WHERE tablename = 'profiles' 
+                    AND policyname = 'Users can update their own profile'
+                ) THEN
+                    CREATE POLICY "Users can update their own profile"
+                      ON public.profiles
+                      FOR UPDATE
+                      USING (auth.uid() = id);
+                END IF;
+            END
+            $$;
+          `);
+          
+          if (policyError) {
+            throw policyError;
+          }
+          
+          // Criar função e trigger
+          const { error: triggerError } = await supabase.query(`
+            CREATE OR REPLACE FUNCTION public.handle_new_user()
+            RETURNS TRIGGER AS $$
+            BEGIN
+              INSERT INTO public.profiles (id, display_name, email, custom_metadata)
+              VALUES (
+                NEW.id,
+                COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+                NEW.email,
+                json_build_object(
+                  'last_login', now(),
+                  'character_level', 1
+                )::jsonb
+              );
+              RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+            DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+            CREATE TRIGGER on_auth_user_created
+              AFTER INSERT ON auth.users
+              FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+          `);
+          
+          if (triggerError) {
+            throw triggerError;
+          }
+          
+          toast.success('Migrações executadas com sucesso!');
+          setMigrationStatus('success');
+        } catch (directError) {
+          console.error('Erro ao executar migrações diretamente:', directError);
+          toast.error('Erro ao executar migrações. Por favor, use o Editor SQL do Supabase.');
+          setMigrationStatus('error');
+        }
       } else {
         toast.success('Migrações executadas com sucesso!');
-        // Atualizar a verificação das tabelas
-        checkTables();
+        setMigrationStatus('success');
+      }
+      
+      // Verificar se as tabelas foram criadas com sucesso
+      const tablesExist = await checkTables();
+      
+      if (!tablesExist) {
+        toast.warning('As migrações foram executadas, mas não foi possível verificar as tabelas. Por favor, verifique no Supabase.');
       }
     } catch (error) {
       console.error('Erro ao executar migrações:', error);
       toast.error('Erro ao executar migrações. Verifique o console para mais detalhes.');
+      setMigrationStatus('error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const executarMigracaoSQL = () => {
+    window.open('https://supabase.com/dashboard/project/iilbczoanafeqzjqovjb/editor', '_blank');
   };
 
   return (
@@ -157,13 +263,34 @@ CREATE TRIGGER on_auth_user_created
                     <p className="font-bold">Algumas tabelas não foram encontradas!</p>
                     <p>Você pode executar as migrações diretamente pelo Editor SQL do Supabase ou usar o botão abaixo para tentar executar as migrações automaticamente.</p>
                     
-                    <Button 
-                      onClick={executarMigracoes}
-                      className="fantasy-button primary mt-2"
-                      disabled={loading}
-                    >
-                      {loading ? 'Executando...' : 'Executar Migrações'}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                      <Button 
+                        onClick={executarMigracoes}
+                        className="fantasy-button primary"
+                        disabled={loading || migrationStatus === 'running'}
+                      >
+                        {loading ? 'Executando...' : 'Executar Migrações Automaticamente'}
+                      </Button>
+                      
+                      <Button 
+                        onClick={executarMigracaoSQL}
+                        className="fantasy-button"
+                      >
+                        Abrir Editor SQL
+                      </Button>
+                    </div>
+                    
+                    {migrationStatus === 'success' && (
+                      <div className="mt-3 p-2 bg-green-100 text-green-800 rounded">
+                        Migrações executadas com sucesso! Verifique se as tabelas aparecem agora.
+                      </div>
+                    )}
+                    
+                    {migrationStatus === 'error' && (
+                      <div className="mt-3 p-2 bg-red-100 text-red-800 rounded">
+                        Houve um erro ao executar as migrações. Por favor, tente usar o Editor SQL diretamente.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
