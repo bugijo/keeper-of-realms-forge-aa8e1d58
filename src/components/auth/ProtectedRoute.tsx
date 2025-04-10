@@ -1,6 +1,6 @@
 
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

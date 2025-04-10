@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { DungeonFormInput } from "@/components/auth/DungeonFormInput";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { OAuthButton } from "@/components/auth/OAuthButton";
@@ -66,27 +66,33 @@ export default function Register() {
   const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
-      const result = await signUp(values.email, values.password);
-      await updateUserProfile(values.displayName);
       
-      // Show verification modal
-      setRegisteredEmail(values.email);
-      setVerificationModalOpen(true);
+      // First, create the user account with Supabase
+      const { error } = await signUp(values.email, values.password);
       
+      if (!error) {
+        // Set user's display name in metadata
+        await updateUserProfile(values.displayName);
+        
+        // Show verification modal
+        setRegisteredEmail(values.email);
+        setVerificationModalOpen(true);
+      } else {
+        // Handle Supabase auth errors
+        if (error.message.includes("already registered")) {
+          form.setError("email", { 
+            message: "Este email já está em uso" 
+          });
+          setStep(1);
+        } else {
+          form.setError("email", { 
+            message: "Erro ao criar conta. Tente novamente." 
+          });
+        }
+      }
     } catch (error: any) {
       console.error("Registration error:", error);
-      
-      // Handle specific Firebase Auth errors
-      if (error.code === "auth/email-already-in-use") {
-        form.setError("email", { 
-          message: "Este email já está em uso" 
-        });
-        setStep(1);
-      } else {
-        form.setError("email", { 
-          message: "Erro ao criar conta. Tente novamente." 
-        });
-      }
+      toast.error("Erro ao criar conta. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

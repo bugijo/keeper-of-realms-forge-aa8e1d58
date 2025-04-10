@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { DungeonFormInput } from "@/components/auth/DungeonFormInput";
 import { OAuthButton } from "@/components/auth/OAuthButton";
 import { Button } from "@/components/ui/button";
@@ -38,19 +38,23 @@ export default function Login() {
   const onSubmit = async (values: FormValues) => {
     try {
       setIsLoading(true);
-      await logIn(values.email, values.password);
-      navigate("/");
+      const { error } = await logIn(values.email, values.password);
+      
+      if (!error) {
+        navigate("/");
+      } else {
+        // Handle Supabase auth errors
+        if (error.message.includes("Invalid login")) {
+          form.setError("password", { message: "Credenciais inválidas" });
+        } else if (error.message.includes("rate limit")) {
+          toast.error("🛡️ Portal Bloqueado! Muitas tentativas.");
+        } else {
+          toast.error("Erro ao fazer login. Tente novamente.");
+        }
+      }
     } catch (error: any) {
       console.error("Login error:", error);
-      
-      // Handle specific Firebase Auth errors
-      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-        form.setError("password", { message: "Credenciais inválidas" });
-      } else if (error.code === "auth/too-many-requests") {
-        toast.error("🛡️ Portal Bloqueado! Muitas tentativas.");
-      } else {
-        toast.error("Erro ao fazer login. Tente novamente.");
-      }
+      toast.error("Erro ao fazer login. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
