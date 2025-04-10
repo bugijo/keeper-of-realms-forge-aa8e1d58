@@ -1,103 +1,148 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
-import { toast } from "sonner";
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function SupabaseConfigDemo() {
-  const { currentUser } = useAuth();
-  const [showInstructions, setShowInstructions] = useState(true);
+  const [tablesInfo, setTablesInfo] = useState<{name: string, exists: boolean}[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function checkTables() {
+      try {
+        setLoading(true);
+        
+        // Verificar tabela profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id')
+          .limit(1);
+        
+        setTablesInfo([
+          { name: 'profiles', exists: !profilesError }
+        ]);
+      } catch (error) {
+        console.error('Erro ao verificar tabelas:', error);
+        toast.error('Erro ao verificar tabelas. Veja o console para mais detalhes.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    checkTables();
+  }, []);
 
   return (
-    <div className="container mx-auto p-4">
-      <Card className="fantasy-card">
-        <CardHeader>
-          <CardTitle className="text-2xl text-fantasy-gold font-medievalsharp">
-            Configuração do Supabase
-          </CardTitle>
-          <CardDescription className="text-fantasy-stone/80">
-            Instruções para configurar corretamente o Supabase para autenticação
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {showInstructions ? (
-            <>
-              <div className="bg-fantasy-dark/30 p-4 rounded-md border border-fantasy-purple/30">
-                <h3 className="text-fantasy-gold font-medievalsharp mb-2">1. Desabilitar Confirmação de Email</h3>
-                <p className="text-fantasy-stone/90 mb-2">
-                  Para acelerar o processo de testes, você pode desabilitar a confirmação de email no Supabase:
-                </p>
-                <ol className="list-decimal pl-5 text-fantasy-stone/80 space-y-2">
-                  <li>Acesse o dashboard do Supabase</li>
-                  <li>Vá para Authentication &gt; Providers</li>
-                  <li>Clique em "Email"</li>
-                  <li>Desmarque a opção "Enable email confirmation"</li>
-                  <li>Salve as alterações</li>
-                </ol>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <div className="fantasy-card p-6 shadow-lg">
+        <h1 className="text-2xl font-medievalsharp text-fantasy-gold mb-6">
+          Configuração do Supabase
+        </h1>
+        
+        <div className="space-y-6">
+          <section className="border border-fantasy-purple/30 rounded-lg p-4">
+            <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-4">
+              1. Status das Tabelas
+            </h2>
+            
+            {loading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 border-t-2 border-fantasy-gold rounded-full animate-spin"></div>
+                <p>Verificando tabelas...</p>
               </div>
-
-              <div className="bg-fantasy-dark/30 p-4 rounded-md border border-fantasy-purple/30">
-                <h3 className="text-fantasy-gold font-medievalsharp mb-2">2. Verificar as Tabelas</h3>
-                <p className="text-fantasy-stone/90 mb-2">
-                  Para verificar se as tabelas foram criadas corretamente:
-                </p>
-                <ol className="list-decimal pl-5 text-fantasy-stone/80 space-y-2">
-                  <li>Acesse o dashboard do Supabase</li>
-                  <li>Vá para Table Editor</li>
-                  <li>Você deve ver a tabela "profiles"</li>
-                  <li>Se não existir, execute novamente a migration em supabase/migrations/</li>
-                </ol>
+            ) : (
+              <div className="space-y-2">
+                {tablesInfo.map((table) => (
+                  <div key={table.name} className="flex items-center space-x-2">
+                    <div className={`w-4 h-4 rounded-full ${table.exists ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p>
+                      Tabela <span className="font-bold">{table.name}</span>: 
+                      {table.exists ? ' Encontrada ✓' : ' Não encontrada ✗'}
+                    </p>
+                  </div>
+                ))}
+                
+                {tablesInfo.some(t => !t.exists) && (
+                  <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mt-4">
+                    <p className="font-bold">Algumas tabelas não foram encontradas!</p>
+                    <p>Verifique se você executou as migrações no Supabase.</p>
+                  </div>
+                )}
               </div>
-
-              <div className="bg-fantasy-dark/30 p-4 rounded-md border border-fantasy-purple/30">
-                <h3 className="text-fantasy-gold font-medievalsharp mb-2">3. Configurar Provedores de Autenticação</h3>
-                <p className="text-fantasy-stone/90 mb-2">
-                  Para adicionar mais provedores como Google ou Facebook:
-                </p>
-                <ol className="list-decimal pl-5 text-fantasy-stone/80 space-y-2">
-                  <li>Acesse o dashboard do Supabase</li>
-                  <li>Vá para Authentication &gt; Providers</li>
-                  <li>Ative e configure os provedores desejados</li>
-                </ol>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-fantasy-gold text-lg">
-                {currentUser ? 
-                  `Logado como: ${currentUser.email}` : 
-                  "Você não está logado"}
-              </p>
-              {!currentUser && (
-                <p className="text-fantasy-stone/80 mt-2">
-                  Vá para a página de login para testar a autenticação
-                </p>
-              )}
+            )}
+            
+            <div className="mt-4">
+              <Button 
+                onClick={() => window.open('https://supabase.com/dashboard/project/iilbczoanafeqzjqovjb/editor', '_blank')}
+                className="fantasy-button primary"
+              >
+                Abrir Editor SQL do Supabase
+              </Button>
             </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            className="fantasy-button secondary"
-            onClick={() => setShowInstructions(!showInstructions)}
-          >
-            {showInstructions ? "Verificar Status de Login" : "Mostrar Instruções"}
-          </Button>
+          </section>
           
+          <section className="border border-fantasy-purple/30 rounded-lg p-4">
+            <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-4">
+              2. Configurar Autenticação
+            </h2>
+            
+            <div className="space-y-4">
+              <div className="bg-fantasy-dark/50 p-4 rounded-lg">
+                <h3 className="font-medievalsharp text-fantasy-gold mb-2">Desabilitar Confirmação de Email</h3>
+                <p className="text-fantasy-stone/90 mb-2">
+                  Para facilitar os testes, recomendamos desabilitar a confirmação de email no Supabase.
+                </p>
+                <Button 
+                  onClick={() => window.open('https://supabase.com/dashboard/project/iilbczoanafeqzjqovjb/auth/providers', '_blank')}
+                  className="fantasy-button"
+                >
+                  Configurar Provedores de Autenticação
+                </Button>
+              </div>
+              
+              <div className="bg-fantasy-dark/50 p-4 rounded-lg">
+                <h3 className="font-medievalsharp text-fantasy-gold mb-2">Adicionar Provedores OAuth</h3>
+                <p className="text-fantasy-stone/90 mb-2">
+                  Você pode adicionar provedores como Google e Facebook no painel do Supabase.
+                </p>
+                <Button 
+                  onClick={() => window.open('https://supabase.com/dashboard/project/iilbczoanafeqzjqovjb/auth/providers', '_blank')}
+                  className="fantasy-button"
+                >
+                  Configurar Provedores OAuth
+                </Button>
+              </div>
+            </div>
+          </section>
+          
+          <section className="border border-fantasy-purple/30 rounded-lg p-4">
+            <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-4">
+              3. Verificar Usuários
+            </h2>
+            
+            <p className="text-fantasy-stone/90 mb-4">
+              Após criar usuários, você pode verificá-los no painel de administração do Supabase.
+            </p>
+            
+            <Button 
+              onClick={() => window.open('https://supabase.com/dashboard/project/iilbczoanafeqzjqovjb/auth/users', '_blank')}
+              className="fantasy-button"
+            >
+              Ver Usuários Cadastrados
+            </Button>
+          </section>
+        </div>
+        
+        <div className="mt-8 text-center">
           <Button 
-            onClick={() => {
-              toast.success("Configurações atualizadas!", {
-                description: "O sistema de autenticação está pronto para uso."
-              });
-            }}
+            onClick={() => window.location.href = '/login'}
             className="fantasy-button primary"
           >
-            Verificar Configuração
+            Voltar para Login
           </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
