@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Check, RefreshCw } from "lucide-react";
 
