@@ -54,7 +54,7 @@ export const MobileNavigation = () => {
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute bottom-0 h-1 w-1/2 rounded-full bg-fantasy-gold"
+                  className="absolute bottom-0 h-1 w-12 rounded-full bg-fantasy-gold"
                   transition={{ duration: 0.3 }}
                 />
               )}

@@ -1,7 +1,9 @@
 
+import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { User2, BookOpen, Users, MapPin, Sword, Skull } from "lucide-react";
 import { motion } from "framer-motion";
+import { DiceRoller } from "@/components/dice/DiceRoller";
 
 const creationCategories = [
   {
@@ -55,6 +57,8 @@ const creationCategories = [
 ];
 
 const Creations = () => {
+  const navigate = useNavigate();
+  
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
@@ -79,6 +83,7 @@ const Creations = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
+                  onClick={() => navigate(category.path)}
                 >
                   {category.action}
                 </motion.button>
@@ -86,6 +91,9 @@ const Creations = () => {
             </div>
           ))}
         </div>
+        
+        {/* Componente de rolagem de dados */}
+        <DiceRoller />
       </div>
     </MainLayout>
   );

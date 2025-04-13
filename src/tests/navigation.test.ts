@@ -1,6 +1,6 @@
 
 // Using vitest instead of playwright for this test
-import { expect, test, beforeEach } from 'vitest';
+import { expect, test } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { MobileNavigation } from '../components/mobile/MobileNavigation';

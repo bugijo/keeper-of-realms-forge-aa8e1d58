@@ -22,6 +22,11 @@ import Creations from "./pages/Creations";
 import Tables from "./pages/Tables";
 import Shop from "./pages/Shop";
 
+// Criações
+import CharacterCreation from "./pages/creations/CharacterCreation";
+import StoryCreation from "./pages/creations/StoryCreation";
+import MapCreation from "./pages/creations/MapCreation";
+
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
@@ -63,7 +68,6 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   
   return isMobile ? (
     <>
-      <MobileNavigation />
       <SwipeableView 
         onSwipeLeft={handleSwipeLeft} 
         onSwipeRight={handleSwipeRight}
@@ -73,6 +77,7 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
           {children}
         </main>
       </SwipeableView>
+      <MobileNavigation />
     </>
   ) : (
     <>{children}</>
@@ -113,6 +118,21 @@ const App = () => (
                   <MobileRouteHandler>
                     <Creations />
                   </MobileRouteHandler>
+                </ProtectedRoute>
+              } />
+              <Route path="/creations/characters" element={
+                <ProtectedRoute>
+                  <CharacterCreation />
+                </ProtectedRoute>
+              } />
+              <Route path="/creations/stories" element={
+                <ProtectedRoute>
+                  <StoryCreation />
+                </ProtectedRoute>
+              } />
+              <Route path="/creations/maps" element={
+                <ProtectedRoute>
+                  <MapCreation />
                 </ProtectedRoute>
               } />
               <Route path="/tables" element={
