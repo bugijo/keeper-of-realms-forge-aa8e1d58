@@ -13,7 +13,6 @@ import { useResponsive } from "@/hooks/useResponsive";
 
 // Pages
 import Index from "./pages/Index";
-import Character from "./pages/Character";
 import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
@@ -32,7 +31,7 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { isMobile } = useResponsive();
   
-  const routes = ['/', '/character', '/inventory', '/creations', '/tables', '/shop'];
+  const routes = ['/', '/inventory', '/creations', '/tables', '/shop'];
   
   const handleSwipeLeft = () => {
     if (!isMobile) return;
@@ -68,9 +67,9 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
       <SwipeableView 
         onSwipeLeft={handleSwipeLeft} 
         onSwipeRight={handleSwipeRight}
-        className="min-h-[calc(100vh-4rem)]"
+        className="min-h-[calc(100vh-4rem)] overflow-y-auto pt-14 pb-16"
       >
-        <main role="main" className="pb-16">
+        <main role="main">
           {children}
         </main>
       </SwipeableView>
@@ -99,13 +98,6 @@ const App = () => (
                 <ProtectedRoute>
                   <MobileRouteHandler>
                     <Index />
-                  </MobileRouteHandler>
-                </ProtectedRoute>
-              } />
-              <Route path="/character" element={
-                <ProtectedRoute>
-                  <MobileRouteHandler>
-                    <Character />
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />

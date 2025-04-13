@@ -13,9 +13,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex flex-col w-full bg-fantasy-gradient bg-fantasy-dark">
         <Navbar />
-        <div className="flex flex-1 w-full">
+        <div className="flex flex-1 w-full pt-14">
           <Sidebar />
-          <main className="flex-1 p-4">
+          <main className="flex-1 p-4 pb-20">
             {children}
           </main>
         </div>

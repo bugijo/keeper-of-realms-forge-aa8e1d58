@@ -26,9 +26,9 @@ test('navigation elements render properly', () => {
   // Check if the navigation contains Missões
   expect(screen.getByText('Missões')).toBeDefined();
   
-  // Check if the Character tab exists
-  expect(screen.getByText('Personagem')).toBeDefined();
-  
   // Check if the Inventory tab exists
   expect(screen.getByText('Inventário')).toBeDefined();
+  
+  // Check if the Creations tab exists
+  expect(screen.getByText('Criações')).toBeDefined();
 });

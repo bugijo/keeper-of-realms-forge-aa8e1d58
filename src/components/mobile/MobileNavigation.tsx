@@ -1,12 +1,11 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { MapPin, User, Backpack, Scroll, Map, Sword, ShoppingCart } from "lucide-react";
+import { MapPin, Backpack, Scroll, Map, Sword, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { path: "/", icon: MapPin, label: "Missões" },
-  { path: "/character", icon: User, label: "Personagem" },
   { path: "/inventory", icon: Backpack, label: "Inventário" },
   { path: "/creations", icon: Scroll, label: "Criações" },
   { path: "/tables", icon: Sword, label: "Mesas" },

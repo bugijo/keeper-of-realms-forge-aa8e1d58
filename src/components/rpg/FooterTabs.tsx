@@ -1,16 +1,16 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MapPin, User, Backpack, Scroll, Award } from "lucide-react";
+import { MapPin, Backpack, Scroll, Award, Sword } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COLORS } from "@/constants/Colors";
 
 const navItems = [
   { path: "/", icon: MapPin, label: "Missões", testId: "quests-tab" },
-  { path: "/character", icon: User, label: "Personagem", testId: "character-tab" },
   { path: "/inventory", icon: Backpack, label: "Inventário", testId: "inventory-tab" },
   { path: "/skills", icon: Scroll, label: "Magias", testId: "skills-tab" },
   { path: "/achievements", icon: Award, label: "Conquistas", testId: "achievements-tab" },
+  { path: "/tables", icon: Sword, label: "Mesas", testId: "tables-tab" },
 ];
 
 export function FooterTabs() {
