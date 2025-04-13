@@ -67,10 +67,10 @@ export default function Register() {
   // Function to check and update tables if needed
   const ensureTablesExist = async () => {
     try {
-      const { data, error } = await fetch('/api/ensure-tables', {
+      const response = await fetch('/api/ensure-tables', {
         method: 'POST',
       });
-      if (error) console.error('Error ensuring tables exist:', error);
+      if (!response.ok) console.error('Error ensuring tables exist:', response.statusText);
     } catch (err) {
       console.error('Failed to ensure tables exist:', err);
     }
