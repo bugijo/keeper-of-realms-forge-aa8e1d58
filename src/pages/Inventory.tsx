@@ -1,197 +1,262 @@
 
 import MainLayout from "@/components/layout/MainLayout";
-import InventoryItem from "@/components/game/InventoryItem";
-import { Package, Search, Filter } from "lucide-react";
+import { Package, Sword, User2, MapPin, BookOpen, Skull, Filter, Search, Eye } from "lucide-react";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { DiceRoller } from "@/components/dice/DiceRoller";
 
-// Inventory data
-const inventoryItems = [
+// Categorias do inventário
+const inventoryCategories = [
+  {
+    title: "Personagens",
+    icon: User2,
+    description: "Heróis, vilões e todos os personagens que você criou",
+    count: 4,
+    action: "Ver Personagens",
+    path: "/inventory/characters"
+  },
+  {
+    title: "Itens & Armas",
+    icon: Sword,
+    description: "Armas mágicas, itens encantados e tesouros em seu inventário",
+    count: 8,
+    action: "Ver Itens",
+    path: "/inventory/items"
+  },
+  {
+    title: "Mapas",
+    icon: MapPin,
+    description: "Mapas de reinos, cidades e calabouços que você criou",
+    count: 3,
+    action: "Ver Mapas",
+    path: "/inventory/maps"
+  },
+  {
+    title: "Histórias",
+    icon: BookOpen,
+    description: "Aventuras, missões e histórias que você elaborou",
+    count: 5,
+    action: "Ver Histórias",
+    path: "/inventory/stories"
+  },
+  {
+    title: "Monstros",
+    icon: Skull,
+    description: "Criaturas e monstros para desafiar seus jogadores",
+    count: 4,
+    action: "Ver Monstros",
+    path: "/inventory/monsters"
+  }
+];
+
+// Dados dos personagens para exibição rápida
+const quickCharacters = [
+  {
+    name: "Elrond Mithrandir",
+    level: 5,
+    class: "Mago",
+    race: "Elfo",
+    stats: [
+      { name: "Vida", value: 32, max: 40 },
+      { name: "Mana", value: 45, max: 50 },
+      { name: "Inteligência", value: 18 },
+      { name: "Sabedoria", value: 16 }
+    ]
+  },
+  {
+    name: "Thorin Escudocarvalho",
+    level: 4,
+    class: "Guerreiro",
+    race: "Anão",
+    stats: [
+      { name: "Vida", value: 50, max: 55 },
+      { name: "Energia", value: 30, max: 35 },
+      { name: "Força", value: 16 },
+      { name: "Constituição", value: 18 }
+    ]
+  }
+];
+
+// Itens para exibição rápida
+const quickItems = [
   {
     name: "Arcane Staff",
-    description: "A powerful staff that channels magical energies.",
+    description: "Um cajado poderoso que canaliza energias mágicas.",
     rarity: "rare" as const,
-    type: "Weapon - Staff",
+    type: "Arma - Cajado",
     stats: {
-      intelligence: 5,
-      magicDamage: 15,
-      manaRegen: 2
+      inteligência: 5,
+      danoMágico: 15,
+      regenMana: 2
     },
     equipped: true
   },
   {
     name: "Elven Robes",
-    description: "Light robes woven with enchanted elven silk.",
+    description: "Vestes leves tecidas com seda élfica encantada.",
     rarity: "common" as const,
-    type: "Armor - Cloth",
+    type: "Armadura - Tecido",
     stats: {
-      defense: 8,
-      magicResist: 12,
-      movementSpeed: 3
+      defesa: 8,
+      resistênciaMágica: 12,
+      velocidade: 3
     },
     equipped: true
   },
-  {
-    name: "Amulet of Wisdom",
-    description: "Ancient amulet that enhances the wearer's magical abilities.",
-    rarity: "epic" as const,
-    type: "Accessory - Necklace",
-    stats: {
-      intelligence: 8,
-      wisdom: 5,
-      spellPower: 10
-    },
-    equipped: true
-  },
-  {
-    name: "Boots of Swiftness",
-    description: "Enchanted boots that allow the wearer to move with incredible speed.",
-    rarity: "rare" as const,
-    type: "Armor - Boots",
-    stats: {
-      movementSpeed: 15,
-      dexterity: 3,
-      evasion: 5
-    },
-    equipped: true
-  },
-  {
-    name: "Dragonscale Shield",
-    description: "A shield forged from the scales of an ancient dragon.",
-    rarity: "epic" as const,
-    type: "Armor - Shield",
-    stats: {
-      defense: 25,
-      fireResist: 30,
-      health: 50
-    }
-  },
-  {
-    name: "Enchanted Dagger",
-    description: "A small but deadly dagger with arcane runes carved into the blade.",
-    rarity: "rare" as const,
-    type: "Weapon - Dagger",
-    stats: {
-      damage: 12,
-      criticalChance: 8,
-      attackSpeed: 15
-    }
-  },
-  {
-    name: "Ring of Protection",
-    description: "A simple ring that provides magical protection to the wearer.",
-    rarity: "common" as const,
-    type: "Accessory - Ring",
-    stats: {
-      defense: 5,
-      magicResist: 8,
-      health: 15
-    }
-  },
-  {
-    name: "Phoenix Feather Cloak",
-    description: "A majestic cloak made from the feathers of a phoenix, providing protection against fire and cold.",
-    rarity: "legendary" as const,
-    type: "Armor - Cloak",
-    stats: {
-      defense: 15,
-      fireResist: 50,
-      coldResist: 50,
-      regeneration: 5
-    }
-  }
 ];
 
 const Inventory = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('categories');
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   
-  // Filter items based on current filter and search
-  const filteredItems = inventoryItems.filter(item => {
-    // Filter by type
-    if (filter !== "all") {
-      if (filter === "equipped" && !item.equipped) return false;
-      if (filter === "unequipped" && item.equipped) return false;
-    }
-    
-    // Filter by search term
-    if (search && !item.name.toLowerCase().includes(search.toLowerCase()) && 
-        !item.description.toLowerCase().includes(search.toLowerCase()) &&
-        !item.type.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
-  });
-  
   return (
     <MainLayout>
-      <div className="container mx-auto">
-        <div className="flex items-center gap-2 mb-6">
-          <Package className="text-fantasy-gold" size={24} />
-          <h2 className="text-2xl font-medievalsharp text-white">Inventory</h2>
+      <div className="container mx-auto pb-16">
+        <h1 className="text-3xl font-medievalsharp text-white mb-4 text-center">Seu Inventário</h1>
+        <p className="text-fantasy-stone text-center mb-8">
+          Veja e gerencie todas as suas criações e itens
+        </p>
+        
+        {/* Tabs para alternar entre modos de visualização */}
+        <div className="flex justify-center mb-8">
+          <div className="fantasy-border inline-flex p-1 rounded-xl">
+            <button 
+              className={`px-4 py-2 rounded-lg text-sm font-medievalsharp ${activeTab === 'categories' ? 'bg-fantasy-purple text-white' : 'text-fantasy-stone hover:bg-fantasy-purple/20'}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              Categorias
+            </button>
+            <button 
+              className={`px-4 py-2 rounded-lg text-sm font-medievalsharp ${activeTab === 'recent' ? 'bg-fantasy-purple text-white' : 'text-fantasy-stone hover:bg-fantasy-purple/20'}`}
+              onClick={() => setActiveTab('recent')}
+            >
+              Recentes
+            </button>
+          </div>
         </div>
         
-        {/* Inventory Controls */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="text-muted-foreground" size={16} />
-            </div>
-            <input 
-              type="text" 
-              className="bg-fantasy-dark border border-fantasy-purple/30 text-white text-sm rounded-lg block w-full pl-10 p-2.5 focus:ring-fantasy-purple focus:border-fantasy-purple"
-              placeholder="Search items..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {activeTab === 'categories' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {inventoryCategories.map((category, index) => (
+              <div key={index} className="fantasy-card p-6 flex flex-col items-center">
+                <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
+                <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
+                <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
+                
+                <div className="mt-auto w-full">
+                  <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
+                    <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
+                  </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
+                    onClick={() => navigate(category.path)}
+                  >
+                    {category.action}
+                  </motion.button>
+                </div>
+              </div>
+            ))}
           </div>
-          
-          <div className="flex gap-2">
-            <div className="flex items-center gap-2 bg-fantasy-dark border border-fantasy-purple/30 rounded-lg p-2">
-              <Filter className="text-muted-foreground" size={16} />
-              <select 
-                className="bg-transparent border-none text-sm focus:ring-0 text-white"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">All Items</option>
-                <option value="equipped">Equipped</option>
-                <option value="unequipped">Unequipped</option>
-              </select>
+        ) : (
+          <div className="space-y-8">
+            {/* Personagens recentes */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-medievalsharp text-white">Personagens Recentes</h2>
+                <Link to="/inventory/characters" className="text-fantasy-purple hover:text-fantasy-accent text-sm flex items-center">
+                  Ver todos <Eye className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quickCharacters.map((character, index) => (
+                  <div key={index} className="fantasy-card p-4">
+                    <div className="flex justify-between mb-2">
+                      <h3 className="font-medievalsharp text-lg">{character.name}</h3>
+                      <span className="text-fantasy-gold text-sm">Nível {character.level}</span>
+                    </div>
+                    <div className="text-sm text-fantasy-stone mb-3">{character.race} • {character.class}</div>
+                    
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {character.stats.map((stat, statIndex) => (
+                        <div key={statIndex} className="fantasy-border p-2">
+                          <div className="flex justify-between mb-1">
+                            <span className="text-xs font-medievalsharp">{stat.name}</span>
+                            <span className="text-xs font-medium">
+                              {stat.max ? `${stat.value}/${stat.max}` : stat.value}
+                            </span>
+                          </div>
+                          
+                          {stat.max && (
+                            <div className="h-1.5 bg-fantasy-dark rounded-full">
+                              <div 
+                                className="h-full bg-gradient-to-r from-fantasy-purple to-fantasy-accent rounded-full" 
+                                style={{ width: `${(stat.value / stat.max) * 100}%` }}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <button className="fantasy-button primary text-xs px-3 py-1">Ver Ficha</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             
-            <button className="fantasy-button primary text-sm">Sort</button>
+            {/* Itens recentes */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-medievalsharp text-white">Itens Recentes</h2>
+                <Link to="/inventory/items" className="text-fantasy-purple hover:text-fantasy-accent text-sm flex items-center">
+                  Ver todos <Eye className="ml-1 h-4 w-4" />
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quickItems.map((item, index) => (
+                  <div key={index} className="fantasy-card">
+                    <div className="flex gap-3">
+                      <div className={`h-16 w-16 rounded border-2 border-fantasy-purple/30 bg-fantasy-dark/30 flex items-center justify-center overflow-hidden`}>
+                        <div className="text-xl font-medievalsharp">?</div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <h3 className="font-medievalsharp">{item.name}</h3>
+                          {item.equipped && (
+                            <span className="text-xs bg-fantasy-purple/20 text-fantasy-purple rounded-full px-2 py-0.5">
+                              Equipado
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground">{item.type}</div>
+                        <p className="text-xs mt-1 text-muted-foreground">{item.description}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t border-fantasy-purple/20 flex justify-end gap-2">
+                      <button className="fantasy-button text-xs py-1 primary">Ver Detalhes</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
         
-        {/* Inventory Stats */}
-        <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: "Total Items", value: inventoryItems.length },
-            { label: "Equipped", value: inventoryItems.filter(i => i.equipped).length },
-            { label: "Capacity", value: `${inventoryItems.length}/20` },
-            { label: "Gold Value", value: "2,450" }
-          ].map((stat, index) => (
-            <div key={index} className="fantasy-card p-3">
-              <div className="text-xs text-muted-foreground">{stat.label}</div>
-              <div className="text-lg font-medievalsharp">{stat.value}</div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Inventory Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item, index) => (
-              <InventoryItem key={index} {...item} />
-            ))
-          ) : (
-            <div className="col-span-full flex flex-col items-center justify-center py-12">
-              <Package className="text-muted-foreground mb-2" size={48} />
-              <p className="text-muted-foreground">No items found matching your criteria</p>
-            </div>
-          )}
-        </div>
+        {/* Componente de rolagem de dados */}
+        <DiceRoller />
       </div>
     </MainLayout>
   );
