@@ -1,20 +1,22 @@
 
-import { describe, test, expect } from 'vitest';
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { FooterTabs } from '@/components/rpg/FooterTabs';
+import { expect, test } from '@playwright/test';
 
-describe('Footer Navigation', () => {
-  test('Troca de abas animada', async () => {
-    const { getByTestId } = render(
-      <BrowserRouter>
-        <FooterTabs />
-      </BrowserRouter>
-    );
-    
-    fireEvent.click(getByTestId('quests-tab'));
-    await waitFor(() => {
-      expect(getByTestId('quests-screen')).toBeVisible();
-    });
-  });
+test('navigation works properly', async ({ page }) => {
+  // Start from the home page
+  await page.goto('/');
+  
+  // Check if the page contains Missões
+  await expect(page.getByTestId('quests-tab')).toBeVisible();
+  
+  // Navigate to Character page
+  await page.getByTestId('character-tab').click();
+  await expect(page.url()).toContain('/character');
+  
+  // Navigate to Inventory page
+  await page.getByTestId('inventory-tab').click();
+  await expect(page.url()).toContain('/inventory');
+  
+  // Navigate back to home
+  await page.getByTestId('quests-tab').click();
+  await expect(page.url()).toEqual(expect.stringContaining('/'));
 });

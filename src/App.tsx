@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-ro
 import { AuthProvider } from "@/contexts/SupabaseAuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { StrictMode, useEffect } from "react";
-import { FooterTabs } from "@/components/rpg/FooterTabs";
+import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import { SwipeableView } from "@/components/mobile/SwipeableView";
 import { useResponsive } from "@/hooks/useResponsive";
 
@@ -19,6 +19,9 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SupabaseConfigDemo from "./pages/SupabaseConfigDemo";
+import Creations from "./pages/Creations";
+import Tables from "./pages/Tables";
+import Shop from "./pages/Shop";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -29,7 +32,7 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { isMobile } = useResponsive();
   
-  const routes = ['/', '/character', '/inventory'];
+  const routes = ['/', '/character', '/inventory', '/creations', '/tables', '/shop'];
   
   const handleSwipeLeft = () => {
     if (!isMobile) return;
@@ -61,7 +64,7 @@ const MobileRouteHandler = ({ children }: { children: React.ReactNode }) => {
   
   return isMobile ? (
     <>
-      <FooterTabs />
+      <MobileNavigation />
       <SwipeableView 
         onSwipeLeft={handleSwipeLeft} 
         onSwipeRight={handleSwipeRight}
@@ -113,19 +116,24 @@ const App = () => (
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
-              
-              {/* Rotas adicionais */}
-              <Route path="/skills" element={
+              <Route path="/creations" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
-                    <NotFound />
+                    <Creations />
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
-              <Route path="/achievements" element={
+              <Route path="/tables" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
-                    <NotFound />
+                    <Tables />
+                  </MobileRouteHandler>
+                </ProtectedRoute>
+              } />
+              <Route path="/shop" element={
+                <ProtectedRoute>
+                  <MobileRouteHandler>
+                    <Shop />
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
