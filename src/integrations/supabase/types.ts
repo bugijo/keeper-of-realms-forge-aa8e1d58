@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      characters: {
+        Row: {
+          attributes: Json | null
+          background: string | null
+          class: string | null
+          created_at: string
+          creation_mode: string | null
+          equipment: Json | null
+          id: string
+          level: number | null
+          name: string
+          notes: string | null
+          proficiencies: Json | null
+          race: string | null
+          spells: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attributes?: Json | null
+          background?: string | null
+          class?: string | null
+          created_at?: string
+          creation_mode?: string | null
+          equipment?: Json | null
+          id?: string
+          level?: number | null
+          name: string
+          notes?: string | null
+          proficiencies?: Json | null
+          race?: string | null
+          spells?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attributes?: Json | null
+          background?: string | null
+          class?: string | null
+          created_at?: string
+          creation_mode?: string | null
+          equipment?: Json | null
+          id?: string
+          level?: number | null
+          name?: string
+          notes?: string | null
+          proficiencies?: Json | null
+          race?: string | null
+          spells?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      maps: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -33,6 +117,126 @@ export type Database = {
           email?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stories: {
+        Row: {
+          content: string | null
+          created_at: string
+          creation_mode: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          creation_mode?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          creation_mode?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      table_participants: {
+        Row: {
+          character_id: string | null
+          id: string
+          joined_at: string
+          role: string | null
+          table_id: string
+          user_id: string
+        }
+        Insert: {
+          character_id?: string | null
+          id?: string
+          joined_at?: string
+          role?: string | null
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string | null
+          id?: string
+          joined_at?: string
+          role?: string | null
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_participants_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_participants_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tables: {
+        Row: {
+          campaign: string | null
+          created_at: string
+          description: string | null
+          id: string
+          max_players: number | null
+          name: string
+          system: string | null
+          time: string | null
+          updated_at: string
+          user_id: string
+          weekday: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_players?: number | null
+          name: string
+          system?: string | null
+          time?: string | null
+          updated_at?: string
+          user_id: string
+          weekday?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          max_players?: number | null
+          name?: string
+          system?: string | null
+          time?: string | null
+          updated_at?: string
+          user_id?: string
+          weekday?: string | null
         }
         Relationships: []
       }
