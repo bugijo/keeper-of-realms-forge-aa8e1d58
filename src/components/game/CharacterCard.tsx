@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 interface Stat {
   name: string;
   value: number;
@@ -14,7 +16,7 @@ interface CharacterCardProps {
   imageUrl?: string;
 }
 
-const CharacterCard = ({ 
+export const CharacterCard = ({ 
   name, 
   level, 
   class: characterClass, 
@@ -79,4 +81,5 @@ const CharacterCard = ({
   );
 };
 
+// Also export as default for backward compatibility
 export default CharacterCard;
