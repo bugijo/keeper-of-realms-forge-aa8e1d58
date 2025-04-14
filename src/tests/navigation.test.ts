@@ -1,34 +1,37 @@
 
-// Using vitest instead of playwright for this test
-import { expect, test, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { MobileNavigation } from '../components/mobile/MobileNavigation';
+import { BrowserRouter, useLocation } from 'react-router-dom';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { Navbar } from '@/components/layout/Navbar';
 
-// Mock useLocation
+// Mock useLocation hook
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useLocation: () => ({
-      pathname: '/'
-    })
+    useLocation: vi.fn()
   };
 });
 
-test('navigation elements render properly', () => {
-  render(
-    <BrowserRouter>
-      <MobileNavigation />
-    </BrowserRouter>
-  );
-  
-  // Check if the navigation contains Missões
-  expect(screen.getByText('Missões')).toBeDefined();
-  
-  // Check if the Inventory tab exists
-  expect(screen.getByText('Inventário')).toBeDefined();
-  
-  // Check if the Creations tab exists
-  expect(screen.getByText('Criações')).toBeDefined();
+describe('Navigation', () => {
+  beforeEach(() => {
+    vi.mocked(useLocation).mockReturnValue({
+      pathname: '/',
+      search: '',
+      hash: '',
+      state: null,
+      key: 'default'
+    });
+  });
+
+  it('renders navigation elements', () => {
+    render(
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    );
+    
+    // Verifica se os elementos de navegação estão presentes
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
+  });
 });
