@@ -34,6 +34,9 @@ import MonsterCreation from "./pages/creations/MonsterCreation";
 import CharacterView from "./pages/character/CharacterView";
 import ItemsView from "./pages/items/ItemsView";
 import MapsView from "./pages/maps/MapsView";
+import StoriesView from "./pages/stories/StoriesView";
+import NpcsView from "./pages/npcs/NpcsView";
+import MonstersView from "./pages/monsters/MonstersView";
 
 // Table Views
 import GameMasterView from "./pages/table/GameMasterView";
@@ -140,6 +143,21 @@ const App = () => (
               <Route path="/maps" element={
                 <ProtectedRoute>
                   <MapsView />
+                </ProtectedRoute>
+              } />
+              <Route path="/stories" element={
+                <ProtectedRoute>
+                  <StoriesView />
+                </ProtectedRoute>
+              } />
+              <Route path="/npcs" element={
+                <ProtectedRoute>
+                  <NpcsView />
+                </ProtectedRoute>
+              } />
+              <Route path="/monsters" element={
+                <ProtectedRoute>
+                  <MonstersView />
                 </ProtectedRoute>
               } />
               

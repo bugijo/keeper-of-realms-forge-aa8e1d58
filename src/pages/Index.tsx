@@ -73,11 +73,6 @@ const Index = () => {
                     {quest.progress}/{quest.max}
                   </div>
                 </div>
-                
-                <div className="flex justify-between">
-                  <div className="text-green-400 font-medievalsharp">+{quest.rewards.xp} XP</div>
-                  <div className="text-fantasy-gold font-medievalsharp">+{quest.rewards.gems} 💎</div>
-                </div>
               </div>
             ))}
           </div>
