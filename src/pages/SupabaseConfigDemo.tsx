@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -114,54 +115,9 @@ CREATE TRIGGER on_auth_user_created
       if (rpcError) {
         console.error('Erro ao executar migrações via RPC:', rpcError);
         
-        // Se o RPC falhar, tente criar as tabelas diretamente
-        try {
-          // Verificar se a tabela profiles existe
-          const { error: createTableError } = await supabase.from('_dummy_query')
-            .select('*')
-            .limit(1)
-            .then(async () => {
-              // Execute SQL to create table - we'll use raw SQL in actual implementation
-              return { error: null };
-            });
-          
-          if (createTableError) {
-            throw createTableError;
-          }
-          
-          // Criar políticas de segurança - this would be SQL in actual implementation
-          const { error: policyError } = await supabase.from('_dummy_query')
-            .select('*')
-            .limit(1)
-            .then(async () => {
-              // Execute SQL to create policies - we'll use raw SQL in actual implementation
-              return { error: null };
-            });
-          
-          if (policyError) {
-            throw policyError;
-          }
-          
-          // Criar função e trigger - this would be SQL in actual implementation
-          const { error: triggerError } = await supabase.from('_dummy_query')
-            .select('*')
-            .limit(1)
-            .then(async () => {
-              // Execute SQL to create trigger - we'll use raw SQL in actual implementation
-              return { error: null };
-            });
-          
-          if (triggerError) {
-            throw triggerError;
-          }
-          
-          toast.success('Migrações executadas com sucesso!');
-          setMigrationStatus('success');
-        } catch (directError) {
-          console.error('Erro ao executar migrações diretamente:', directError);
-          toast.error('Erro ao executar migrações. Por favor, use o Editor SQL do Supabase.');
-          setMigrationStatus('error');
-        }
+        // Se o RPC falhar, informar ao usuário para usar o Editor SQL
+        toast.error('Erro ao executar migrações automaticamente. Por favor, use o Editor SQL do Supabase.');
+        setMigrationStatus('error');
       } else {
         toast.success('Migrações executadas com sucesso!');
         setMigrationStatus('success');
