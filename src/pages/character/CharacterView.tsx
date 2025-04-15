@@ -1,8 +1,13 @@
+
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
-import { ArrowLeft, Dices, Edit, Trash } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import CharacterHeader from '@/components/character/CharacterHeader';
+import CharacterStats from '@/components/character/CharacterStats';
+import CharacterSkills from '@/components/character/CharacterSkills';
+import CharacterEquipment from '@/components/character/CharacterEquipment';
+import CharacterSpells from '@/components/character/CharacterSpells';
 
 // This would come from the database in a real app
 const mockCharacter = {
@@ -64,167 +69,30 @@ const CharacterView = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Character Info Card */}
-          <div className="fantasy-card p-6 md:col-span-1">
-            <div className="h-40 w-40 mx-auto rounded-full overflow-hidden border-4 border-fantasy-purple/30 mb-4">
-              <img 
-                src="https://images.unsplash.com/photo-1501854140801-50d01698950b" 
-                alt={character.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            
-            <h2 className="text-xl font-medievalsharp text-center text-white mb-1">{character.name}</h2>
-            <p className="text-center text-fantasy-stone mb-4">
-              Nível {character.level} {character.race} {character.class}
-            </p>
-            
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between">
-                <span className="text-fantasy-stone">Antecedente:</span>
-                <span className="text-white">{character.background}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-fantasy-stone">Alinhamento:</span>
-                <span className="text-white">{character.alignment}</span>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 mt-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex-1 bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
-              >
-                <Edit size={16} />
-                Editar
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-fantasy-dark/80 text-red-400 py-2 px-3 rounded-lg"
-              >
-                <Trash size={16} />
-              </motion.button>
-            </div>
-          </div>
+          <CharacterHeader 
+            name={character.name}
+            level={character.level}
+            race={character.race}
+            characterClass={character.class}
+            background={character.background}
+            alignment={character.alignment}
+          />
           
-          {/* Stats Card */}
           <div className="md:col-span-2 space-y-6">
             {/* Abilities & Combat Stats */}
-            <div className="fantasy-card p-6">
-              <h3 className="text-xl font-medievalsharp text-white mb-4">Atributos & Combate</h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-                {Object.entries(character.stats).map(([stat, value]) => (
-                  <div key={stat} className="bg-fantasy-dark/30 p-3 rounded-lg text-center">
-                    <div className="text-xs text-fantasy-stone uppercase mb-1">{stat}</div>
-                    <div className="text-2xl font-medievalsharp text-white">{value}</div>
-                    <div className="text-sm text-fantasy-gold mt-1">
-                      {Math.floor((value - 10) / 2) >= 0 ? '+' : ''}{Math.floor((value - 10) / 2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-gradient-to-br from-red-900/40 to-red-600/20 p-3 rounded-lg text-center">
-                  <div className="text-xs text-fantasy-stone uppercase mb-1">Pontos de Vida</div>
-                  <div className="text-xl font-medievalsharp text-white">
-                    {character.abilities.hp.current}/{character.abilities.hp.max}
-                  </div>
-                </div>
-                <div className="bg-fantasy-dark/30 p-3 rounded-lg text-center">
-                  <div className="text-xs text-fantasy-stone uppercase mb-1">Classe de Armadura</div>
-                  <div className="text-xl font-medievalsharp text-white">{character.abilities.ac}</div>
-                </div>
-                <div className="bg-fantasy-dark/30 p-3 rounded-lg text-center">
-                  <div className="text-xs text-fantasy-stone uppercase mb-1">Iniciativa</div>
-                  <div className="text-xl font-medievalsharp text-white">
-                    {character.abilities.initiative >= 0 ? '+' : ''}{character.abilities.initiative}
-                  </div>
-                </div>
-                <div className="bg-fantasy-dark/30 p-3 rounded-lg text-center">
-                  <div className="text-xs text-fantasy-stone uppercase mb-1">Deslocamento</div>
-                  <div className="text-xl font-medievalsharp text-white">{character.abilities.speed}ft</div>
-                </div>
-                <div className="bg-fantasy-dark/30 p-3 rounded-lg text-center">
-                  <div className="text-xs text-fantasy-stone uppercase mb-1">Bônus de Prof.</div>
-                  <div className="text-xl font-medievalsharp text-white">
-                    +{character.abilities.proficiencyBonus}
-                  </div>
-                </div>
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="mt-4 flex items-center justify-center gap-2 bg-fantasy-gold/20 hover:bg-fantasy-gold/30 text-fantasy-gold px-4 py-2 rounded-lg font-medievalsharp w-full"
-              >
-                <Dices size={16} />
-                Rolar Dados
-              </motion.button>
-            </div>
+            <CharacterStats 
+              stats={character.stats}
+              abilities={character.abilities}
+            />
             
             {/* Proficiencies & Skills */}
-            <div className="fantasy-card p-6">
-              <h3 className="text-xl font-medievalsharp text-white mb-4">Perícias</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {character.skills.map((skill, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-fantasy-dark/30">
-                    <span className="text-white">{skill.name}</span>
-                    <span className="text-fantasy-gold font-medievalsharp">
-                      +{skill.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CharacterSkills skills={character.skills} />
             
             {/* Equipment */}
-            <div className="fantasy-card p-6">
-              <h3 className="text-xl font-medievalsharp text-white mb-4">Equipamentos</h3>
-              
-              <div className="space-y-3">
-                {character.equipment.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-fantasy-dark/30">
-                    <div>
-                      <span className="text-white font-medievalsharp">{item.name}</span>
-                      <div className="text-xs text-fantasy-stone">
-                        {item.type === 'weapon' && `Dano: ${item.damage}`}
-                        {item.type === 'armor' && `CA: ${item.ac}`}
-                        {item.type === 'shield' && `CA: ${item.ac}`}
-                        {item.properties && ` | ${item.properties}`}
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 rounded bg-fantasy-purple/30 text-fantasy-purple">
-                      {item.type === 'weapon' ? 'Arma' : 
-                       item.type === 'armor' ? 'Armadura' : 
-                       item.type === 'shield' ? 'Escudo' : 'Item'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CharacterEquipment equipment={character.equipment} />
             
             {/* Spells */}
-            <div className="fantasy-card p-6">
-              <h3 className="text-xl font-medievalsharp text-white mb-4">Magias</h3>
-              
-              <div className="space-y-3">
-                {character.spells.map((spell, index) => (
-                  <div key={index} className="p-3 rounded-lg bg-fantasy-dark/30">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-white font-medievalsharp">{spell.name}</span>
-                      <span className="text-xs px-2 py-1 rounded bg-fantasy-purple/30 text-fantasy-purple">
-                        Nível {spell.level === 0 ? 'Truque' : spell.level}
-                      </span>
-                    </div>
-                    <p className="text-sm text-fantasy-stone">{spell.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CharacterSpells spells={character.spells} />
           </div>
         </div>
       </div>
