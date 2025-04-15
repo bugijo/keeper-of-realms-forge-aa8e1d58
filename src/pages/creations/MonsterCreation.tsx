@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
 import { ArrowLeft, Save, Plus, Trash2, Skull } from "lucide-react";
@@ -172,4 +173,71 @@ const MonsterCreation = () => {
                       <option value="2">2 (450 XP)</option>
                       <option value="3">3 (700 XP)</option>
                       <option value="4">4 (1.100 XP)</option>
-                      <option value="5">5 (1.800 XP)</
+                      <option value="5">5 (1.800 XP)</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Add more form fields here */}
+                <div>
+                  <label className="block text-fantasy-stone mb-1">Habilidade Especial</label>
+                  <div className="flex space-x-2 mb-2">
+                    <input
+                      type="text"
+                      className="flex-1 bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
+                      placeholder="Nome da habilidade"
+                      value={newAbilityName}
+                      onChange={(e) => setNewAbilityName(e.target.value)}
+                    />
+                    <button 
+                      className="bg-fantasy-purple px-3 py-1 rounded-lg text-white"
+                      onClick={handleAddAbility}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  <textarea
+                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 min-h-[80px]"
+                    placeholder="Descrição da habilidade"
+                    value={newAbilityDesc}
+                    onChange={(e) => setNewAbilityDesc(e.target.value)}
+                  ></textarea>
+                </div>
+                
+                {/* Ability list */}
+                {abilities.length > 0 && (
+                  <div className="space-y-2 border border-fantasy-purple/20 p-3 rounded-lg">
+                    <h4 className="text-sm font-medievalsharp text-fantasy-gold">Habilidades Adicionadas</h4>
+                    {abilities.map((ability, idx) => (
+                      <div key={idx} className="flex justify-between items-start border-b border-fantasy-purple/10 pb-2">
+                        <div>
+                          <span className="text-white text-sm font-semibold">{ability.name}</span>
+                          <p className="text-fantasy-stone text-xs">{ability.description}</p>
+                        </div>
+                        <button 
+                          className="text-red-400 hover:text-red-300 p-1"
+                          onClick={() => handleRemoveAbility(idx)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="pt-4">
+                  <button className="w-full bg-fantasy-gold text-fantasy-dark py-2 rounded-lg font-medievalsharp flex items-center justify-center gap-2">
+                    <Save size={18} />
+                    Salvar Monstro
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default MonsterCreation;

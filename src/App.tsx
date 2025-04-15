@@ -217,7 +217,7 @@ const App = () => (
         </QueryClientProvider>
       </AuthProvider>
     </BrowserRouter>
-  </Strict>
+  </StrictMode>
 );
 
 export default App;
