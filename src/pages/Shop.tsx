@@ -1,8 +1,9 @@
 
 import MainLayout from "@/components/layout/MainLayout";
-import { Gem, LayoutGrid, BoxSelect, Sparkles } from "lucide-react";
+import { Gem, LayoutGrid, BoxSelect, Sparkles, ShoppingCart, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const themes = [
   {
@@ -60,12 +61,45 @@ const premium = [
 
 const Shop = () => {
   const [activeTab, setActiveTab] = useState("themes");
+  const [purchaseModal, setPurchaseModal] = useState<{show: boolean, item?: any, type?: string}>({show: false});
+  const [userGems, setUserGems] = useState(350); // In a real app, fetch this from the user's profile
   
   const tabs = [
     { id: "themes", label: "Temas", icon: BoxSelect },
     { id: "assets", label: "Assets", icon: LayoutGrid },
     { id: "premium", label: "Premium", icon: Sparkles }
   ];
+  
+  const handlePurchase = (item: any, type: string) => {
+    setPurchaseModal({show: true, item, type});
+  };
+  
+  const completePurchase = () => {
+    const item = purchaseModal.item;
+    const type = purchaseModal.type;
+    
+    if (type === 'premium') {
+      // In a real app, this would redirect to a payment gateway
+      toast.success(`Assinatura ${item.name} iniciada!`, {
+        description: `Você recebeu ${item.gems} cristais como bônus.`,
+      });
+      setUserGems(prev => prev + item.gems);
+    } else {
+      // Check if user has enough gems
+      if (userGems >= item.price) {
+        setUserGems(prev => prev - item.price);
+        toast.success(`${item.name} comprado com sucesso!`, {
+          description: "Item adicionado à sua coleção."
+        });
+      } else {
+        toast.error("Saldo insuficiente", {
+          description: "Você não tem cristais suficientes para esta compra."
+        });
+      }
+    }
+    
+    setPurchaseModal({show: false});
+  };
   
   return (
     <MainLayout>
@@ -74,7 +108,7 @@ const Shop = () => {
         <div className="py-2 px-4 bg-fantasy-dark/70 border-b border-fantasy-purple/20 mb-6 flex items-center justify-between">
           <h2 className="text-sm font-medievalsharp text-white">Seu saldo:</h2>
           <div className="flex items-center">
-            <span className="text-white font-bold">350</span>
+            <span className="text-white font-bold">{userGems}</span>
             <span className="text-fantasy-gold ml-2">💎</span>
             <span className="text-fantasy-gold ml-1">Cristais</span>
           </div>
@@ -123,6 +157,7 @@ const Shop = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="w-full bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp"
+                  onClick={() => handlePurchase(theme, 'theme')}
                 >
                   Comprar
                 </motion.button>
@@ -153,6 +188,7 @@ const Shop = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="w-full bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp"
+                  onClick={() => handlePurchase(asset, 'asset')}
                 >
                   Comprar
                 </motion.button>
@@ -186,6 +222,7 @@ const Shop = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="w-full bg-fantasy-gold text-fantasy-dark py-2 rounded-lg font-medievalsharp mt-4"
+                  onClick={() => handlePurchase(plan, 'premium')}
                 >
                   Assinar Agora
                 </motion.button>
@@ -194,6 +231,100 @@ const Shop = () => {
           </div>
         )}
       </div>
+      
+      {/* Purchase Confirmation Modal */}
+      {purchaseModal.show && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-fantasy-dark border border-fantasy-purple/30 rounded-lg p-6 max-w-md w-full"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple">Confirmar Compra</h2>
+              <button 
+                onClick={() => setPurchaseModal({show: false})}
+                className="text-fantasy-stone hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {purchaseModal.type === 'premium' ? (
+              <div className="mb-4">
+                <h3 className="text-white font-medievalsharp mb-2">{purchaseModal.item?.name}</h3>
+                <p className="text-fantasy-stone mb-3">{purchaseModal.item?.description}</p>
+                <div className="bg-fantasy-dark/40 p-3 rounded-lg mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white">Valor:</span>
+                    <span className="text-white font-bold">{purchaseModal.item?.price}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-fantasy-stone">Bônus de cristais:</span>
+                    <div className="flex items-center">
+                      <span className="text-fantasy-gold">{purchaseModal.item?.gems}</span>
+                      <Gem className="text-fantasy-gold ml-1" size={14} />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-fantasy-stone mb-4">
+                  Ao clicar em "Confirmar", você será redirecionado para a página de pagamento seguro.
+                </p>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <h3 className="text-white font-medievalsharp mb-2">{purchaseModal.item?.name}</h3>
+                <div className="bg-fantasy-dark/40 p-3 rounded-lg mb-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white">Preço:</span>
+                    <div className="flex items-center">
+                      <span className="text-fantasy-gold">{purchaseModal.item?.price}</span>
+                      <Gem className="text-fantasy-gold ml-1" size={14} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-fantasy-stone">Seu saldo atual:</span>
+                    <div className="flex items-center">
+                      <span className={`${userGems >= purchaseModal.item?.price ? 'text-fantasy-gold' : 'text-red-400'}`}>
+                        {userGems}
+                      </span>
+                      <Gem className={`${userGems >= purchaseModal.item?.price ? 'text-fantasy-gold' : 'text-red-400'} ml-1`} size={14} />
+                    </div>
+                  </div>
+                </div>
+                {userGems < purchaseModal.item?.price && (
+                  <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4">
+                    <ShoppingCart className="inline-block mr-1" size={16} /> Saldo insuficiente para esta compra.
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                className="flex-1 bg-fantasy-dark/60 text-fantasy-stone py-2 rounded-lg"
+                onClick={() => setPurchaseModal({show: false})}
+              >
+                Cancelar
+              </button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 ${
+                  (purchaseModal.type === 'premium' || userGems >= (purchaseModal.item?.price || 0))
+                    ? 'bg-fantasy-gold text-fantasy-dark font-medievalsharp'
+                    : 'bg-fantasy-dark/60 text-fantasy-stone/50 cursor-not-allowed'
+                }`}
+                onClick={completePurchase}
+                disabled={purchaseModal.type !== 'premium' && userGems < (purchaseModal.item?.price || 0)}
+              >
+                <Check size={18} />
+                Confirmar
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </MainLayout>
   );
 };

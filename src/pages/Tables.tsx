@@ -4,6 +4,8 @@ import MainLayout from "@/components/layout/MainLayout";
 import { Plus, Book, Users, Calendar, Sword, Search, Filter, Dices } from "lucide-react";
 import { motion } from "framer-motion";
 import { DiceRoller } from "@/components/dice/DiceRoller";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 // Dados de exemplo para as mesas
 const tableMockData = [
@@ -14,7 +16,8 @@ const tableMockData = [
     players: ["João", "Maria", "Pedro", "Ana"],
     nextSession: "Amanhã às 19h",
     campaign: "Águas Profundas",
-    tags: ["Dungeons", "Combate", "Tesouro"]
+    tags: ["Dungeons", "Combate", "Tesouro"],
+    isMaster: true
   },
   {
     id: 2,
@@ -23,7 +26,8 @@ const tableMockData = [
     players: ["Clara", "Rafael", "Mariana", "Gustavo", "Tiago"],
     nextSession: "Sábado às 14h",
     campaign: "Reinos Esquecidos",
-    tags: ["Cidade", "Intriga", "Investigação"]
+    tags: ["Cidade", "Intriga", "Investigação"],
+    isMaster: false
   },
   {
     id: 3,
@@ -32,7 +36,8 @@ const tableMockData = [
     players: ["Fernando", "Rodrigo", "Camila"],
     nextSession: "Sexta-feira às 20h",
     campaign: "Ravenloft",
-    tags: ["Terror", "Mistério", "Survival"]
+    tags: ["Terror", "Mistério", "Survival"],
+    isMaster: false
   }
 ];
 
@@ -51,9 +56,9 @@ const Tables = () => {
     }
     
     // Filtro de categoria
-    if (filter === "dm" && table.dm !== "Mestre Gabriel") {
+    if (filter === "dm" && !table.isMaster) {
       return false;
-    } else if (filter === "player" && !table.players.includes("João")) {
+    } else if (filter === "player" && table.isMaster) {
       return false;
     }
     
@@ -144,14 +149,16 @@ const Tables = () => {
                       <span className="text-sm">{table.campaign}</span>
                     </div>
                     
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-fantasy-gold text-fantasy-dark py-2 px-4 rounded-lg mt-2 font-medievalsharp text-sm flex items-center gap-2"
-                    >
-                      <Sword size={14} />
-                      Entrar na Mesa
-                    </motion.button>
+                    <Link to={table.isMaster ? `/tables/master/${table.id}` : `/tables/player/${table.id}`}>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-fantasy-gold text-fantasy-dark py-2 px-4 rounded-lg mt-2 font-medievalsharp text-sm flex items-center gap-2"
+                      >
+                        <Sword size={14} />
+                        Entrar na Mesa
+                      </motion.button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -273,7 +280,13 @@ const Tables = () => {
                     className="w-full bg-fantasy-gold text-fantasy-dark py-3 rounded-lg font-medievalsharp"
                     onClick={() => {
                       setShowNewTableModal(false);
-                      toast.success("Mesa criada com sucesso!");
+                      toast("Mesa criada com sucesso!", {
+                        description: "Sua nova mesa está pronta para receber jogadores.",
+                        action: {
+                          label: "Ver Mesa",
+                          onClick: () => { /* link to new table */ }
+                        }
+                      });
                     }}
                   >
                     Criar Mesa

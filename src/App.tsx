@@ -26,6 +26,18 @@ import Shop from "./pages/Shop";
 import CharacterCreation from "./pages/creations/CharacterCreation";
 import StoryCreation from "./pages/creations/StoryCreation";
 import MapCreation from "./pages/creations/MapCreation";
+import NpcCreation from "./pages/creations/NpcCreation";
+import ItemCreation from "./pages/creations/ItemCreation";
+import MonsterCreation from "./pages/creations/MonsterCreation";
+
+// Visualizações
+import CharacterView from "./pages/character/CharacterView";
+import ItemsView from "./pages/items/ItemsView";
+import MapsView from "./pages/maps/MapsView";
+
+// Table Views
+import GameMasterView from "./pages/table/GameMasterView";
+import PlayerView from "./pages/table/PlayerView";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -106,6 +118,8 @@ const App = () => (
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
+              
+              {/* Inventory Routes */}
               <Route path="/inventory" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
@@ -113,6 +127,23 @@ const App = () => (
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
+              <Route path="/character/:id" element={
+                <ProtectedRoute>
+                  <CharacterView />
+                </ProtectedRoute>
+              } />
+              <Route path="/items" element={
+                <ProtectedRoute>
+                  <ItemsView />
+                </ProtectedRoute>
+              } />
+              <Route path="/maps" element={
+                <ProtectedRoute>
+                  <MapsView />
+                </ProtectedRoute>
+              } />
+              
+              {/* Creations Routes */}
               <Route path="/creations" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
@@ -130,11 +161,28 @@ const App = () => (
                   <StoryCreation />
                 </ProtectedRoute>
               } />
+              <Route path="/creations/npcs" element={
+                <ProtectedRoute>
+                  <NpcCreation />
+                </ProtectedRoute>
+              } />
               <Route path="/creations/maps" element={
                 <ProtectedRoute>
                   <MapCreation />
                 </ProtectedRoute>
               } />
+              <Route path="/creations/items" element={
+                <ProtectedRoute>
+                  <ItemCreation />
+                </ProtectedRoute>
+              } />
+              <Route path="/creations/monsters" element={
+                <ProtectedRoute>
+                  <MonsterCreation />
+                </ProtectedRoute>
+              } />
+              
+              {/* Tables Routes */}
               <Route path="/tables" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
@@ -142,6 +190,18 @@ const App = () => (
                   </MobileRouteHandler>
                 </ProtectedRoute>
               } />
+              <Route path="/tables/master/:id" element={
+                <ProtectedRoute>
+                  <GameMasterView />
+                </ProtectedRoute>
+              } />
+              <Route path="/tables/player/:id" element={
+                <ProtectedRoute>
+                  <PlayerView />
+                </ProtectedRoute>
+              } />
+              
+              {/* Shop Route */}
               <Route path="/shop" element={
                 <ProtectedRoute>
                   <MobileRouteHandler>
@@ -157,7 +217,7 @@ const App = () => (
         </QueryClientProvider>
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>
+  </Strict>
 );
 
 export default App;

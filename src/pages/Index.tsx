@@ -1,17 +1,8 @@
 
 import MainLayout from "@/components/layout/MainLayout";
-import { Zap, Scroll, User2, BookOpen, Users, MapPin, Sword, ShoppingCart } from "lucide-react";
+import { Scroll, User2, BookOpen, Users, MapPin, Sword, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const creations = [
-  { name: "Personagens", icon: User2, count: 8, color: "bg-indigo-600", path: "/creations/characters" },
-  { name: "Histórias", icon: BookOpen, count: 12, color: "bg-purple-600", path: "/creations/stories" },
-  { name: "NPCs", icon: Users, count: 24, color: "bg-blue-500", path: "/creations/npcs" },
-  { name: "Mapas", icon: MapPin, count: 5, color: "bg-green-600", path: "/creations/maps" },
-  { name: "Itens & Armas", icon: Sword, count: 16, color: "bg-amber-600", path: "/creations/items" },
-  { name: "Monstros", icon: ShoppingCart, count: 7, color: "bg-red-600", path: "/creations/monsters" },
-];
 
 const quests = [
   {
@@ -55,52 +46,6 @@ const Index = () => {
             <span className="text-white font-bold">350</span>
             <span className="text-fantasy-gold ml-2">💎</span>
             <span className="text-fantasy-gold ml-1">Cristais</span>
-          </div>
-        </div>
-
-        {/* Progress section */}
-        <div className="fantasy-card mb-6">
-          <div className="w-full bg-fantasy-dark/70 h-4 rounded-full mb-4">
-            <div 
-              className="bg-gradient-to-r from-fantasy-purple to-fantasy-accent h-full rounded-full"
-              style={{ width: '65%' }}
-            ></div>
-          </div>
-          
-          <div className="flex justify-center">
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 bg-fantasy-purple/80 hover:bg-fantasy-purple text-white px-6 py-3 rounded-lg font-medievalsharp"
-            >
-              <Zap className="text-fantasy-gold" size={20} />
-              Recompensa Rápida
-            </motion.button>
-          </div>
-        </div>
-        
-        {/* Inventory Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-medievalsharp text-white mb-4">Seu Inventário</h2>
-          <div className="grid grid-cols-1 gap-4">
-            {creations.map((item, index) => (
-              <Link to={item.path} key={index}>
-                <div className="bg-fantasy-purple/80 rounded-lg p-4 flex items-center justify-between hover:bg-fantasy-purple/90 transition-colors">
-                  <div className="flex items-center">
-                    <div className={`p-2 rounded-full ${item.color} mr-3 flex items-center justify-center`}>
-                      <item.icon className="text-white" size={24} />
-                    </div>
-                    <span className="text-lg font-medievalsharp text-white">{item.name}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-medievalsharp text-fantasy-gold">{item.count}</span>
-                    <button className="bg-fantasy-gold/20 hover:bg-fantasy-gold/30 text-fantasy-gold px-4 py-2 rounded-lg font-medievalsharp text-sm">
-                      Ver Todos
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            ))}
           </div>
         </div>
         
