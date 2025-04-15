@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
-import { ArrowLeft, Dice, Edit, Trash } from "lucide-react";
+import { ArrowLeft, Dices, Edit, Trash } from "lucide-react";
 import { motion } from "framer-motion";
 
 // This would come from the database in a real app
@@ -161,7 +160,7 @@ const CharacterView = () => {
                 whileTap={{ scale: 0.98 }}
                 className="mt-4 flex items-center justify-center gap-2 bg-fantasy-gold/20 hover:bg-fantasy-gold/30 text-fantasy-gold px-4 py-2 rounded-lg font-medievalsharp w-full"
               >
-                <Dice size={16} />
+                <Dices size={16} />
                 Rolar Dados
               </motion.button>
             </div>
