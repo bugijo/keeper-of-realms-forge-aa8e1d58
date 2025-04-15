@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Plus, Book, Users, Calendar, Sword, Search, Filter, Dices } from "lucide-react";
 import { motion } from "framer-motion";
-import { DiceRoller } from "@/components/dice/DiceRoller";
+import DiceRoller from "@/components/dice/DiceRoller";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 

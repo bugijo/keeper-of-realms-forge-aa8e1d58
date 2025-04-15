@@ -1,13 +1,10 @@
-
-import MainLayout from "@/components/layout/MainLayout";
-import { Package, Sword, User2, MapPin, BookOpen, Skull, Filter, Search, Eye, 
-  Heart, Brain, Shield, Dices, Coffee, CheckCircle, Table } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { DiceRoller } from "@/components/dice/DiceRoller";
+import MainLayout from "@/components/layout/MainLayout";
 import { CharacterCard } from "@/components/game/CharacterCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InventoryItem } from "@/components/game/InventoryItem";
+import { MedievalButton } from "@/components/rpg/MedievalButton";
+import { Link } from "react-router-dom";
+import DiceRoller from "@/components/dice/DiceRoller";
 
 // Categorias do inventário
 const inventoryCategories = [
@@ -145,7 +142,6 @@ const quickSpells = [
 ];
 
 const Inventory = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('categories');
   const [characterTab, setCharacterTab] = useState('attributes');
   const [filter, setFilter] = useState("all");
