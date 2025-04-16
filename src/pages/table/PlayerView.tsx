@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import DiceRoller from '@/components/dice/DiceRoller';
-import { PlayerStats } from '@/components/game/PlayerStats';
+import PlayerStats from '@/components/game/PlayerStats';
 import { 
   Tabs, 
   TabsList, 
@@ -18,6 +18,7 @@ import {
   Dices, 
   BookOpen 
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const sessionData = {
   name: "A Caverna do Dragão Negro",
@@ -237,6 +238,8 @@ const PlayerView = () => {
                   type="text" 
                   className="flex-1 bg-fantasy-dark/50 border border-fantasy-purple/20 rounded-lg px-3 py-1 text-white"
                   placeholder="Digite sua mensagem..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendMessage(e)}
                 />
                 <Button onClick={sendMessage}>

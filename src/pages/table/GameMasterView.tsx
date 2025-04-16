@@ -1,3 +1,4 @@
+
 // Import the necessary components and hooks
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -18,6 +19,7 @@ import {
   Dices,
   FileText
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Sample data (in a real app, this would come from your database)
 const sessionData = {
@@ -30,9 +32,9 @@ const sessionData = {
     { id: 4, name: "Gimli", class: "Bárbaro", level: 4, online: false }
   ],
   maps: [
-    { id: 1, name: "Entrada da Caverna", isActive: true },
-    { id: 2, name: "Corredor Principal", isActive: false },
-    { id: 3, name: "Sala do Tesouro", isActive: false }
+    { id: 1, name: "Entrada da Caverna", isActive: true, description: "Uma grande abertura na face da montanha, com estalactites pendendo do teto." },
+    { id: 2, name: "Corredor Principal", isActive: false, description: "Um longo corredor escuro que se estende profundamente na montanha." },
+    { id: 3, name: "Sala do Tesouro", isActive: false, description: "Uma câmara ampla repleta de ouro e artefatos antigos." }
   ],
   monsters: [
     { id: 1, name: "Goblins da Caverna", type: "Goblin", quantity: 4, hp: 7 },
@@ -245,7 +247,7 @@ const GameMasterView = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-grow bg-fantasy-dark/50 text-white rounded-l-md py-2 px-3 focus:outline-none"
                   />
-                  <button type="submit" className="fantasy-button primary rounded-l-none text-sm py-2.5">Enviar</button>
+                  <Button type="submit" className="fantasy-button primary rounded-l-none text-sm py-2.5">Enviar</Button>
                 </div>
               </form>
             </div>
