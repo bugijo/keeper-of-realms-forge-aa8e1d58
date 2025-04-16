@@ -1,117 +1,113 @@
 
-import { render, fireEvent, screen } from '@testing-library/react';
-import ShopItem from '../components/shop/ShopItem';
-import CartDrawer from '../components/shop/CartDrawer';
-import { BrowserRouter } from 'react-router-dom';
+import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { ShopItem } from '../components/shop/ShopItem';
+import { CartDrawer } from '../components/shop/CartDrawer';
 
-// Mock para o toast
-jest.mock('sonner', () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn()
-  }
-}));
+// Mock data for tests
+const mockItem = {
+  id: '1',
+  name: 'Poção de Cura',
+  description: 'Restaura 50 pontos de vida',
+  price: 100,
+  image: '/placeholder.svg',
+  category: 'potion',
+  quantity: 1
+};
 
-describe('Testes do componente ShopItem', () => {
-  const mockItem = {
-    id: 'test-1',
-    name: 'Item de Teste',
-    description: 'Descrição do item de teste',
-    price: 100,
-    currency: 'gems' as const,
-    imageUrl: 'test-image.jpg',
-    category: 'theme' as const,
-    onPurchase: jest.fn()
-  };
-
-  test('Deve renderizar o item corretamente', () => {
+describe('ShopItem Component', () => {
+  it('renders the shop item correctly', () => {
     render(
-      <BrowserRouter>
-        <ShopItem {...mockItem} />
-      </BrowserRouter>
+      <ShopItem 
+        item={mockItem}
+        onAddToCart={() => {}}
+      />
     );
     
-    expect(screen.getByText('Item de Teste')).toBeInTheDocument();
-    expect(screen.getByText('Descrição do item de teste')).toBeInTheDocument();
-    expect(screen.getByText('100 gemas')).toBeInTheDocument();
+    expect(screen.getByText('Poção de Cura')).toBeDefined();
+    expect(screen.getByText('100 moedas')).toBeDefined();
   });
-
-  test('Deve mostrar desconto quando disponível', () => {
+  
+  it('calls onAddToCart when add button is clicked', () => {
+    const mockAddToCart = vi.fn();
+    
     render(
-      <BrowserRouter>
-        <ShopItem {...mockItem} discountPrice={80} />
-      </BrowserRouter>
+      <ShopItem 
+        item={mockItem}
+        onAddToCart={mockAddToCart}
+      />
     );
     
-    expect(screen.getByText('100 gemas')).toHaveClass('line-through');
-    expect(screen.getByText('80 gemas')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Adicionar ao Carrinho'));
+    expect(mockAddToCart).toHaveBeenCalledWith(mockItem);
   });
-
-  test('Deve chamar onPurchase quando o botão de compra é clicado', () => {
+  
+  it('shows item details when clicked', () => {
     render(
-      <BrowserRouter>
-        <ShopItem {...mockItem} />
-      </BrowserRouter>
+      <ShopItem 
+        item={mockItem}
+        onAddToCart={() => {}}
+      />
     );
     
-    fireEvent.click(screen.getByText('Comprar'));
-    expect(mockItem.onPurchase).toHaveBeenCalledWith('test-1');
+    fireEvent.click(screen.getByText('Poção de Cura'));
+    expect(screen.getByText('Restaura 50 pontos de vida')).toBeDefined();
   });
 });
 
-describe('Testes do componente CartDrawer', () => {
+describe('CartDrawer Component', () => {
   const mockCartItems = [
     {
-      id: 'item-1',
-      name: 'Item 1',
+      id: '1',
+      name: 'Poção de Cura',
+      description: 'Restaura 50 pontos de vida',
       price: 100,
-      imageUrl: 'item1.jpg',
-      quantity: 1,
-      currency: 'gems' as const
+      image: '/placeholder.svg',
+      category: 'potion',
+      quantity: 2
+    },
+    {
+      id: '2',
+      name: 'Espada de Aço',
+      description: '+5 de Dano',
+      price: 250,
+      image: '/placeholder.svg',
+      category: 'weapon',
+      quantity: 1
     }
   ];
-
-  const mockHandlers = {
-    onRemove: jest.fn(),
-    onUpdateQuantity: jest.fn(),
-    onCheckout: jest.fn(),
-    onClear: jest.fn()
-  };
-
-  test('Deve mostrar a quantidade correta de itens', () => {
+  
+  it('renders cart items correctly', () => {
     render(
-      <BrowserRouter>
-        <CartDrawer 
-          items={mockCartItems} 
-          onRemove={mockHandlers.onRemove}
-          onUpdateQuantity={mockHandlers.onUpdateQuantity}
-          onCheckout={mockHandlers.onCheckout}
-          onClear={mockHandlers.onClear}
-        />
-      </BrowserRouter>
+      <CartDrawer 
+        isOpen={true}
+        onClose={() => {}}
+        items={mockCartItems}
+        onRemoveItem={() => {}}
+        onCheckout={() => {}}
+      />
     );
     
-    // Verifica se o botão de trigger mostra a quantidade correta
-    const trigger = screen.getByRole('button');
-    expect(trigger).toContainElement(screen.getByText('1'));
+    expect(screen.getByText('Poção de Cura')).toBeDefined();
+    expect(screen.getByText('Espada de Aço')).toBeDefined();
+    expect(screen.getByText('Total: 450 moedas')).toBeDefined();
   });
-
-  test('Deve remover item quando o botão de remover é clicado', () => {
-    // Este teste seria para verificar a remoção de itens
-    // Mas precisaria abrir o drawer primeiro, o que é complexo em testes
-    // Então apenas verificamos se o componente renderiza
+  
+  it('calls onRemoveItem when remove button is clicked', () => {
+    const mockRemoveItem = vi.fn();
+    
     render(
-      <BrowserRouter>
-        <CartDrawer 
-          items={mockCartItems} 
-          onRemove={mockHandlers.onRemove}
-          onUpdateQuantity={mockHandlers.onUpdateQuantity}
-          onCheckout={mockHandlers.onCheckout}
-          onClear={mockHandlers.onClear}
-        />
-      </BrowserRouter>
+      <CartDrawer 
+        isOpen={true}
+        onClose={() => {}}
+        items={mockCartItems}
+        onRemoveItem={mockRemoveItem}
+        onCheckout={() => {}}
+      />
     );
     
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    const removeButtons = screen.getAllByText('Remover');
+    fireEvent.click(removeButtons[0]);
+    expect(mockRemoveItem).toHaveBeenCalledWith('1');
   });
 });

@@ -62,29 +62,41 @@ export default function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       await googleSignIn();
-      // Não redirecionamos aqui, o redirecionamento acontece automaticamente pelo Supabase
+      // O redirecionamento acontece automaticamente pelo Supabase
     } catch (error) {
       console.error("Google sign in error:", error);
+      toast.error("Erro ao fazer login com Google. Tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleFacebookSignIn = async () => {
     try {
+      setIsLoading(true);
       await facebookSignIn();
-      // Não redirecionamos aqui, o redirecionamento acontece automaticamente pelo Supabase
+      // O redirecionamento acontece automaticamente pelo Supabase
     } catch (error) {
       console.error("Facebook sign in error:", error);
+      toast.error("Erro ao fazer login com Facebook. Tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleAnonymousSignIn = async () => {
     try {
+      setIsLoading(true);
       await anonymousSignIn();
-      // Redirecionamos para a página inicial após login anônimo bem-sucedido
+      // Após o login anônimo bem-sucedido, redirecionar para a página inicial
       navigate("/");
     } catch (error) {
       console.error("Demo mode sign in error:", error);
+      toast.error("Erro ao entrar no modo demo. Tente novamente.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

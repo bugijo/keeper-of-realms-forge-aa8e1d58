@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logIn = async (email: string, password: string) => {
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({ 
+      const { error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
       });
@@ -128,17 +128,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + '/login',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
         }
       });
       
       if (error) {
         console.error("Erro ao autenticar com Google:", error);
         toast.error(error.message);
+        throw error;
       }
     } catch (error: any) {
       console.error("Exceção ao autenticar com Google:", error);
       toast.error(messages.genericError);
+      throw error;
     }
   };
 
@@ -147,58 +153,74 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + '/login',
+          scopes: 'public_profile,email'
         }
       });
       
       if (error) {
         console.error("Erro ao autenticar com Facebook:", error);
         toast.error(error.message);
+        throw error;
       }
     } catch (error: any) {
       console.error("Exceção ao autenticar com Facebook:", error);
       toast.error(messages.genericError);
+      throw error;
     }
   };
 
   const anonymousSignIn = async () => {
     try {
-      // Como o Supabase não tem login anônimo direto, vamos usar um email temporário
+      // Como o Supabase não tem login anônimo direto, vamos criar uma conta temporária
       const randomEmail = `demo_${Math.random().toString(36).substring(2, 15)}@example.com`;
       const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      // Primeiro, registramos o usuário anônimo
-      const { error: signUpError, data } = await supabase.auth.signUp({
-        email: randomEmail,
-        password: randomPassword,
-        options: {
-          data: {
-            name: "Aventureiro Anônimo"
-          }
-        }
-      });
-      
-      if (signUpError) {
-        console.error("Erro ao criar usuário anônimo:", signUpError);
-        toast.error(messages.genericError);
-        return;
-      }
-      
-      // Depois, fazemos login com as credenciais criadas
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Primeiro, fazemos login diretamente (sem registro prévio)
+      const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: randomEmail,
         password: randomPassword
       });
       
+      // Se não conseguir fazer login (esperado, pois o usuário não existe), criamos um
       if (signInError) {
-        console.error("Erro ao fazer login anônimo:", signInError);
-        toast.error(messages.genericError);
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: randomEmail,
+          password: randomPassword,
+          options: {
+            data: {
+              name: "Aventureiro Anônimo"
+            }
+          }
+        });
+        
+        if (signUpError) {
+          console.error("Erro ao criar usuário anônimo:", signUpError);
+          toast.error(messages.genericError);
+          throw signUpError;
+        }
+        
+        // Agora fazemos login com o usuário criado
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: randomEmail,
+          password: randomPassword
+        });
+        
+        if (loginError) {
+          console.error("Erro ao fazer login anônimo:", loginError);
+          toast.error(messages.genericError);
+          throw loginError;
+        }
+        
+        toast.success(messages.loginSuccess("Aventureiro Anônimo"));
       } else {
+        // Caso o usuário já exista (improvável)
         toast.success(messages.loginSuccess("Aventureiro Anônimo"));
       }
     } catch (error: any) {
       console.error("Exceção ao criar login anônimo:", error);
       toast.error(messages.genericError);
+      throw error;
     }
   };
 
@@ -210,9 +232,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         toast.error(error.message);
+        throw error;
       }
     } catch (error: any) {
       toast.error("Erro ao atualizar perfil: " + error.message);
+      throw error;
     }
   };
 
