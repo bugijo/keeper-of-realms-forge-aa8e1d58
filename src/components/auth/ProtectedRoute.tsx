@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!currentUser) {
+  if (!user) {
     toast("Você precisa estar logado para acessar esta área", {
       description: "Redirecionando para o portal de entrada...",
       action: {

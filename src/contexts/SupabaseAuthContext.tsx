@@ -46,9 +46,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
     // Configurar ouvinte de mudança de estado de autenticação PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -66,12 +69,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // DEPOIS verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Got initial session:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth state listener");
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Funções de autenticação
@@ -124,11 +131,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const googleSignIn = async () => {
+    console.log("Google sign in initiated");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/login',
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -149,11 +157,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const facebookSignIn = async () => {
+    console.log("Facebook sign in initiated");
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: window.location.origin + '/login',
+          redirectTo: window.location.origin,
           scopes: 'public_profile,email'
         }
       });
@@ -171,6 +180,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const anonymousSignIn = async () => {
+    console.log("Anonymous sign in initiated");
     try {
       // Como o Supabase não tem login anônimo direto, vamos criar uma conta temporária
       const randomEmail = `demo_${Math.random().toString(36).substring(2, 15)}@example.com`;

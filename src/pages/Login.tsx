@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { DungeonFormInput } from "@/components/auth/DungeonFormInput";
 import { OAuthButton } from "@/components/auth/OAuthButton";
@@ -22,10 +22,18 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Login() {
-  const { logIn, googleSignIn, facebookSignIn, anonymousSignIn } = useAuth();
+  const { logIn, googleSignIn, facebookSignIn, anonymousSignIn, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,6 +49,7 @@ export default function Login() {
       const { error } = await logIn(values.email, values.password);
       
       if (!error) {
+        console.log("Login successful, redirecting to home");
         navigate("/");
       } else {
         // Handle Supabase auth errors
@@ -64,7 +73,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       await googleSignIn();
-      // O redirecionamento acontece automaticamente pelo Supabase
+      // O redirecionamento acontece automaticamente via onAuthStateChange
     } catch (error) {
       console.error("Google sign in error:", error);
       toast.error("Erro ao fazer login com Google. Tente novamente.");
@@ -77,7 +86,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       await facebookSignIn();
-      // O redirecionamento acontece automaticamente pelo Supabase
+      // O redirecionamento acontece automaticamente via onAuthStateChange
     } catch (error) {
       console.error("Facebook sign in error:", error);
       toast.error("Erro ao fazer login com Facebook. Tente novamente.");
@@ -90,8 +99,8 @@ export default function Login() {
     try {
       setIsLoading(true);
       await anonymousSignIn();
-      // Após o login anônimo bem-sucedido, redirecionar para a página inicial
-      navigate("/");
+      // Após o login anônimo bem-sucedido, o listener onAuthStateChange vai redirecionar
+      console.log("Anonymous login successful, should redirect soon");
     } catch (error) {
       console.error("Demo mode sign in error:", error);
       toast.error("Erro ao entrar no modo demo. Tente novamente.");
