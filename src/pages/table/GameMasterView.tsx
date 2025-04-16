@@ -1,374 +1,271 @@
-
+// Import the necessary components and hooks
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import MainLayout from "@/components/layout/MainLayout";
+import MainLayout from '@/components/layout/MainLayout';
+import DiceRoller from '@/components/dice/DiceRoller';
 import { 
-  Dices, BookOpen, Map, Users, Sword, Skull, 
-  FileText, ArrowLeft, ArrowRight, MessagesSquare, 
-  PenTool, Clock, Settings, User
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import DiceRoller from "@/components/dice/DiceRoller";
-import { toast } from "sonner";
+  Tabs, 
+  TabsList, 
+  TabsTrigger, 
+  TabsContent 
+} from '@/components/ui/tabs';
+import { 
+  BookOpen, 
+  MapPin, 
+  Sword, 
+  Users, 
+  MessageSquare,
+  Dices,
+  FileText
+} from 'lucide-react';
+
+// Sample data (in a real app, this would come from your database)
+const sessionData = {
+  name: "A Caverna do Dragão Negro",
+  description: "Uma aventura épica para encontrar o tesouro escondido na caverna de um antigo dragão negro.",
+  players: [
+    { id: 1, name: "Elrond", class: "Mago", level: 5, online: true },
+    { id: 2, name: "Thorin", class: "Guerreiro", level: 4, online: true },
+    { id: 3, name: "Legolas", class: "Arqueiro", level: 5, online: false },
+    { id: 4, name: "Gimli", class: "Bárbaro", level: 4, online: false }
+  ],
+  maps: [
+    { id: 1, name: "Entrada da Caverna", isActive: true },
+    { id: 2, name: "Corredor Principal", isActive: false },
+    { id: 3, name: "Sala do Tesouro", isActive: false }
+  ],
+  monsters: [
+    { id: 1, name: "Goblins da Caverna", type: "Goblin", quantity: 4, hp: 7 },
+    { id: 2, name: "Ogro Guardião", type: "Ogro", quantity: 1, hp: 35 },
+    { id: 3, name: "Dragão Negro Ancião", type: "Dragão", quantity: 1, hp: 120 }
+  ]
+};
+
+const storySegments = [
+  {
+    id: 1,
+    text: "Os aventureiros chegam à entrada da caverna. O vento frio sopra da abertura escura, trazendo um odor de umidade e algo queimado. Pegadas recentes sugerem que outras criaturas entraram recentemente.",
+    notes: "Permita que os jogadores investiguem a entrada. DC 14 Percepção pode revelar pegadas de goblins."
+  },
+  {
+    id: 2,
+    text: "Após avançar pelos corredores estreitos, vocês ouvem vozes ásperas à frente. Espreitando, vocês veem quatro goblins dividindo um saque ao redor de uma pequena fogueira.",
+    notes: "Os goblins estão distraídos. Jogadores podem tentar furtividade ou combate direto."
+  },
+  {
+    id: 3, 
+    text: "O corredor se abre em uma câmara maior. Um ogro enorme está sentado em um trono improvisado, roendo um osso. Ele parece ser o líder desses goblins.",
+    notes: "O ogro tem 35 pontos de vida e ataca com uma clava (1d10+3 de dano)."
+  }
+];
 
 const GameMasterView = () => {
   const { id } = useParams();
-  const [activeSection, setActiveSection] = useState('story');
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [sessionTime, setSessionTime] = useState(0); // Time in seconds
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const [activeTab, setActiveTab] = useState("story");
+  const [messages, setMessages] = useState([
+    { sender: "Sistema", text: "Sessão iniciada" },
+    { sender: "Mestre", text: "Bem-vindos à Caverna do Dragão Negro!" }
+  ]);
+  const [newMessage, setNewMessage] = useState("");
+  const [currentStorySegment, setCurrentStorySegment] = useState(0);
 
-  // Mock data
-  const sessionData = {
-    name: "A Masmorra do Dragão Vermelho",
-    campaign: "Águas Profundas",
-    nextSession: "Amanhã às 19h",
-    players: ["João", "Maria", "Pedro", "Ana"],
-    story: "Os aventureiros acabaram de derrotar os goblins que guardavam a entrada da caverna. À frente, eles podem ver um corredor escuro que se estende por vários metros antes de chegar a uma porta ornamentada com símbolos dracônicos.",
-    notes: "- Lembrar de descrever o cheiro de enxofre\n- O dragão está ferido e irritado\n- O tesouro contém o pergaminho de ressurreição",
-    maps: [
-      { id: 1, name: "Entrada da Caverna", description: "Mapa da área externa e entrada da caverna do dragão" },
-      { id: 2, name: "Salão Principal", description: "Grande salão onde o dragão descansa sobre seu tesouro" }
-    ],
-    npcs: [
-      { id: 1, name: "Ancião Temeroso", description: "Um velho que conhece a lenda do dragão" },
-      { id: 2, name: "Comerciante Suspeito", description: "Vende itens mágicos de origem duvidosa" }
-    ],
-    monsters: [
-      { id: 1, name: "Goblins", hp: 7, ac: 15, description: "Pequenas criaturas verdes que atacam em grupo" },
-      { id: 2, name: "Dragão Vermelho", hp: 178, ac: 19, description: "Enorme dragão com escamas vermelhas brilhantes" }
-    ]
-  };
-
-  const startSession = () => {
-    setIsSessionActive(true);
-    toast.success("Sessão iniciada!", {
-      description: "O cronômetro foi iniciado. Boa aventura!"
-    });
-
-    // Start timer
-    const interval = setInterval(() => {
-      setSessionTime(prev => prev + 1);
-    }, 1000);
+  const sendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
     
-    setTimerInterval(interval);
+    setMessages([...messages, { sender: "Mestre", text: newMessage }]);
+    setNewMessage("");
   };
 
-  const endSession = () => {
-    if (timerInterval) clearInterval(timerInterval);
-    setIsSessionActive(false);
-    setSessionTime(0);
-    
-    toast({
-      title: "Sessão finalizada",
-      description: "Um resumo foi salvo no histórico de sessões."
-    });
-  };
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleRollInitiative = () => {
-    toast.success("Iniciativa rolada para todos!", {
-      description: "Os resultados foram enviados para os jogadores."
-    });
-  };
-
-  // Interactive sections components
-  const StorySection = () => (
-    <div className="space-y-4">
-      <div className="fantasy-card p-4">
-        <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">Narrativa Atual</h3>
-        <p className="text-fantasy-stone whitespace-pre-line">{sessionData.story}</p>
-        <div className="flex gap-2 mt-4">
-          <Button variant="outline" size="sm">
-            <PenTool className="mr-2 h-4 w-4" />
-            Editar Narrativa
-          </Button>
-          <Button variant="outline" size="sm">
-            <ArrowRight className="mr-2 h-4 w-4" />
-            Próxima Cena
-          </Button>
-        </div>
-      </div>
-      
-      <div className="fantasy-card p-4">
-        <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">Notas do Mestre</h3>
-        <p className="text-fantasy-stone whitespace-pre-line">{sessionData.notes}</p>
-        <Button variant="outline" size="sm" className="mt-2">
-          <PenTool className="mr-2 h-4 w-4" />
-          Editar Notas
-        </Button>
-      </div>
-    </div>
-  );
-
-  const MapsSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {sessionData.maps.map(map => (
-        <div key={map.id} className="fantasy-card p-4">
-          <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">{map.name}</h3>
-          <div className="aspect-video bg-fantasy-dark/50 rounded-lg mb-2 flex items-center justify-center">
-            <Map size={48} className="text-fantasy-purple/40" />
-          </div>
-          <p className="text-fantasy-stone text-sm mb-2">{map.description}</p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">Ver Detalhe</Button>
-            <Button variant="outline" size="sm">Compartilhar</Button>
-          </div>
-        </div>
-      ))}
-      <div className="fantasy-card p-4 flex flex-col items-center justify-center min-h-[200px]">
-        <Button variant="outline">
-          <Map className="mr-2 h-4 w-4" />
-          Adicionar Novo Mapa
-        </Button>
-      </div>
-    </div>
-  );
-
-  const NPCsSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {sessionData.npcs.map(npc => (
-        <div key={npc.id} className="fantasy-card p-4">
-          <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">{npc.name}</h3>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-16 h-16 bg-fantasy-dark/50 rounded-full flex items-center justify-center">
-              <User size={32} className="text-fantasy-purple/40" />
-            </div>
-            <div>
-              <p className="text-fantasy-stone text-sm">{npc.description}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">Ver Detalhes</Button>
-            <Button variant="outline" size="sm">Interagir</Button>
-          </div>
-        </div>
-      ))}
-      <div className="fantasy-card p-4 flex flex-col items-center justify-center min-h-[120px]">
-        <Button variant="outline">
-          <Users className="mr-2 h-4 w-4" />
-          Adicionar Novo NPC
-        </Button>
-      </div>
-    </div>
-  );
-
-  const MonstersSection = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {sessionData.monsters.map(monster => (
-        <div key={monster.id} className="fantasy-card p-4">
-          <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">{monster.name}</h3>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-16 h-16 bg-fantasy-dark/50 rounded-full flex items-center justify-center">
-              <Skull size={32} className="text-fantasy-purple/40" />
-            </div>
-            <div>
-              <div className="grid grid-cols-2 gap-1 mb-1">
-                <span className="text-xs bg-fantasy-dark/50 rounded px-2 py-1">HP: {monster.hp}</span>
-                <span className="text-xs bg-fantasy-dark/50 rounded px-2 py-1">CA: {monster.ac}</span>
-              </div>
-              <p className="text-fantasy-stone text-sm">{monster.description}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">Ver Detalhes</Button>
-            <Button variant="outline" size="sm">Adicionar ao Encontro</Button>
-          </div>
-        </div>
-      ))}
-      <div className="fantasy-card p-4 flex flex-col items-center justify-center min-h-[120px]">
-        <Button variant="outline">
-          <Skull className="mr-2 h-4 w-4" />
-          Adicionar Novo Monstro
-        </Button>
-      </div>
-    </div>
-  );
-
-  const PlayersSection = () => (
-    <div className="space-y-4">
-      <div className="fantasy-card p-4">
-        <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">Jogadores Presentes</h3>
-        <div className="space-y-2">
-          {sessionData.players.map((player, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-fantasy-dark/30 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-fantasy-purple/20 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-fantasy-purple" />
-                </div>
-                <span className="text-fantasy-stone">{player}</span>
-              </div>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm">
-                  <MessagesSquare size={14} />
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <FileText size={14} />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4">
-          <Button variant="outline" size="sm" onClick={handleRollInitiative}>
-            <Dices className="mr-2 h-4 w-4" />
-            Rolar Iniciativa para Todos
-          </Button>
-        </div>
-      </div>
-      
-      <div className="fantasy-card p-4">
-        <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">Enviar Notificação</h3>
-        <textarea 
-          className="w-full bg-fantasy-dark/30 border border-fantasy-purple/20 rounded-lg p-2 text-fantasy-stone mb-2" 
-          rows={3}
-          placeholder="Escreva uma mensagem para todos os jogadores..."
-        ></textarea>
-        <Button variant="outline" size="sm">
-          <MessagesSquare className="mr-2 h-4 w-4" />
-          Enviar para Todos
-        </Button>
-      </div>
-    </div>
-  );
-
-  // Return the component
   return (
     <MainLayout>
-      <div className="container mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-2xl font-medievalsharp text-white">Mesa #{id}</h1>
-            <h2 className="text-lg font-medievalsharp text-fantasy-purple">{sessionData.name}</h2>
-          </div>
-          <div className="flex gap-2">
-            {isSessionActive ? (
-              <>
-                <div className="bg-fantasy-dark/50 px-3 py-1 rounded-md flex items-center gap-2">
-                  <Clock size={16} className="text-fantasy-gold" />
-                  <span className="text-fantasy-gold font-mono">{formatTime(sessionTime)}</span>
-                </div>
-                <Button variant="destructive" size="sm" onClick={endSession}>
-                  Finalizar Sessão
-                </Button>
-              </>
-            ) : (
-              <Button 
-                variant="default" 
-                className="bg-fantasy-gold text-fantasy-dark hover:bg-fantasy-gold/80"
-                onClick={startSession}
-              >
-                Iniciar Sessão
-              </Button>
-            )}
-            <Button variant="outline" size="icon">
-              <Settings size={18} />
-            </Button>
-          </div>
-        </div>
+      <div className="container mx-auto py-6">
+        <h1 className="text-3xl font-medievalsharp text-fantasy-gold mb-2">{sessionData.name}</h1>
+        <p className="text-fantasy-stone mb-6">{sessionData.description}</p>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="fantasy-card p-4 mb-4">
-              <div className="flex flex-col space-y-2">
-                <Button 
-                  variant={activeSection === 'story' ? 'default' : 'outline'} 
-                  className={activeSection === 'story' ? 'bg-fantasy-purple text-white' : ''}
-                  onClick={() => setActiveSection('story')}
-                >
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  História
-                </Button>
-                <Button 
-                  variant={activeSection === 'maps' ? 'default' : 'outline'} 
-                  className={activeSection === 'maps' ? 'bg-fantasy-purple text-white' : ''}
-                  onClick={() => setActiveSection('maps')}
-                >
-                  <Map className="mr-2 h-4 w-4" />
-                  Mapas
-                </Button>
-                <Button 
-                  variant={activeSection === 'npcs' ? 'default' : 'outline'} 
-                  className={activeSection === 'npcs' ? 'bg-fantasy-purple text-white' : ''}
-                  onClick={() => setActiveSection('npcs')}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  NPCs
-                </Button>
-                <Button 
-                  variant={activeSection === 'monsters' ? 'default' : 'outline'} 
-                  className={activeSection === 'monsters' ? 'bg-fantasy-purple text-white' : ''}
-                  onClick={() => setActiveSection('monsters')}
-                >
-                  <Skull className="mr-2 h-4 w-4" />
-                  Monstros
-                </Button>
-                <Button 
-                  variant={activeSection === 'players' ? 'default' : 'outline'} 
-                  className={activeSection === 'players' ? 'bg-fantasy-purple text-white' : ''}
-                  onClick={() => setActiveSection('players')}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Jogadores
-                </Button>
-              </div>
-            </div>
-            
-            <div className="fantasy-card p-4">
-              <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-2">Ferramentas</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm">
-                  <Dices className="mr-2 h-4 w-4" />
-                  Dados
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Sword className="mr-2 h-4 w-4" />
-                  Combate
-                </Button>
-                <Button variant="outline" size="sm">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Regras
-                </Button>
-                <Button variant="outline" size="sm">
-                  <MessagesSquare className="mr-2 h-4 w-4" />
-                  Chat
-                </Button>
-              </div>
-            </div>
-          </div>
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="bg-fantasy-dark/70 border-b border-fantasy-purple/30 p-0 rounded-none w-full flex justify-start overflow-x-auto">
+            <TabsTrigger 
+              value="story" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <BookOpen size={16} />
+              História
+            </TabsTrigger>
+            <TabsTrigger 
+              value="maps" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <MapPin size={16} />
+              Mapas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="monsters" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <Sword size={16} />
+              Monstros
+            </TabsTrigger>
+            <TabsTrigger 
+              value="players" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <Users size={16} />
+              Jogadores
+            </TabsTrigger>
+            <TabsTrigger 
+              value="chat" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <MessageSquare size={16} />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger 
+              value="dice" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <Dices size={16} />
+              Dados
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notes" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <FileText size={16} />
+              Notas
+            </TabsTrigger>
+          </TabsList>
           
-          {/* Main content */}
-          <div className="lg:col-span-3">
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-4">
-                {activeSection === 'story' && "Narrativa e Notas"}
-                {activeSection === 'maps' && "Mapas da Aventura"}
-                {activeSection === 'npcs' && "Personagens Não-Jogadores"}
-                {activeSection === 'monsters' && "Monstros e Criaturas"}
-                {activeSection === 'players' && "Gerenciamento de Jogadores"}
-              </h2>
+          {/* Tab contents */}
+          <TabsContent value="story" className="pt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 fantasy-card">
+                <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Narrativa Atual</h2>
+                <div className="prose prose-invert max-w-none">
+                  {storySegments[currentStorySegment] && (
+                    <>
+                      <p>{storySegments[currentStorySegment].text}</p>
+                      <div className="mt-4 bg-fantasy-dark/40 p-3 rounded">
+                        <h3 className="text-sm font-medievalsharp text-fantasy-gold">Notas para o Mestre:</h3>
+                        <p className="text-sm italic">{storySegments[currentStorySegment].notes}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <button 
+                    onClick={() => setCurrentStorySegment(prev => Math.max(0, prev - 1))}
+                    className="fantasy-button secondary text-sm py-1.5"
+                    disabled={currentStorySegment === 0}
+                  >
+                    Segmento Anterior
+                  </button>
+                  <button 
+                    onClick={() => setCurrentStorySegment(prev => Math.min(storySegments.length - 1, prev + 1))}
+                    className="fantasy-button primary text-sm py-1.5"
+                    disabled={currentStorySegment === storySegments.length - 1}
+                  >
+                    Próximo Segmento
+                  </button>
+                </div>
+              </div>
               
-              {activeSection === 'story' && <StorySection />}
-              {activeSection === 'maps' && <MapsSection />}
-              {activeSection === 'npcs' && <NPCsSection />}
-              {activeSection === 'monsters' && <MonstersSection />}
-              {activeSection === 'players' && <PlayersSection />}
+              <div className="fantasy-card">
+                <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Roteiro da Aventura</h2>
+                <div className="space-y-3">
+                  {storySegments.map((segment, index) => (
+                    <div 
+                      key={segment.id}
+                      className={`p-3 rounded cursor-pointer ${currentStorySegment === index ? 'bg-fantasy-purple/30 border border-fantasy-purple/60' : 'bg-fantasy-dark/30 hover:bg-fantasy-dark/50'}`}
+                      onClick={() => setCurrentStorySegment(index)}
+                    >
+                      <h3 className="text-sm font-medievalsharp text-fantasy-gold">Segmento {index + 1}</h3>
+                      <p className="text-xs text-fantasy-stone truncate">{segment.text.substring(0, 60)}...</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+          
+          <TabsContent value="maps" className="pt-4">
+            <div>
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Mapas da Sessão</h2>
+              {sessionData.maps.map(map => (
+                <div key={map.id} className="fantasy-card p-4 mb-3">
+                  <h3 className="text-lg font-medievalsharp">{map.name}</h3>
+                  <p className="text-sm text-fantasy-stone">{map.description || "Sem descrição."}</p>
+                  {map.isActive && <span className="text-xs bg-fantasy-purple/20 text-fantasy-purple rounded-full px-2 py-0.5">Ativo</span>}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="monsters" className="pt-4">
+            <div>
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Monstros Encontrados</h2>
+              {sessionData.monsters.map(monster => (
+                <div key={monster.id} className="fantasy-card p-4 mb-3">
+                  <h3 className="text-lg font-medievalsharp">{monster.name}</h3>
+                  <p className="text-sm text-fantasy-stone">Tipo: {monster.type}, Quantidade: {monster.quantity}, HP: {monster.hp}</p>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="players" className="pt-4">
+            <div>
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Jogadores na Sessão</h2>
+              {sessionData.players.map(player => (
+                <div key={player.id} className="fantasy-card p-4 mb-3">
+                  <h3 className="text-lg font-medievalsharp">{player.name}</h3>
+                  <p className="text-sm text-fantasy-stone">Classe: {player.class}, Nível: {player.level}, Online: {player.online ? "Sim" : "Não"}</p>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="chat" className="pt-4">
+            <div>
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Chat da Sessão</h2>
+              <div className="space-y-2">
+                {messages.map((message, index) => (
+                  <div key={index} className={`p-3 rounded ${message.sender === "Mestre" ? 'bg-fantasy-purple/20' : 'bg-fantasy-dark/30'}`}>
+                    <span className="text-sm font-medium">{message.sender}:</span>
+                    <p className="text-sm text-fantasy-stone">{message.text}</p>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={sendMessage} className="mt-4">
+                <div className="flex">
+                  <input
+                    type="text"
+                    placeholder="Digite sua mensagem..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-grow bg-fantasy-dark/50 text-white rounded-l-md py-2 px-3 focus:outline-none"
+                  />
+                  <button type="submit" className="fantasy-button primary rounded-l-none text-sm py-2.5">Enviar</button>
+                </div>
+              </form>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="dice" className="pt-4">
+            <div className="flex justify-center">
+              <DiceRoller />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notes" className="pt-4">
+            <div>
+              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-3">Anotações da Sessão</h2>
+              <p className="text-sm text-fantasy-stone">Espaço para o mestre anotar informações importantes sobre a sessão.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
         
-        {/* Dice roller at the bottom */}
-        <div className="mt-6">
-          <DiceRoller />
-        </div>
+        <DiceRoller />
       </div>
     </MainLayout>
   );

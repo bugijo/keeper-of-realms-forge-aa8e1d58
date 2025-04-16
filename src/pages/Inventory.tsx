@@ -1,10 +1,25 @@
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { CharacterCard } from "@/components/game/CharacterCard";
-import { InventoryItem } from "@/components/game/InventoryItem";
+import InventoryItem from "@/components/game/InventoryItem";
 import { MedievalButton } from "@/components/rpg/MedievalButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DiceRoller from "@/components/dice/DiceRoller";
+import { 
+  User2, 
+  Sword, 
+  MapPin, 
+  BookOpen, 
+  Skull, 
+  Table as TableIcon, 
+  CheckCircle, 
+  Eye, 
+  Shield, 
+  Coffee, 
+  Dices
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Categorias do inventário
 const inventoryCategories = [
@@ -50,7 +65,7 @@ const inventoryCategories = [
   },
   {
     title: "Mesas",
-    icon: Table,
+    icon: TableIcon,
     description: "Mesas de jogo que você criou ou participa",
     count: 2,
     action: "Ver Mesas",
@@ -146,6 +161,7 @@ const Inventory = () => {
   const [characterTab, setCharacterTab] = useState('attributes');
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
   
   // Função para renderizar a ficha completa de personagem no estilo D&D 5e
   const renderCharacterSheet = (character: typeof quickCharacters[0]) => {
