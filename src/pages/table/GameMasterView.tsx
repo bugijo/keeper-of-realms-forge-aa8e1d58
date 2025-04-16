@@ -1,9 +1,9 @@
 
-// Import the necessary components and hooks
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import DiceRoller from '@/components/dice/DiceRoller';
+import CombatTracker from '@/components/game/CombatTracker';
 import { 
   Tabs, 
   TabsList, 
@@ -17,7 +17,8 @@ import {
   Users, 
   MessageSquare,
   Dices,
-  FileText
+  FileText,
+  Skull
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -105,8 +106,15 @@ const GameMasterView = () => {
               value="monsters" 
               className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
             >
-              <Sword size={16} />
+              <Skull size={16} />
               Monstros
+            </TabsTrigger>
+            <TabsTrigger 
+              value="combat" 
+              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent flex items-center gap-2"
+            >
+              <Sword size={16} />
+              Combate
             </TabsTrigger>
             <TabsTrigger 
               value="players" 
@@ -214,6 +222,10 @@ const GameMasterView = () => {
               ))}
             </div>
           </TabsContent>
+          
+          <TabsContent value="combat" className="pt-4">
+            <CombatTracker />
+          </TabsContent>
 
           <TabsContent value="players" className="pt-4">
             <div>
@@ -266,8 +278,6 @@ const GameMasterView = () => {
             </div>
           </TabsContent>
         </Tabs>
-        
-        <DiceRoller />
       </div>
     </MainLayout>
   );

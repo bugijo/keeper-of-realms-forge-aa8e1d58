@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import DiceRoller from '@/components/dice/DiceRoller';
 import PlayerStats from '@/components/game/PlayerStats';
+import CharacterSheet from '@/components/game/CharacterSheet';
 import { 
   Tabs, 
   TabsList, 
@@ -28,6 +30,17 @@ const sessionData = {
     race: "Elfo",
     class: "Mago",
     level: 5,
+    background: "Sábio",
+    alignment: "Neutro e Bom",
+    experiencePoints: 300,
+    nextLevelXP: 500,
+    proficiencyBonus: 3,
+    armorClass: 14,
+    initiative: 2,
+    speed: 30,
+    hitPoints: { current: 32, max: 40, temporary: 0 },
+    hitDice: { current: 5, total: 5, die: "d6" },
+    deathSaves: { successes: 0, failures: 0 },
     stats: [
       { name: "Vida", value: 32, max: 40 },
       { name: "Mana", value: 45, max: 50 },
@@ -38,16 +51,87 @@ const sessionData = {
       { name: "Sabedoria", value: 16 },
       { name: "Carisma", value: 13 }
     ],
+    skills: [
+      { name: "Arcanismo", value: 7, proficient: true },
+      { name: "História", value: 7, proficient: true },
+      { name: "Investigação", value: 7, proficient: true },
+      { name: "Natureza", value: 4, proficient: false },
+      { name: "Religião", value: 4, proficient: false },
+      { name: "Percepção", value: 6, proficient: true },
+      { name: "Furtividade", value: 2, proficient: false },
+      { name: "Sobrevivência", value: 3, proficient: false }
+    ],
+    savingThrows: [
+      { name: "Força", value: 0, proficient: false },
+      { name: "Destreza", value: 5, proficient: true },
+      { name: "Constituição", value: 1, proficient: false },
+      { name: "Inteligência", value: 7, proficient: true },
+      { name: "Sabedoria", value: 6, proficient: true },
+      { name: "Carisma", value: 1, proficient: false }
+    ],
     inventory: [
       { name: "Cajado Arcano", type: "Arma", description: "Um cajado mágico que amplifica seus feitiços." },
-      { name: "Poção de Cura", type: "Consumível", description: "Restaura 2d4+2 pontos de vida." },
-      { name: "Grimório", type: "Ferramenta", description: "Contém seus feitiços conhecidos." }
+      { name: "Poção de Cura", type: "Consumível", description: "Restaura 2d4+2 pontos de vida.", quantity: 2 },
+      { name: "Grimório", type: "Ferramenta", description: "Contém seus feitiços conhecidos." },
+      { name: "Componentes Arcanos", type: "Item", description: "Bolsa com componentes para lançar magias.", quantity: 1 },
+      { name: "Varinha de Detecção Mágica", type: "Maravilhoso", description: "Permite lançar a magia Detectar Magia 3 vezes por dia." }
     ],
-    spells: [
-      { name: "Mísseis Mágicos", level: 1, description: "Dispara 3 dardos mágicos que causam 1d4+1 de dano cada." },
-      { name: "Escudo Arcano", level: 1, description: "Cria uma barreira mágica que concede +5 de CA." },
-      { name: "Bola de Fogo", level: 3, description: "Explode em chamas causando 8d6 de dano em uma área." }
-    ]
+    spells: {
+      slots: [
+        { level: 1, used: 2, total: 4 },
+        { level: 2, used: 1, total: 3 },
+        { level: 3, used: 0, total: 2 }
+      ],
+      known: [
+        { 
+          name: "Mísseis Mágicos", 
+          level: 1, 
+          castingTime: "1 ação",
+          range: "36 metros",
+          components: "V, S",
+          duration: "Instantânea",
+          description: "Dispara 3 dardos mágicos que causam 1d4+1 de dano cada." 
+        },
+        { 
+          name: "Escudo Arcano", 
+          level: 1, 
+          castingTime: "1 reação",
+          range: "Pessoal",
+          components: "V, S",
+          duration: "1 rodada",
+          description: "Cria uma barreira mágica que concede +5 de CA." 
+        },
+        { 
+          name: "Bola de Fogo", 
+          level: 3, 
+          castingTime: "1 ação",
+          range: "45 metros",
+          components: "V, S, M",
+          duration: "Instantânea",
+          description: "Explode em chamas causando 8d6 de dano em uma área." 
+        }
+      ]
+    },
+    features: [
+      { name: "Magias", source: "Mago", description: "Você pode lançar magias do grimório do mago." },
+      { name: "Recuperação Arcana", source: "Mago", description: "Uma vez por dia, durante um descanso curto, você pode recuperar espaços de magia." },
+      { name: "Tradição Arcana: Evocação", source: "Mago", description: "Você se especializa em magias que manipulam energia mágica para criar efeitos poderosos." },
+      { name: "Esculpir Magias", source: "Evocação", description: "A partir do 2º nível, você pode criar bolsões de segurança relativa dentro dos efeitos de suas magias de evocação." }
+    ],
+    personalityTraits: "Eu falo com palavras polissilábicas, independentemente de ser necessário.",
+    ideals: "Conhecimento. O caminho para o poder e o auto-aperfeiçoamento é através do conhecimento.",
+    bonds: "Meu grimório contém segredos arcanos que não podem cair em mãos erradas.",
+    flaws: "A maioria das pessoas grita e corre quando vê um demônio. Eu paro e tomo notas sobre sua anatomia.",
+    appearance: "Um elfo alto e esbelto com cabelos prateados, olhos azuis penetrantes e vestes elegantes decoradas com símbolos arcanos.",
+    backstory: "Estudante da antiga e prestigiada Academia Arcana de Penholder, Elrond sempre foi fascinado pelo poder da magia. Após a destruição da academia por forças misteriosas, ele busca conhecimento e vingança.",
+    notes: "Procurando por informações sobre artefatos antigos, especialmente aqueles relacionados ao controle de energia elemental.",
+    currency: {
+      copper: 15,
+      silver: 24,
+      electrum: 0,
+      gold: 35,
+      platinum: 2
+    }
   },
   otherPlayers: [
     { id: 2, name: "Thorin", class: "Guerreiro", level: 4, online: true },
@@ -180,7 +264,7 @@ const PlayerView = () => {
           </TabsContent>
           
           <TabsContent value="character">
-            <PlayerStats character={sessionData.playerCharacter} />
+            <CharacterSheet character={sessionData.playerCharacter} />
           </TabsContent>
           
           <TabsContent value="maps">
@@ -257,8 +341,6 @@ const PlayerView = () => {
             </div>
           </TabsContent>
         </Tabs>
-        
-        <DiceRoller />
       </div>
     </MainLayout>
   );

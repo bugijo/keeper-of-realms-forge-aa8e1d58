@@ -2,6 +2,24 @@
 import { Bell, MessageSquare, Settings } from 'lucide-react';
 import PlayerStats from '../game/PlayerStats';
 
+// Dados simulados do personagem para exibir no navbar
+const characterData = {
+  name: "Elrond Mithrandir",
+  race: "Elfo",
+  class: "Mago",
+  level: 5,
+  stats: [
+    { name: "Vida", value: 32, max: 40 },
+    { name: "Mana", value: 45, max: 50 },
+    { name: "Força", value: 10 },
+    { name: "Destreza", value: 14 },
+    { name: "Constituição", value: 12 },
+    { name: "Inteligência", value: 18 },
+    { name: "Sabedoria", value: 16 },
+    { name: "Carisma", value: 13 }
+  ]
+};
+
 const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-fantasy-purple/20 bg-fantasy-dark/90 backdrop-blur-sm px-4 py-2">
@@ -20,7 +38,7 @@ const Navbar = () => {
         </div>
         
         <div className="hidden md:block">
-          <PlayerStats />
+          <PlayerStats character={characterData} />
         </div>
         
         <div className="flex items-center gap-4">

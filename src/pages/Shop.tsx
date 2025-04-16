@@ -1,635 +1,281 @@
 
-import MainLayout from "@/components/layout/MainLayout";
-import { Gem, LayoutGrid, BoxSelect, Sparkles, ShoppingCart, Check, CreditCard, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+import ShopItem, { ShopItemProps } from '@/components/shop/ShopItem';
+import CartDrawer, { CartItem } from '@/components/shop/CartDrawer';
+import { 
+  Tabs, 
+  TabsList, 
+  TabsTrigger, 
+  TabsContent 
+} from '@/components/ui/tabs';
+import { Sparkles, Package, Crown, Gem, Search, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
-const themes = [
+// Dados de amostra para a loja
+const sampleShopItems: ShopItemProps[] = [
   {
-    id: 1,
-    name: "Tema Dragão Ancião",
+    id: '1',
+    name: 'Tema Clássico de Fantasia',
+    description: 'Um tema visual inspirado nos livros clássicos de fantasia medieval.',
     price: 250,
-    image: "https://images.unsplash.com/photo-1577083552431-6e5fd734e311?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZHJhZ29ufGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60"
+    currency: 'gems',
+    imageUrl: 'https://images.unsplash.com/photo-1560942485-b2a11cc13456',
+    category: 'theme',
+    popular: true
   },
   {
-    id: 2,
-    name: "Tema Reino Élfico",
-    price: 200,
-    image: "https://images.unsplash.com/photo-1531826267553-c4979aefab12?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8ZWxmJTIwZm9yZXN0fGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60"
-  },
-  {
-    id: 3,
-    name: "Tema Cidade Subterrânea",
+    id: '2',
+    name: 'Tema Futurista',
+    description: 'Um tema visual futurista para suas aventuras de ficção científica.',
     price: 300,
-    image: "https://images.unsplash.com/photo-1566252768331-98371942ea8d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y2F2ZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
-  }
-];
-
-const assets = [
-  {
-    id: 1,
-    name: "Pack de Tokens Aventureiros",
-    price: 150,
-    image: "https://images.unsplash.com/photo-1610890704766-95f8085afb95?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZGljZSUyMGdhbWV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
+    discountPrice: 200,
+    currency: 'gems',
+    imageUrl: 'https://images.unsplash.com/photo-1558346490-a72e53ae2d4f',
+    category: 'theme',
+    new: true
   },
   {
-    id: 2,
-    name: "Mapas Fantásticos",
-    price: 180,
-    image: "https://images.unsplash.com/photo-1533729590644-695ded775ced?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bWFwfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60"
-  }
-];
-
-const premium = [
-  {
-    id: 1,
-    name: "Plano Mensal",
-    price: "R$ 14,90",
-    description: "Acesso a todas as funcionalidades premium por 1 mês",
-    gems: 200
+    id: '3',
+    name: 'Pack de Mapas de Masmorras',
+    description: 'Um conjunto de 10 mapas detalhados de masmorras para suas aventuras.',
+    price: 500,
+    currency: 'gems',
+    imageUrl: 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d10',
+    category: 'asset'
   },
   {
-    id: 2,
-    name: "Plano Anual",
-    price: "R$ 149,90",
-    description: "Acesso a todas as funcionalidades premium por 12 meses",
-    gems: 3000,
-    discount: "15% de desconto!"
-  }
-];
-
-// New gem packages for direct purchase
-const gemPacks = [
-  {
-    id: 1,
-    name: "Pacote Inicial",
-    gems: 500,
-    price: "R$ 9,90",
-    bonus: "0%"
+    id: '4',
+    name: 'Pack de Mapas de Cidades',
+    description: 'Um conjunto de 5 mapas detalhados de cidades medievais.',
+    price: 450,
+    currency: 'gems',
+    imageUrl: 'https://images.unsplash.com/photo-1566533227298-6f945d6351f9',
+    category: 'asset'
   },
   {
-    id: 2,
-    name: "Pacote Popular",
-    gems: 1200,
-    price: "R$ 19,90",
-    bonus: "+20% bônus"
+    id: '5',
+    name: 'Pacote de Tokens de Monstros',
+    description: 'Mais de 100 tokens de monstros para usar em combates.',
+    price: 350,
+    currency: 'gems',
+    imageUrl: 'https://images.unsplash.com/photo-1577741314755-048d8525792e',
+    category: 'asset'
   },
   {
-    id: 3,
-    name: "Pacote Épico",
-    gems: 3000,
-    price: "R$ 39,90",
-    bonus: "+50% bônus"
+    id: '6',
+    name: 'Assinatura Premium - 1 Mês',
+    description: 'Acesso a todas as funcionalidades premium por 1 mês.',
+    price: 29.90,
+    currency: 'real',
+    imageUrl: 'https://images.unsplash.com/photo-1518364538800-6bae3c2ea0f2',
+    category: 'premium',
+    popular: true
   },
   {
-    id: 4,
-    name: "Pacote Lendário",
-    gems: 10000,
-    price: "R$ 99,90",
-    bonus: "+100% bônus"
+    id: '7',
+    name: 'Assinatura Premium - 6 Meses',
+    description: 'Acesso a todas as funcionalidades premium por 6 meses.',
+    price: 149.90,
+    discountPrice: 129.90,
+    currency: 'real',
+    imageUrl: 'https://images.unsplash.com/photo-1594322436404-5a0526db4d13',
+    category: 'premium'
+  },
+  {
+    id: '8',
+    name: '500 Gemas',
+    description: 'Pacote com 500 gemas para comprar itens na loja.',
+    price: 19.90,
+    currency: 'real',
+    imageUrl: 'https://images.unsplash.com/photo-1611689102192-1f6e0e52bf00',
+    category: 'gem'
+  },
+  {
+    id: '9',
+    name: '1000 Gemas + 100 Bônus',
+    description: 'Pacote com 1100 gemas pelo preço de 1000.',
+    price: 39.90,
+    currency: 'real',
+    imageUrl: 'https://images.unsplash.com/photo-1567446100022-588d16803521',
+    category: 'gem',
+    popular: true
+  },
+  {
+    id: '10',
+    name: '3000 Gemas + 500 Bônus',
+    description: 'Pacote com 3500 gemas pelo preço de 3000.',
+    price: 99.90,
+    currency: 'real',
+    imageUrl: 'https://images.unsplash.com/photo-1623001468263-a075c782bfbf',
+    category: 'gem',
+    new: true
   }
 ];
 
 const Shop = () => {
-  const [activeTab, setActiveTab] = useState("themes");
-  const [purchaseModal, setPurchaseModal] = useState<{show: boolean, item?: any, type?: string}>({show: false});
-  const [userGems, setUserGems] = useState(350); // In a real app, fetch this from the user's profile
-  const [paymentModal, setPaymentModal] = useState(false);
-  const [gemPurchaseModal, setGemPurchaseModal] = useState<{show: boolean, pack?: any}>({show: false});
-  const [cardInfo, setCardInfo] = useState({
-    number: '',
-    name: '',
-    expiry: '',
-    cvc: ''
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  
+  const filteredItems = sampleShopItems.filter(item => {
+    // Filtrar por categoria
+    if (activeTab !== 'all' && item.category !== activeTab) {
+      return false;
+    }
+    
+    // Filtrar por termo de pesquisa
+    if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        !item.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    
+    return true;
   });
-  const [loading, setLoading] = useState(false);
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   
-  const tabs = [
-    { id: "themes", label: "Temas", icon: BoxSelect },
-    { id: "assets", label: "Assets", icon: LayoutGrid },
-    { id: "premium", label: "Premium", icon: Sparkles },
-    { id: "gems", label: "Cristais", icon: Gem }
-  ];
-  
-  const handlePurchase = (item: any, type: string) => {
-    setPurchaseModal({show: true, item, type});
-  };
-  
-  const handleBuyGems = (pack: any) => {
-    setGemPurchaseModal({show: true, pack});
-  };
-  
-  const completePurchase = () => {
-    const item = purchaseModal.item;
-    const type = purchaseModal.type;
+  const addToCart = (itemId: string) => {
+    const item = sampleShopItems.find(i => i.id === itemId);
+    if (!item) return;
     
-    if (type === 'premium') {
-      setPaymentModal(true);
-      setPurchaseModal({show: false});
-    } else {
-      // Check if user has enough gems
-      if (userGems >= item.price) {
-        setUserGems(prev => prev - item.price);
-        toast.success(`${item.name} comprado com sucesso!`, {
-          description: "Item adicionado à sua coleção."
-        });
-      } else {
-        toast.error("Saldo insuficiente", {
-          description: "Você não tem cristais suficientes para esta compra."
-        });
+    setCartItems(prevItems => {
+      const existingItem = prevItems.find(i => i.id === itemId);
+      
+      if (existingItem) {
+        return prevItems.map(i => 
+          i.id === itemId ? { ...i, quantity: i.quantity + 1 } : i
+        );
       }
       
-      setPurchaseModal({show: false});
-    }
+      return [...prevItems, {
+        id: item.id,
+        name: item.name,
+        price: item.discountPrice || item.price,
+        imageUrl: item.imageUrl,
+        quantity: 1,
+        currency: item.currency
+      }];
+    });
   };
   
-  const completeCardPayment = () => {
-    setLoading(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setLoading(false);
-      setPurchaseSuccess(true);
-      
-      // If it was gem purchase
-      if (gemPurchaseModal.show && gemPurchaseModal.pack) {
-        setUserGems(prev => prev + gemPurchaseModal.pack.gems);
-        
-        toast.success("Compra de cristais concluída!", {
-          description: `${gemPurchaseModal.pack.gems} cristais foram adicionados à sua conta.`
-        });
-      } else {
-        // Premium subscription
-        toast.success("Assinatura ativada com sucesso!", {
-          description: "Você agora tem acesso a todos os recursos premium."
-        });
-      }
-      
-      // Reset after 2 seconds
-      setTimeout(() => {
-        setPaymentModal(false);
-        setGemPurchaseModal({show: false});
-        setPurchaseSuccess(false);
-        setCardInfo({
-          number: '',
-          name: '',
-          expiry: '',
-          cvc: ''
-        });
-      }, 2000);
-    }, 2000);
+  const removeFromCart = (itemId: string) => {
+    setCartItems(prevItems => prevItems.filter(i => i.id !== itemId));
   };
   
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 16) value = value.slice(0, 16);
-    
-    // Format with spaces every 4 digits
-    if (value.length > 0) {
-      value = value.match(/.{1,4}/g)?.join(' ') || value;
-    }
-    
-    setCardInfo(prev => ({...prev, number: value}));
+  const updateQuantity = (itemId: string, quantity: number) => {
+    setCartItems(prevItems => 
+      prevItems.map(i => i.id === itemId ? { ...i, quantity } : i)
+    );
   };
   
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 4) value = value.slice(0, 4);
-    
-    // Format as MM/YY
-    if (value.length > 2) {
-      value = `${value.slice(0, 2)}/${value.slice(2)}`;
-    }
-    
-    setCardInfo(prev => ({...prev, expiry: value}));
+  const clearCart = () => {
+    setCartItems([]);
   };
   
-  const handleCvcChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 3) value = value.slice(0, 3);
-    setCardInfo(prev => ({...prev, cvc: value}));
+  const handleCheckout = () => {
+    toast.success("Compra finalizada com sucesso! Obrigado pela sua compra.");
+    clearCart();
   };
   
   return (
     <MainLayout>
-      <div className="container mx-auto pb-16">
-        {/* Balance at top */}
-        <div className="py-2 px-4 bg-fantasy-dark/70 border-b border-fantasy-purple/20 mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medievalsharp text-white">Seu saldo:</h2>
-          <div className="flex items-center">
-            <span className="text-white font-bold">{userGems}</span>
-            <span className="text-fantasy-gold ml-2">💎</span>
-            <span className="text-fantasy-gold ml-1">Cristais</span>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-medievalsharp text-fantasy-gold">Loja</h1>
+            <p className="text-fantasy-stone">Encontre itens, temas e recursos para suas aventuras</p>
           </div>
+          <CartDrawer 
+            items={cartItems}
+            onRemove={removeFromCart}
+            onUpdateQuantity={updateQuantity}
+            onCheckout={handleCheckout}
+            onClear={clearCart}
+          />
         </div>
         
-        {/* Tabs */}
-        <div className="flex mb-6 gap-2 overflow-x-auto">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`flex-1 py-3 px-4 rounded-full font-medievalsharp transition-colors ${
-                activeTab === tab.id 
-                  ? 'bg-fantasy-purple text-white' 
-                  : 'bg-fantasy-dark/50 text-fantasy-stone hover:bg-fantasy-dark'
-              }`}
-              onClick={() => setActiveTab(tab.id)}
+        {/* Barra de pesquisa */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-fantasy-stone" size={18} />
+          <Input
+            type="text"
+            placeholder="Buscar na loja..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-fantasy-dark/50 border-fantasy-purple/30"
+          />
+        </div>
+        
+        {/* Abas de categorias */}
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
+          <TabsList className="bg-fantasy-dark/70 border border-fantasy-purple/30 w-full grid grid-cols-5 h-auto">
+            <TabsTrigger 
+              value="all" 
+              className="data-[state=active]:bg-fantasy-purple/20 py-2"
             >
-              <div className="flex items-center justify-center">
-                <tab.icon size={18} className="mr-2" />
-                {tab.label}
-              </div>
-            </button>
-          ))}
-        </div>
+              <Package size={16} className="mr-2" />
+              Todos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="theme"
+              className="data-[state=active]:bg-fantasy-purple/20 py-2"
+            >
+              <Sparkles size={16} className="mr-2" />
+              Temas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="asset"
+              className="data-[state=active]:bg-fantasy-purple/20 py-2"
+            >
+              <Package size={16} className="mr-2" />
+              Assets
+            </TabsTrigger>
+            <TabsTrigger 
+              value="premium"
+              className="data-[state=active]:bg-fantasy-purple/20 py-2"
+            >
+              <Crown size={16} className="mr-2" />
+              Premium
+            </TabsTrigger>
+            <TabsTrigger 
+              value="gem"
+              className="data-[state=active]:bg-fantasy-purple/20 py-2"
+            >
+              <Gem size={16} className="mr-2" />
+              Gemas
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         
-        {/* Content based on active tab */}
-        {activeTab === "themes" && (
-          <div className="space-y-6">
-            {themes.map(theme => (
-              <div key={theme.id} className="fantasy-card">
-                <div className="h-40 overflow-hidden rounded-lg mb-4">
-                  <img 
-                    src={theme.image} 
-                    alt={theme.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-xl font-medievalsharp text-white mb-2">{theme.name}</h3>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-fantasy-gold text-xl font-bold">{theme.price}</span>
-                    <Gem className="text-fantasy-gold ml-2" size={18} />
-                  </div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp"
-                  onClick={() => handlePurchase(theme, 'theme')}
-                >
-                  Comprar
-                </motion.button>
-              </div>
+        {/* Grade de itens */}
+        {filteredItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredItems.map(item => (
+              <ShopItem 
+                key={item.id} 
+                {...item} 
+                onPurchase={addToCart}
+              />
             ))}
           </div>
-        )}
-        
-        {activeTab === "assets" && (
-          <div className="space-y-6">
-            {assets.map(asset => (
-              <div key={asset.id} className="fantasy-card">
-                <div className="h-40 overflow-hidden rounded-lg mb-4">
-                  <img 
-                    src={asset.image} 
-                    alt={asset.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-xl font-medievalsharp text-white mb-2">{asset.name}</h3>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <span className="text-fantasy-gold text-xl font-bold">{asset.price}</span>
-                    <Gem className="text-fantasy-gold ml-2" size={18} />
-                  </div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp"
-                  onClick={() => handlePurchase(asset, 'asset')}
-                >
-                  Comprar
-                </motion.button>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {activeTab === "premium" && (
-          <div className="space-y-6">
-            {premium.map(plan => (
-              <div key={plan.id} className="fantasy-card">
-                <h3 className="text-xl font-medievalsharp text-white mb-2">{plan.name}</h3>
-                <p className="text-fantasy-stone mb-4">{plan.description}</p>
-                
-                {plan.discount && (
-                  <div className="bg-green-600/20 text-green-400 py-1 px-3 rounded-full inline-block mb-4">
-                    {plan.discount}
-                  </div>
-                )}
-                
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xl font-bold text-white">{plan.price}</span>
-                  <div className="flex items-center">
-                    <span className="text-fantasy-gold">+{plan.gems}</span>
-                    <Gem className="text-fantasy-gold ml-1" size={16} />
-                  </div>
-                </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-fantasy-gold text-fantasy-dark py-2 rounded-lg font-medievalsharp mt-4"
-                  onClick={() => handlePurchase(plan, 'premium')}
-                >
-                  Assinar Agora
-                </motion.button>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {activeTab === "gems" && (
-          <div className="space-y-6">
-            <div className="fantasy-card p-4">
-              <h3 className="text-xl font-medievalsharp text-white mb-4">Comprar Cristais</h3>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                {gemPacks.map(pack => (
-                  <div key={pack.id} className="bg-fantasy-dark/40 p-4 rounded-lg border border-fantasy-purple/20">
-                    <h4 className="text-lg font-medievalsharp text-fantasy-gold mb-1">{pack.name}</h4>
-                    
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="flex items-center">
-                        <span className="text-fantasy-gold font-bold text-xl">{pack.gems}</span>
-                        <Gem className="text-fantasy-gold ml-1" size={16} />
-                      </div>
-                      {pack.bonus !== "0%" && (
-                        <span className="text-green-400 text-xs bg-green-400/10 px-2 py-1 rounded-full">
-                          {pack.bonus}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-bold">{pack.price}</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleBuyGems(pack)}
-                      >
-                        <CreditCard className="mr-1 h-4 w-4" />
-                        Comprar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="bg-fantasy-dark/20 p-4 rounded-lg border border-fantasy-purple/10">
-                <h4 className="text-lg font-medievalsharp text-fantasy-purple mb-2">Como usar cristais?</h4>
-                <p className="text-fantasy-stone text-sm mb-3">
-                  Cristais são a moeda premium do sistema. Com eles você pode:
-                </p>
-                <ul className="list-disc list-inside text-sm text-fantasy-stone space-y-1 ml-2">
-                  <li>Adquirir temas exclusivos para personalizar sua interface</li>
-                  <li>Comprar assets para usar nas suas aventuras</li>
-                  <li>Desbloquear recursos extras para suas mesas</li>
-                  <li>Obter vantagens nas criações e geração de conteúdo</li>
-                </ul>
-              </div>
-            </div>
+        ) : (
+          <div className="fantasy-card py-12 text-center">
+            <p className="text-fantasy-stone text-lg">Nenhum item encontrado para a sua busca.</p>
+            <Button 
+              className="mt-4 fantasy-button secondary"
+              onClick={() => {
+                setSearchTerm('');
+                setActiveTab('all');
+              }}
+            >
+              Limpar Filtros
+            </Button>
           </div>
         )}
       </div>
-      
-      {/* Purchase Confirmation Modal */}
-      {purchaseModal.show && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }} 
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-fantasy-dark border border-fantasy-purple/30 rounded-lg p-6 max-w-md w-full"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple">Confirmar Compra</h2>
-              <button 
-                onClick={() => setPurchaseModal({show: false})}
-                className="text-fantasy-stone hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            
-            {purchaseModal.type === 'premium' ? (
-              <div className="mb-4">
-                <h3 className="text-white font-medievalsharp mb-2">{purchaseModal.item?.name}</h3>
-                <p className="text-fantasy-stone mb-3">{purchaseModal.item?.description}</p>
-                <div className="bg-fantasy-dark/40 p-3 rounded-lg mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white">Valor:</span>
-                    <span className="text-white font-bold">{purchaseModal.item?.price}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-fantasy-stone">Bônus de cristais:</span>
-                    <div className="flex items-center">
-                      <span className="text-fantasy-gold">{purchaseModal.item?.gems}</span>
-                      <Gem className="text-fantasy-gold ml-1" size={14} />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-xs text-fantasy-stone mb-4">
-                  Ao clicar em "Confirmar", você será redirecionado para a página de pagamento seguro.
-                </p>
-              </div>
-            ) : (
-              <div className="mb-4">
-                <h3 className="text-white font-medievalsharp mb-2">{purchaseModal.item?.name}</h3>
-                <div className="bg-fantasy-dark/40 p-3 rounded-lg mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white">Preço:</span>
-                    <div className="flex items-center">
-                      <span className="text-fantasy-gold">{purchaseModal.item?.price}</span>
-                      <Gem className="text-fantasy-gold ml-1" size={14} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-fantasy-stone">Seu saldo atual:</span>
-                    <div className="flex items-center">
-                      <span className={`${userGems >= purchaseModal.item?.price ? 'text-fantasy-gold' : 'text-red-400'}`}>
-                        {userGems}
-                      </span>
-                      <Gem className={`${userGems >= purchaseModal.item?.price ? 'text-fantasy-gold' : 'text-red-400'} ml-1`} size={14} />
-                    </div>
-                  </div>
-                </div>
-                {userGems < purchaseModal.item?.price && (
-                  <div className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4">
-                    <ShoppingCart className="inline-block mr-1" size={16} /> Saldo insuficiente para esta compra.
-                  </div>
-                )}
-              </div>
-            )}
-            
-            <div className="flex gap-3">
-              <button
-                className="flex-1 bg-fantasy-dark/60 text-fantasy-stone py-2 rounded-lg"
-                onClick={() => setPurchaseModal({show: false})}
-              >
-                Cancelar
-              </button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 ${
-                  (purchaseModal.type === 'premium' || userGems >= (purchaseModal.item?.price || 0))
-                    ? 'bg-fantasy-gold text-fantasy-dark font-medievalsharp'
-                    : 'bg-fantasy-dark/60 text-fantasy-stone/50 cursor-not-allowed'
-                }`}
-                onClick={completePurchase}
-                disabled={purchaseModal.type !== 'premium' && userGems < (purchaseModal.item?.price || 0)}
-              >
-                <Check size={18} />
-                Confirmar
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-      
-      {/* Payment Modal */}
-      {(paymentModal || gemPurchaseModal.show) && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }} 
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-fantasy-dark border border-fantasy-purple/30 rounded-lg p-6 max-w-md w-full"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple">
-                {purchaseSuccess ? "Pagamento Concluído" : "Informações de Pagamento"}
-              </h2>
-              <button 
-                onClick={() => {
-                  setPaymentModal(false);
-                  setGemPurchaseModal({show: false});
-                }}
-                className="text-fantasy-stone hover:text-white"
-                disabled={loading}
-              >
-                ✕
-              </button>
-            </div>
-            
-            {purchaseSuccess ? (
-              <div className="text-center py-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 mb-4">
-                  <Check size={32} className="text-green-500" />
-                </div>
-                <h3 className="text-lg font-medievalsharp text-white mb-2">Pagamento Aprovado!</h3>
-                <p className="text-fantasy-stone mb-6">
-                  Sua compra foi processada com sucesso.
-                </p>
-                <p className="text-sm text-fantasy-gold">
-                  {gemPurchaseModal.show && gemPurchaseModal.pack
-                    ? `${gemPurchaseModal.pack.gems} cristais foram adicionados à sua conta.`
-                    : "Sua assinatura premium está ativa."}
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4">
-                  <h3 className="text-white font-medievalsharp mb-2">
-                    {gemPurchaseModal.show && gemPurchaseModal.pack 
-                      ? `Comprar ${gemPurchaseModal.pack.gems} Cristais` 
-                      : "Assinar Plano Premium"}
-                  </h3>
-                  <p className="text-fantasy-stone mb-4">
-                    Valor total: <span className="text-white font-bold">
-                      {gemPurchaseModal.show && gemPurchaseModal.pack 
-                        ? gemPurchaseModal.pack.price 
-                        : "R$ 14,90"}
-                    </span>
-                  </p>
-                </div>
-                
-                <div className="space-y-3 mb-6">
-                  <div>
-                    <label className="block text-fantasy-stone text-sm mb-1">Número do Cartão</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
-                      placeholder="0000 0000 0000 0000"
-                      value={cardInfo.number}
-                      onChange={handleCardNumberChange}
-                      disabled={loading}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-fantasy-stone text-sm mb-1">Nome no Cartão</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
-                      placeholder="NOME COMPLETO"
-                      value={cardInfo.name}
-                      onChange={(e) => setCardInfo(prev => ({...prev, name: e.target.value.toUpperCase()}))}
-                      disabled={loading}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-fantasy-stone text-sm mb-1">Validade</label>
-                      <input 
-                        type="text" 
-                        className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
-                        placeholder="MM/AA"
-                        value={cardInfo.expiry}
-                        onChange={handleExpiryChange}
-                        disabled={loading}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-fantasy-stone text-sm mb-1">CVC</label>
-                      <input 
-                        type="text" 
-                        className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
-                        placeholder="000"
-                        value={cardInfo.cvc}
-                        onChange={handleCvcChange}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-6 flex items-start gap-2">
-                  <AlertCircle size={20} className="text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-fantasy-stone">
-                    Este é um ambiente de demonstração. Nenhum valor será cobrado e você pode inserir
-                    dados fictícios para simular o pagamento.
-                  </p>
-                </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="w-full bg-fantasy-gold text-fantasy-dark py-3 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
-                  onClick={completeCardPayment}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="animate-spin inline-block h-4 w-4 border-2 border-fantasy-dark border-t-transparent rounded-full"></span>
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard size={18} />
-                      Finalizar Pagamento
-                    </>
-                  )}
-                </motion.button>
-              </>
-            )}
-          </motion.div>
-        </div>
-      )}
     </MainLayout>
   );
 };
