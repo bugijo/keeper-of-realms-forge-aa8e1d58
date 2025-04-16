@@ -49,7 +49,7 @@ export default function Login() {
         } else if (error.message.includes("rate limit")) {
           toast.error("🛡️ Portal Bloqueado! Muitas tentativas.");
         } else {
-          toast.error("Erro ao fazer login. Tente novamente.");
+          toast.error("Erro ao fazer login: " + error.message);
         }
       }
     } catch (error: any) {
@@ -57,6 +57,34 @@ export default function Login() {
       toast.error("Erro ao fazer login. Tente novamente.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await googleSignIn();
+      // Não redirecionamos aqui, o redirecionamento acontece automaticamente pelo Supabase
+    } catch (error) {
+      console.error("Google sign in error:", error);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    try {
+      await facebookSignIn();
+      // Não redirecionamos aqui, o redirecionamento acontece automaticamente pelo Supabase
+    } catch (error) {
+      console.error("Facebook sign in error:", error);
+    }
+  };
+
+  const handleAnonymousSignIn = async () => {
+    try {
+      await anonymousSignIn();
+      // Redirecionamos para a página inicial após login anônimo bem-sucedido
+      navigate("/");
+    } catch (error) {
+      console.error("Demo mode sign in error:", error);
     }
   };
 
@@ -182,9 +210,9 @@ export default function Login() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-3">
-            <OAuthButton provider="google" onClick={googleSignIn} />
-            <OAuthButton provider="facebook" onClick={facebookSignIn} />
-            <OAuthButton provider="anonymous" onClick={anonymousSignIn} />
+            <OAuthButton provider="google" onClick={handleGoogleSignIn} />
+            <OAuthButton provider="facebook" onClick={handleFacebookSignIn} />
+            <OAuthButton provider="anonymous" onClick={handleAnonymousSignIn} />
           </motion.div>
 
           <motion.div 

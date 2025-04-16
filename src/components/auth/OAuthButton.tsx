@@ -122,7 +122,7 @@ export function OAuthButton({ provider, onClick, className }: OAuthButtonProps) 
       >
         <span className="flex items-center gap-2">
           <IconComponent className={cn("h-5 w-5", config.iconColor)} />
-          {config.label}
+          {isLoading ? "Carregando..." : config.label}
         </span>
       </Button>
       

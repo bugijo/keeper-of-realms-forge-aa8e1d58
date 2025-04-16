@@ -14,6 +14,7 @@ interface AuthContextType {
   googleSignIn: () => Promise<void>;
   facebookSignIn: () => Promise<void>;
   anonymousSignIn: () => Promise<void>;
+  updateUserProfile: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +51,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Mostrar mensagem de boas-vindas no login
+        if (event === 'SIGNED_IN' && session) {
+          toast.success(messages.loginSuccess(session.user?.user_metadata?.name || ''));
+        }
+        
+        // Mostrar mensagem de logout
+        if (event === 'SIGNED_OUT') {
+          toast.success(messages.logoutSuccess);
+        }
       }
     );
 
@@ -66,14 +77,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Funções de autenticação
   const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: window.location.origin + '/login'
+        }
+      });
       
       if (!error) {
-        toast(messages.signupSuccess);
+        toast.success(messages.signupSuccess);
+      } else {
+        toast.error(error.message);
       }
       
       return { error };
-    } catch (error) {
+    } catch (error: any) {
       toast.error(messages.signupError);
       return { error };
     }
@@ -86,65 +105,114 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password 
       });
       
-      if (!error) {
-        toast(messages.loginSuccess(data.user?.user_metadata?.name || ''));
+      if (error) {
+        toast.error(messages.loginError);
       }
       
       return { error };
-    } catch (error) {
+    } catch (error: any) {
       toast.error(messages.loginError);
       return { error };
     }
   };
 
   const logOut = async () => {
-    await supabase.auth.signOut();
-    toast(messages.logoutSuccess);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error(error.message);
+    }
   };
 
   const googleSignIn = async () => {
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin
         }
       });
-    } catch (error) {
+      
+      if (error) {
+        console.error("Erro ao autenticar com Google:", error);
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      console.error("Exceção ao autenticar com Google:", error);
       toast.error(messages.genericError);
     }
   };
 
   const facebookSignIn = async () => {
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
           redirectTo: window.location.origin
         }
       });
-    } catch (error) {
+      
+      if (error) {
+        console.error("Erro ao autenticar com Facebook:", error);
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      console.error("Exceção ao autenticar com Facebook:", error);
       toast.error(messages.genericError);
     }
   };
 
   const anonymousSignIn = async () => {
     try {
-      // Como o Supabase não tem login anônimo direto, vamos simular
-      // usando um email temporário aleatório
-      const randomEmail = `guest_${Math.random().toString(36).substring(2, 15)}@example.com`;
-      const randomPassword = Math.random().toString(36).substring(2, 15);
+      // Como o Supabase não tem login anônimo direto, vamos usar um email temporário
+      const randomEmail = `demo_${Math.random().toString(36).substring(2, 15)}@example.com`;
+      const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      const { error } = await supabase.auth.signUp({
+      // Primeiro, registramos o usuário anônimo
+      const { error: signUpError, data } = await supabase.auth.signUp({
+        email: randomEmail,
+        password: randomPassword,
+        options: {
+          data: {
+            name: "Aventureiro Anônimo"
+          }
+        }
+      });
+      
+      if (signUpError) {
+        console.error("Erro ao criar usuário anônimo:", signUpError);
+        toast.error(messages.genericError);
+        return;
+      }
+      
+      // Depois, fazemos login com as credenciais criadas
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: randomEmail,
         password: randomPassword
       });
       
-      if (!error) {
-        toast(messages.loginSuccess("Aventureiro Anônimo"));
+      if (signInError) {
+        console.error("Erro ao fazer login anônimo:", signInError);
+        toast.error(messages.genericError);
+      } else {
+        toast.success(messages.loginSuccess("Aventureiro Anônimo"));
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Exceção ao criar login anônimo:", error);
       toast.error(messages.genericError);
+    }
+  };
+
+  const updateUserProfile = async (displayName: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { name: displayName }
+      });
+
+      if (error) {
+        toast.error(error.message);
+      }
+    } catch (error: any) {
+      toast.error("Erro ao atualizar perfil: " + error.message);
     }
   };
 
@@ -158,7 +226,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       logOut,
       googleSignIn,
       facebookSignIn,
-      anonymousSignIn
+      anonymousSignIn,
+      updateUserProfile
     }}>
       {children}
     </AuthContext.Provider>
