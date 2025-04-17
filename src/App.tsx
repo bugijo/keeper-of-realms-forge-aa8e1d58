@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -28,12 +27,13 @@ import TacticalCombat from '@/pages/TacticalCombat';
 import CharactersCollection from '@/pages/CharactersCollection';
 import CreationsCollection from '@/pages/CreationsCollection';
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
+import Missions from "@/pages/Missions";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={<Missions />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
