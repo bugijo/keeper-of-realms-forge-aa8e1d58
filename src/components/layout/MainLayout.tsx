@@ -30,7 +30,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </Button>
         </Navbar>
         <div className="flex flex-1 w-full pt-14">
-          <div className={`transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className={`fixed z-40 h-full transition-all duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <Sidebar isOpen={sidebarOpen} />
           </div>
           <main className={`flex-1 p-4 ${isMobile ? 'pb-20 overflow-y-auto' : 'pb-8'}`}>

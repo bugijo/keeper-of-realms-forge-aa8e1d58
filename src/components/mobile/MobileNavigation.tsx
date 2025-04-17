@@ -20,8 +20,8 @@ const navItems = [
   { 
     path: "/character", 
     icon: Scroll, 
-    label: "Personagens",
-    testId: "characters-tab"
+    label: "Criações",
+    testId: "creations-tab"
   },
   { 
     path: "/tables", 
@@ -51,7 +51,8 @@ export const MobileNavigation = () => {
          style={{ boxShadow: '0 -2px 10px rgba(0,0,0,0.2)' }}>
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || 
+                          (item.path === "/character" && location.pathname.includes("/creations"));
           const Icon = item.icon;
           
           return (
