@@ -48,6 +48,7 @@ const Navbar = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-fantasy-purple/20 bg-fantasy-dark/90 backdrop-blur-sm px-4 py-2">
       <div className="container mx-auto flex justify-between items-center">
+        {/* Logo section */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <img 
@@ -61,20 +62,23 @@ const Navbar = () => {
           </div>
         </div>
         
+        {/* Character stats section */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4">
+          {/* Currency display */}
+          <div className="flex items-center gap-4 bg-fantasy-dark/30 px-4 py-2 rounded-lg border border-fantasy-purple/20">
             <div className="flex items-center gap-2">
               <Gem className="text-emerald-400" size={16} />
-              <span className="text-sm font-medium text-fantasy-stone">{gems}</span>
+              <span className="text-sm font-medium text-white">{gems}</span>
             </div>
             <div className="flex items-center gap-2">
               <Coins className="text-yellow-400" size={16} />
-              <span className="text-sm font-medium text-fantasy-stone">{coins}</span>
+              <span className="text-sm font-medium text-white">{coins}</span>
             </div>
           </div>
           
-          <div className="flex-1 max-w-xs">
-            <div className="text-center text-fantasy-gold text-sm mb-1">
+          {/* Level and XP */}
+          <div className="min-w-[200px]">
+            <div className="text-center text-fantasy-gold text-sm font-medievalsharp">
               Nível {level}
             </div>
             <Progress value={(xp / maxXp) * 100} className="h-2 bg-fantasy-purple/20" />
@@ -84,26 +88,30 @@ const Navbar = () => {
           </div>
         </div>
         
+        {/* User actions section */}
         <div className="flex items-center gap-4">
-          <button className="fantasy-icon text-fantasy-gold animate-pulse-glow">
-            <Bell size={18} />
+          <button className="fantasy-icon-button group relative">
+            <Bell size={18} className="text-fantasy-gold" />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
               3
             </span>
+            <span className="sr-only">Notificações</span>
           </button>
           
-          <button className="fantasy-icon text-fantasy-purple">
-            <MessageSquare size={18} />
+          <button className="fantasy-icon-button group relative">
+            <MessageSquare size={18} className="text-fantasy-purple" />
+            <span className="sr-only">Mensagens</span>
           </button>
           
-          <button className="fantasy-icon text-fantasy-purple">
-            <Settings size={18} />
+          <button className="fantasy-icon-button group relative">
+            <Settings size={18} className="text-fantasy-purple" />
+            <span className="sr-only">Configurações</span>
           </button>
           
           <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-fantasy-gold/50">
             <img 
               src="https://images.unsplash.com/photo-1501854140801-50d01698950b" 
-              alt="Player Avatar" 
+              alt="Avatar do Jogador" 
               className="h-full w-full object-cover"
             />
           </div>

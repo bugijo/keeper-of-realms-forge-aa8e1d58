@@ -16,7 +16,8 @@ import {
   Eye, 
   Shield, 
   Coffee, 
-  Dices
+  Dices,
+  Search
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -76,6 +77,7 @@ const inventoryCategories = [
 // Dados dos personagens para exibição rápida
 const quickCharacters = [
   {
+    id: '1',
     name: "Elrond Mithrandir",
     level: 5,
     class: "Mago",
@@ -92,6 +94,7 @@ const quickCharacters = [
     ]
   },
   {
+    id: '2',
     name: "Thorin Escudocarvalho",
     level: 4,
     class: "Guerreiro",
@@ -459,133 +462,112 @@ const Inventory = () => {
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
-        <h1 className="text-3xl font-medievalsharp text-white mb-4 text-center">Seu Inventário</h1>
-        <p className="text-fantasy-stone text-center mb-8">
-          Veja e gerencie todas as suas criações e itens
-        </p>
-        
-        {/* Tabs para alternar entre modos de visualização */}
-        <div className="flex justify-center mb-8">
-          <div className="fantasy-border inline-flex p-1 rounded-xl">
-            <button 
-              className={`px-4 py-2 rounded-lg text-sm font-medievalsharp ${activeTab === 'categories' ? 'bg-fantasy-purple text-white' : 'text-fantasy-stone hover:bg-fantasy-purple/20'}`}
-              onClick={() => setActiveTab('categories')}
-            >
-              Categorias
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-lg text-sm font-medievalsharp ${activeTab === 'recent' ? 'bg-fantasy-purple text-white' : 'text-fantasy-stone hover:bg-fantasy-purple/20'}`}
-              onClick={() => setActiveTab('recent')}
-            >
-              Recentes
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-lg text-sm font-medievalsharp ${activeTab === 'character' ? 'bg-fantasy-purple text-white' : 'text-fantasy-stone hover:bg-fantasy-purple/20'}`}
-              onClick={() => setActiveTab('character')}
-            >
-              Ficha D&D
-            </button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-medievalsharp text-white mb-1">Seu Inventário</h1>
+            <p className="text-fantasy-stone">Veja e gerencie todas as suas criações e itens</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-fantasy-stone" size={18} />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                className="pl-10 pr-4 py-2 w-full bg-fantasy-dark/30 border border-fantasy-purple/20 rounded-lg text-white focus:outline-none focus:border-fantasy-purple/60"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </div>
-        
-        {activeTab === 'categories' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {inventoryCategories.map((category, index) => (
-              <div key={index} className="fantasy-card p-6 flex flex-col items-center">
-                <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
-                <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
-                <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
-                
-                <div className="mt-auto w-full">
-                  <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
-                    <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
-                  </div>
+
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsTrigger value="categories" className="text-sm">Categorias</TabsTrigger>
+            <TabsTrigger value="character" className="text-sm">Personagens</TabsTrigger>
+            <TabsTrigger value="items" className="text-sm">Itens</TabsTrigger>
+            <TabsTrigger value="maps" className="text-sm">Mapas</TabsTrigger>
+            <TabsTrigger value="stories" className="text-sm">Histórias</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="categories" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {inventoryCategories.map((category, index) => (
+                <div key={index} className="fantasy-card p-6 flex flex-col items-center">
+                  <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
+                  <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
+                  <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
                   
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
-                    onClick={() => navigate(category.path)}
-                  >
-                    {category.action}
-                  </motion.button>
+                  <div className="mt-auto w-full">
+                    <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
+                      <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
+                    </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
+                      onClick={() => navigate(category.path)}
+                    >
+                      {category.action}
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : activeTab === 'recent' ? (
-          <div className="space-y-8">
-            {/* Personagens recentes */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-medievalsharp text-white">Personagens Recentes</h2>
-                <Link to="/inventory/characters" className="text-fantasy-purple hover:text-fantasy-accent text-sm flex items-center">
-                  Ver todos <Eye className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {quickCharacters.map((character, index) => (
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="character" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {quickCharacters.map((character, index) => (
+                <Link key={index} to={`/character/view/${character.id}`} className="fantasy-card p-4 hover:border-fantasy-purple/50 transition-colors">
                   <CharacterCard 
-                    key={index}
                     name={character.name}
                     level={character.level}
                     class={character.class}
                     race={character.race}
-                    stats={character.stats.filter(stat => stat.max || ['Força', 'Inteligência'].includes(stat.name))}
+                    stats={character.stats}
                   />
-                ))}
-              </div>
-            </div>
-            
-            {/* Itens recentes */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-medievalsharp text-white">Itens Recentes</h2>
-                <Link to="/inventory/items" className="text-fantasy-purple hover:text-fantasy-accent text-sm flex items-center">
-                  Ver todos <Eye className="ml-1 h-4 w-4" />
                 </Link>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {quickItems.map((item, index) => (
-                  <div key={index} className="fantasy-card">
-                    <div className="flex gap-3">
-                      <div className={`h-16 w-16 rounded border-2 border-fantasy-purple/30 bg-fantasy-dark/30 flex items-center justify-center overflow-hidden`}>
-                        <div className="text-xl font-medievalsharp">
-                          {item.type.includes('Cajado') ? <Sword size={24} className="text-fantasy-gold" /> : 
-                           item.type.includes('Armadura') ? <Shield size={24} className="text-fantasy-gold" /> : 
-                           <Coffee size={24} className="text-fantasy-gold" />}
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex justify-between">
-                          <h3 className="font-medievalsharp">{item.name}</h3>
-                          {item.equipped && (
-                            <span className="text-xs bg-fantasy-purple/20 text-fantasy-purple rounded-full px-2 py-0.5">
-                              Equipado
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="text-xs text-muted-foreground">{item.type}</div>
-                        <p className="text-xs mt-1 text-muted-foreground">{item.description}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 pt-3 border-t border-fantasy-purple/20 flex justify-end gap-2">
-                      <button className="fantasy-button text-xs py-1 primary">Ver Detalhes</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          </div>
-        ) : (
-          // Ficha completa no estilo D&D 5e
-          renderCharacterSheet(quickCharacters[0])
-        )}
+          </TabsContent>
+          
+          <TabsContent value="items" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {quickItems.map((item, index) => (
+                <InventoryItem 
+                  key={index}
+                  name={item.name}
+                  description={item.description}
+                  rarity={item.rarity}
+                  type={item.type}
+                  stats={item.stats}
+                  equipped={item.equipped}
+                />
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="maps" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link to="/maps/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
+                <Plus size={48} className="text-fantasy-purple mb-4" />
+                <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Novo Mapa</span>
+              </Link>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="stories" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link to="/stories/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
+                <Plus size={48} className="text-fantasy-purple mb-4" />
+                <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Nova História</span>
+              </Link>
+            </div>
+          </TabsContent>
+        </Tabs>
         
         {/* Componente de rolagem de dados */}
         <div className="fixed bottom-6 right-6 z-10">
