@@ -2,7 +2,7 @@
 import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Link } from "react-router-dom";
-import { Plus, Sword, Book, Map, User, Package, Scroll, Skull, Users } from "lucide-react";
+import { User, Book, Map, Package, Scroll, Skull, Users } from "lucide-react";
 
 const Creations = () => {
   return (
