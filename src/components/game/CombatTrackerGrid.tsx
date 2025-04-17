@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface Character {
@@ -13,11 +12,7 @@ interface CombatTrackerGridProps {
   rollInitiative: (id: string) => void;
 }
 
-const CombatTrackerGrid = ({
-  characters,
-  removeCharacter,
-  rollInitiative
-}: CombatTrackerGridProps) => {
+const CombatTrackerGrid = ({ characters, removeCharacter, rollInitiative }: CombatTrackerGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {characters.map((character) => (
