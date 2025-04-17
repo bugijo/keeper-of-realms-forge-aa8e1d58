@@ -2,9 +2,7 @@
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Scroll, Sword, Shield, Star, User, Map, Package, Skull, Users } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { User, Star, Map, Package, Users } from 'lucide-react';
 
 interface Mission {
   id: string;
@@ -16,6 +14,7 @@ interface Mission {
   total: number;
   reward: string;
   icon: React.ReactNode;
+  completed: boolean;
 }
 
 const missions: Mission[] = [
@@ -28,7 +27,8 @@ const missions: Mission[] = [
     progress: 0,
     total: 1,
     reward: '100 moedas de ouro',
-    icon: <User className="w-6 h-6 text-fantasy-gold" />
+    icon: <User className="w-6 h-6 text-fantasy-gold" />,
+    completed: false
   },
   {
     id: '2',
@@ -39,7 +39,8 @@ const missions: Mission[] = [
     progress: 2,
     total: 5,
     reward: '500 moedas de ouro + Item raro',
-    icon: <Star className="w-6 h-6 text-fantasy-gold" />
+    icon: <Star className="w-6 h-6 text-fantasy-gold" />,
+    completed: false
   },
   {
     id: '3',
@@ -50,7 +51,8 @@ const missions: Mission[] = [
     progress: 0,
     total: 1,
     reward: '150 moedas de ouro',
-    icon: <Map className="w-6 h-6 text-fantasy-gold" />
+    icon: <Map className="w-6 h-6 text-fantasy-gold" />,
+    completed: false
   },
   {
     id: '4',
@@ -61,7 +63,8 @@ const missions: Mission[] = [
     progress: 1,
     total: 3,
     reward: '300 moedas de ouro',
-    icon: <Package className="w-6 h-6 text-fantasy-gold" />
+    icon: <Package className="w-6 h-6 text-fantasy-gold" />,
+    completed: false
   }
 ];
 
@@ -71,7 +74,7 @@ const Missions = () => {
       <div className="container mx-auto py-6 px-4">
         <h1 className="text-3xl font-medievalsharp text-fantasy-gold mb-6 flex items-center gap-2">
           <Star className="w-8 h-8" />
-          Missões Disponíveis
+          Missões
         </h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,7 +84,7 @@ const Missions = () => {
               <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-2">{mission.title}</h2>
               <p className="text-fantasy-stone mb-4">{mission.description}</p>
               
-              {/* Barra de Progresso */}
+              {/* Progress Bar */}
               <div className="mb-4">
                 <div className="w-full bg-fantasy-purple/10 h-2 rounded-full overflow-hidden">
                   <div 
@@ -94,16 +97,12 @@ const Missions = () => {
                 </p>
               </div>
               
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-fantasy-stone">Dificuldade: {mission.difficulty}</span>
-                <span className="text-sm text-fantasy-gold">{mission.reward}</span>
+                {mission.completed && (
+                  <span className="text-sm text-fantasy-gold">Recompensa: {mission.reward}</span>
+                )}
               </div>
-              
-              <Link to="/creations">
-                <Button variant="default" className="w-full">
-                  Iniciar Missão
-                </Button>
-              </Link>
             </Card>
           ))}
         </div>

@@ -4,12 +4,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
   Home, User, Book, Map, Sword, Users, ShoppingCart, 
-  Settings, ChevronLeft, ChevronRight, Scroll, Skull,
-  Shield, Crosshair
+  Settings, Scroll, Skull, Shield, Crosshair
 } from 'lucide-react';
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  isOpen: boolean;
+}
+
+const Sidebar = ({ isOpen }: SidebarProps) => {
   const location = useLocation();
   
   const links = [
@@ -30,7 +32,7 @@ const Sidebar = () => {
     <div 
       className={cn(
         "fixed top-16 left-0 h-screen bg-fantasy-dark border-r border-fantasy-purple/20 transition-all duration-300 z-40",
-        collapsed ? "w-16" : "w-64"
+        "w-64"
       )}
     >
       <div className="flex flex-col h-full">
@@ -51,23 +53,11 @@ const Sidebar = () => {
                   <div className="flex-shrink-0">
                     {link.icon}
                   </div>
-                  {!collapsed && (
-                    <span className="ml-3 whitespace-nowrap">{link.label}</span>
-                  )}
+                  <span className="ml-3 whitespace-nowrap">{link.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
-        </div>
-        
-        <div className="p-4 border-t border-fantasy-purple/20">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="fantasy-button w-full justify-center py-2 secondary"
-          >
-            {collapsed ? <ChevronRight /> : <ChevronLeft />}
-            {!collapsed && <span className="ml-2">Recolher</span>}
-          </button>
         </div>
       </div>
     </div>
