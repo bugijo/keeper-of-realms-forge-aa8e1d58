@@ -1,823 +1,381 @@
-
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Tabs, TabsContent, TabsList, TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  ArrowLeft, Save, Wand2, Dices, User, Book, 
-  Shield, Sword, Heart, Brain 
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
-
-// Dados para o modo fácil
-const races = [
-  { id: 'human', name: 'Humano', description: 'Versáteis e adaptáveis, +1 em todos os atributos' },
-  { id: 'elf', name: 'Elfo', description: 'Graciosos e longevos, +2 DES, visão no escuro' },
-  { id: 'dwarf', name: 'Anão', description: 'Robustos e resistentes, +2 CON, resistência a venenos' },
-  { id: 'halfling', name: 'Halfling', description: 'Pequenos e sortudos, +2 DES, sorte halfling' },
-  { id: 'tiefling', name: 'Tiefling', description: 'Descendentes de demônios, +2 CAR, +1 INT, resistência a fogo' },
-  { id: 'dragonborn', name: 'Draconato', description: 'Descendentes de dragões, +2 FOR, +1 CAR, sopro de dragão' },
-];
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const classes = [
-  { id: 'fighter', name: 'Guerreiro', description: 'Mestre em armas e combate' },
-  { id: 'wizard', name: 'Mago', description: 'Conjurador de magias arcanas' },
-  { id: 'cleric', name: 'Clérigo', description: 'Servo divino com poderes de cura' },
-  { id: 'rogue', name: 'Ladino', description: 'Especialista em furtividade e habilidades' },
-  { id: 'ranger', name: 'Patrulheiro', description: 'Caçador e rastreador da natureza' },
-  { id: 'bard', name: 'Bardo', description: 'Artista inspirador com magia musical' },
+  'Bárbaro',
+  'Bardo',
+  'Clérigo',
+  'Druida',
+  'Guerreiro',
+  'Mago',
+  'Monge',
+  'Paladino',
+  'Ranger',
+  'Ladino',
+  'Feiticeiro',
+  'Bruxo'
 ];
 
-const backgrounds = [
-  { id: 'acolyte', name: 'Acólito', description: 'Servo de um templo ou ordem religiosa' },
-  { id: 'criminal', name: 'Criminoso', description: 'Experiente no submundo do crime' },
-  { id: 'noble', name: 'Nobre', description: 'Membro de uma família aristocrática' },
-  { id: 'soldier', name: 'Soldado', description: 'Veterano de conflitos e batalhas' },
-  { id: 'sage', name: 'Sábio', description: 'Estudioso e pesquisador' },
+const races = [
+  'Humano',
+  'Elfo',
+  'Anão',
+  'Halfling',
+  'Gnomo',
+  'Meio-Elfo',
+  'Meio-Orc',
+  'Tiefling',
+  'Draconato'
 ];
 
 const CharacterCreation = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const [creationMode, setCreationMode] = useState<'easy' | 'classic' | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
-  
-  // Dados para o modo fácil
-  const [selectedRace, setSelectedRace] = useState<string | null>(null);
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
-  const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
-  const [characterName, setCharacterName] = useState('');
-  
-  // Dados para o modo clássico
-  const [classicCharacter, setClassicCharacter] = useState({
+  const { user } = useAuth();
+  const isEditing = !!id;
+
+  const [formData, setFormData] = useState({
     name: '',
     race: '',
     class: '',
     level: 1,
-    attributes: {
-      strength: 10,
-      dexterity: 10,
-      constitution: 10,
-      intelligence: 10,
-      wisdom: 10,
-      charisma: 10
-    },
     background: '',
     alignment: '',
-    equipment: [],
-    spells: [],
-    proficiencies: [],
-    notes: ''
+    strength: 10,
+    dexterity: 10,
+    constitution: 10,
+    intelligence: 10,
+    wisdom: 10,
+    charisma: 10,
+    appearance: '',
+    backstory: '',
   });
-  
-  const steps = [
-    { name: 'Raça', icon: User },
-    { name: 'Classe', icon: Shield },
-    { name: 'Detalhes', icon: Book },
-    { name: 'Equipamento', icon: Sword },
-    { name: 'Revisão', icon: Save }
-  ];
-  
-  const generateRandomName = () => {
-    const humanNames = ['João', 'Artur', 'Ricardo', 'Guilherme', 'Pedro', 'Lucas'];
-    const elfNames = ['Legolas', 'Elrond', 'Thranduil', 'Galadriel', 'Arwen', 'Celeborn'];
-    const dwarfNames = ['Gimli', 'Thorin', 'Balin', 'Dwalin', 'Durin', 'Gloin'];
-    
-    let namePool = humanNames;
-    
-    if (selectedRace === 'elf') namePool = elfNames;
-    if (selectedRace === 'dwarf') namePool = dwarfNames;
-    
-    const randomIndex = Math.floor(Math.random() * namePool.length);
-    setCharacterName(namePool[randomIndex]);
-  };
-  
-  const saveCharacter = async () => {
-    if (!currentUser) {
-      toast.error('Você precisa estar logado para salvar um personagem');
-      return;
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
+
+  useEffect(() => {
+    if (isEditing) {
+      setIsLoading(true);
+      // Here you would fetch the character data from your database
+      // For now, we'll simulate it with a timeout
+      setTimeout(() => {
+        setFormData({
+          name: 'Aragorn',
+          race: 'Humano',
+          class: 'Ranger',
+          level: 5,
+          background: 'Forasteiro',
+          alignment: 'Neutro e Bom',
+          strength: 16,
+          dexterity: 14,
+          constitution: 14,
+          intelligence: 12,
+          wisdom: 14,
+          charisma: 14,
+          appearance: 'Alto, cabelos escuros, olhos cinzentos, vestido com roupas de couro desgastadas.',
+          backstory: 'Herdeiro do trono de Gondor, criado entre os elfos, agora vive como um ranger protegendo as terras do norte.',
+        });
+        setIsLoading(false);
+      }, 1000);
     }
-    
+  }, [id, isEditing]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleStatChange = (stat, value) => {
+    const numValue = parseInt(value);
+    if (numValue >= 3 && numValue <= 20) {
+      setFormData(prev => ({ ...prev, [stat]: numValue }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
     try {
-      const characterData = creationMode === 'easy' 
-        ? {
-            name: characterName,
-            race: selectedRace,
-            class: selectedClass,
-            background: selectedBackground,
-            level: 1,
-            creation_mode: 'easy',
-            user_id: currentUser.id
-          }
-        : {
-            ...classicCharacter,
-            creation_mode: 'classic',
-            user_id: currentUser.id
-          };
+      // Here you would save the character to your database
+      // For now, we'll just simulate it with a timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const { error } = await supabase
-        .from('characters')
-        .insert(characterData);
-      
-      if (error) throw error;
-      
-      toast.success('Personagem salvo com sucesso!');
-      navigate('/creations');
+      toast.success(isEditing ? 'Personagem atualizado com sucesso!' : 'Personagem criado com sucesso!');
+      navigate('/character');
     } catch (error) {
-      console.error('Erro ao salvar personagem:', error);
+      console.error('Error saving character:', error);
       toast.error('Erro ao salvar personagem. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleNextStep = () => {
-    setCurrentStep((prev) => prev + 1);
+
+  const calculateModifier = (stat) => {
+    return Math.floor((stat - 10) / 2);
   };
-  
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => Math.max(0, prev - 1));
+
+  const formatModifier = (mod) => {
+    return mod >= 0 ? `+${mod}` : mod.toString();
   };
-  
-  const rollDice = (sides = 20) => {
-    const result = Math.floor(Math.random() * sides) + 1;
-    toast(`🎲 Resultado: ${result}`, {
-      position: 'bottom-center',
-      icon: '🎲'
-    });
-    return result;
-  };
-  
-  // Retorna para a tela de escolha de modo se nenhum modo foi selecionado
-  if (!creationMode) {
+
+  if (isLoading && isEditing) {
     return (
       <MainLayout>
-        <div className="container mx-auto pb-16">
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => navigate('/creations')}
-              className="text-fantasy-purple hover:text-fantasy-gold transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-2xl font-medievalsharp text-white">Criar Personagem</h1>
-          </div>
-          
-          <p className="text-fantasy-stone text-center mb-8">
-            Escolha o modo de criação que deseja utilizar
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="fantasy-card p-6 cursor-pointer"
-              onClick={() => setCreationMode('easy')}
-            >
-              <Wand2 className="w-14 h-14 text-fantasy-gold mx-auto mb-4" />
-              <h2 className="text-2xl font-medievalsharp text-center text-fantasy-purple mb-2">
-                Modo Fácil
-              </h2>
-              <p className="text-center text-fantasy-stone">
-                Crie seu personagem através de escolhas simples e guiadas.
-                Ideal para iniciantes ou para criação rápida.
-              </p>
-            </motion.div>
-            
-            <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              className="fantasy-card p-6 cursor-pointer"
-              onClick={() => setCreationMode('classic')}
-            >
-              <Book className="w-14 h-14 text-fantasy-gold mx-auto mb-4" />
-              <h2 className="text-2xl font-medievalsharp text-center text-fantasy-purple mb-2">
-                Modo Clássico
-              </h2>
-              <p className="text-center text-fantasy-stone">
-                Preencha a ficha de personagem completa com todos os detalhes,
-                atributos e habilidades. Para jogadores experientes.
-              </p>
-            </motion.div>
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <p className="text-fantasy-stone">Carregando personagem...</p>
           </div>
         </div>
       </MainLayout>
     );
   }
-  
-  // Modo fácil - criação passo a passo
-  if (creationMode === 'easy') {
-    return (
-      <MainLayout>
-        <div className="container mx-auto pb-16">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => currentStep === 0 ? setCreationMode(null) : handlePrevStep()}
-                className="text-fantasy-purple hover:text-fantasy-gold transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-2xl font-medievalsharp text-white">Criar Personagem</h1>
-            </div>
-            
-            <button 
-              onClick={() => rollDice()} 
-              className="fantasy-icon p-2"
-              aria-label="Rolar dado"
-            >
-              <Dices className="text-fantasy-gold" size={20} />
-            </button>
-          </div>
-          
-          {/* Stepper */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center w-full">
-              {steps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div 
-                    className={`rounded-full p-2 ${
-                      currentStep === index 
-                        ? 'bg-fantasy-purple text-white' 
-                        : currentStep > index 
-                          ? 'bg-fantasy-gold text-fantasy-dark' 
-                          : 'bg-fantasy-purple/20 text-fantasy-stone'
-                    }`}
-                  >
-                    <step.icon size={16} />
-                  </div>
-                  <span className={`text-xs mt-1 ${
-                    currentStep === index 
-                      ? 'text-white' 
-                      : currentStep > index 
-                        ? 'text-fantasy-gold' 
-                        : 'text-fantasy-stone'
-                  }`}>
-                    {step.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="w-full bg-fantasy-dark/70 h-1 mt-2 mb-6">
-              <div 
-                className="bg-gradient-to-r from-fantasy-purple to-fantasy-gold h-full rounded-full"
-                style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          {/* Conteúdo dos passos */}
-          {currentStep === 0 && (
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Escolha sua Raça</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {races.map((race) => (
-                  <motion.div
-                    key={race.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`p-4 rounded-lg cursor-pointer border ${
-                      selectedRace === race.id 
-                        ? 'border-fantasy-gold bg-fantasy-purple/20' 
-                        : 'border-fantasy-purple/20 bg-fantasy-dark/60'
-                    }`}
-                    onClick={() => setSelectedRace(race.id)}
-                  >
-                    <h3 className="text-lg font-medievalsharp text-white mb-1">{race.name}</h3>
-                    <p className="text-sm text-fantasy-stone">{race.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-              
-              <div className="mt-6 flex justify-end">
-                <button
-                  className="fantasy-button primary"
-                  onClick={handleNextStep}
-                  disabled={!selectedRace}
-                >
-                  Próximo Passo
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {currentStep === 1 && (
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Escolha sua Classe</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {classes.map((characterClass) => (
-                  <motion.div
-                    key={characterClass.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`p-4 rounded-lg cursor-pointer border ${
-                      selectedClass === characterClass.id 
-                        ? 'border-fantasy-gold bg-fantasy-purple/20' 
-                        : 'border-fantasy-purple/20 bg-fantasy-dark/60'
-                    }`}
-                    onClick={() => setSelectedClass(characterClass.id)}
-                  >
-                    <h3 className="text-lg font-medievalsharp text-white mb-1">{characterClass.name}</h3>
-                    <p className="text-sm text-fantasy-stone">{characterClass.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-              
-              <div className="mt-6 flex justify-between">
-                <button
-                  className="fantasy-button secondary"
-                  onClick={handlePrevStep}
-                >
-                  Voltar
-                </button>
-                <button
-                  className="fantasy-button primary"
-                  onClick={handleNextStep}
-                  disabled={!selectedClass}
-                >
-                  Próximo Passo
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {currentStep === 2 && (
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Detalhes do Personagem</h2>
-              
-              <div className="mb-4">
-                <label className="block text-white mb-2">Nome do Personagem</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={characterName}
-                    onChange={(e) => setCharacterName(e.target.value)}
-                    className="flex-1 bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
-                    placeholder="Digite o nome do seu personagem"
-                  />
-                  <button 
-                    onClick={generateRandomName}
-                    className="fantasy-button secondary"
-                    disabled={!selectedRace}
-                    title="Gerar nome aleatório baseado na raça"
-                  >
-                    <Wand2 size={16} />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-white mb-2">Antecedente</label>
-                <div className="grid grid-cols-1 gap-2">
-                  {backgrounds.map((background) => (
-                    <motion.div
-                      key={background.id}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      className={`p-3 rounded-lg cursor-pointer border ${
-                        selectedBackground === background.id 
-                          ? 'border-fantasy-gold bg-fantasy-purple/20' 
-                          : 'border-fantasy-purple/20 bg-fantasy-dark/60'
-                      }`}
-                      onClick={() => setSelectedBackground(background.id)}
-                    >
-                      <h3 className="text-md font-medievalsharp text-white">{background.name}</h3>
-                      <p className="text-xs text-fantasy-stone">{background.description}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="mt-6 flex justify-between">
-                <button
-                  className="fantasy-button secondary"
-                  onClick={handlePrevStep}
-                >
-                  Voltar
-                </button>
-                <button
-                  className="fantasy-button primary"
-                  onClick={handleNextStep}
-                  disabled={!characterName || !selectedBackground}
-                >
-                  Próximo Passo
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {currentStep === 3 && (
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Equipamento</h2>
-              
-              <p className="text-fantasy-stone mb-4">
-                Com base na sua classe ({classes.find(c => c.id === selectedClass)?.name}), 
-                você receberá o equipamento padrão inicial.
-              </p>
-              
-              <div className="bg-fantasy-dark/50 border border-fantasy-purple/20 rounded-lg p-4 mb-4">
-                <h3 className="text-lg font-medievalsharp text-white mb-2">Equipamento Inicial</h3>
-                <ul className="space-y-2">
-                  {selectedClass === 'fighter' && (
-                    <>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <Sword size={16} className="text-fantasy-gold" />
-                        Espada longa
-                      </li>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <Shield size={16} className="text-fantasy-gold" />
-                        Escudo
-                      </li>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <User size={16} className="text-fantasy-gold" />
-                        Armadura de malha
-                      </li>
-                    </>
-                  )}
-                  
-                  {selectedClass === 'wizard' && (
-                    <>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <Wand2 size={16} className="text-fantasy-gold" />
-                        Cajado arcano
-                      </li>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <Book size={16} className="text-fantasy-gold" />
-                        Livro de magias
-                      </li>
-                      <li className="text-fantasy-stone flex items-center gap-2">
-                        <User size={16} className="text-fantasy-gold" />
-                        Vestes de mago
-                      </li>
-                    </>
-                  )}
-                  
-                  {(selectedClass !== 'fighter' && selectedClass !== 'wizard') && (
-                    <li className="text-fantasy-stone">Equipamento padrão da classe selecionada</li>
-                  )}
-                </ul>
-              </div>
-              
-              <div className="mt-6 flex justify-between">
-                <button
-                  className="fantasy-button secondary"
-                  onClick={handlePrevStep}
-                >
-                  Voltar
-                </button>
-                <button
-                  className="fantasy-button primary"
-                  onClick={handleNextStep}
-                >
-                  Próximo Passo
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {currentStep === 4 && (
-            <div className="fantasy-card p-4">
-              <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Revisão Final</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="bg-fantasy-dark/50 border border-fantasy-purple/20 rounded-lg p-4">
-                  <h3 className="text-lg font-medievalsharp text-white mb-2">Informações Básicas</h3>
-                  <p className="text-fantasy-stone"><strong>Nome:</strong> {characterName}</p>
-                  <p className="text-fantasy-stone"><strong>Raça:</strong> {races.find(r => r.id === selectedRace)?.name}</p>
-                  <p className="text-fantasy-stone"><strong>Classe:</strong> {classes.find(c => c.id === selectedClass)?.name}</p>
-                  <p className="text-fantasy-stone"><strong>Antecedente:</strong> {backgrounds.find(b => b.id === selectedBackground)?.name}</p>
-                </div>
-                
-                <div className="bg-fantasy-dark/50 border border-fantasy-purple/20 rounded-lg p-4">
-                  <h3 className="text-lg font-medievalsharp text-white mb-2">Atributos</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Heart size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">FOR 10</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Heart size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">DES 10</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Heart size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">CON 10</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Brain size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">INT 10</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Brain size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">SAB 10</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-10 h-10 rounded-full bg-fantasy-purple/20 flex items-center justify-center mx-auto">
-                        <Brain size={16} className="text-fantasy-gold" />
-                      </div>
-                      <p className="text-xs text-fantasy-stone mt-1">CAR 10</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full bg-fantasy-gold text-fantasy-dark py-3 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
-                onClick={saveCharacter}
-              >
-                <Save size={18} />
-                Salvar Personagem
-              </motion.button>
-              
-              <div className="mt-4 flex justify-center">
-                <button
-                  className="fantasy-button secondary"
-                  onClick={handlePrevStep}
-                >
-                  Voltar e Editar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </MainLayout>
-    );
-  }
-  
-  // Modo clássico - ficha completa
+
   return (
     <MainLayout>
-      <div className="container mx-auto pb-16">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCreationMode(null)}
-              className="text-fantasy-purple hover:text-fantasy-gold transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-2xl font-medievalsharp text-white">Ficha de Personagem</h1>
-          </div>
-          
-          <button 
-            onClick={() => rollDice()} 
-            className="fantasy-icon p-2"
-            aria-label="Rolar dado"
-          >
-            <Dices className="text-fantasy-gold" size={20} />
-          </button>
-        </div>
-        
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="bg-fantasy-dark/70 border-b border-fantasy-purple/30 p-0 rounded-none w-full flex justify-start overflow-x-auto">
-            <TabsTrigger 
-              value="details" 
-              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Detalhes
-            </TabsTrigger>
-            <TabsTrigger 
-              value="attributes" 
-              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Atributos
-            </TabsTrigger>
-            <TabsTrigger 
-              value="equipment" 
-              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Equipamento
-            </TabsTrigger>
-            <TabsTrigger 
-              value="spells" 
-              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Magias
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notes" 
-              className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-            >
-              Anotações
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="pt-4">
-            <div className="fantasy-card p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-medievalsharp text-fantasy-gold mb-6">
+          {isEditing ? 'Editar Personagem' : 'Criar Novo Personagem'}
+        </h1>
+
+        <form onSubmit={handleSubmit}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-3 mb-6">
+              <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+              <TabsTrigger value="stats">Atributos</TabsTrigger>
+              <TabsTrigger value="description">Descrição</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="fantasy-card p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-white mb-1">Nome do Personagem</label>
-                  <input
-                    type="text"
-                    value={classicCharacter.name}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, name: e.target.value})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                  />
-                  
-                  <label className="block text-white mb-1">Raça</label>
-                  <input
-                    type="text"
-                    value={classicCharacter.race}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, race: e.target.value})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                  />
-                  
-                  <label className="block text-white mb-1">Classe</label>
-                  <input
-                    type="text"
-                    value={classicCharacter.class}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, class: e.target.value})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
+                  <Label htmlFor="name">Nome do Personagem</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                    required
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-white mb-1">Nível</label>
-                  <input
+                  <Label htmlFor="level">Nível</Label>
+                  <Input
+                    id="level"
+                    name="level"
                     type="number"
-                    value={classicCharacter.level}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, level: parseInt(e.target.value) || 1})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                    min={1}
-                    max={20}
+                    min="1"
+                    max="20"
+                    value={formData.level}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                    required
                   />
-                  
-                  <label className="block text-white mb-1">Antecedente</label>
-                  <input
-                    type="text"
-                    value={classicCharacter.background}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, background: e.target.value})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
+                </div>
+
+                <div>
+                  <Label htmlFor="race">Raça</Label>
+                  <Select
+                    value={formData.race}
+                    onValueChange={(value) => handleSelectChange('race', value)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione uma raça" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {races.map((race) => (
+                          <SelectItem key={race} value={race}>
+                            {race}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="class">Classe</Label>
+                  <Select
+                    value={formData.class}
+                    onValueChange={(value) => handleSelectChange('class', value)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione uma classe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {classes.map((cls) => (
+                          <SelectItem key={cls} value={cls}>
+                            {cls}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="background">Antecedente</Label>
+                  <Input
+                    id="background"
+                    name="background"
+                    value={formData.background}
+                    onChange={handleInputChange}
+                    className="mt-1"
                   />
-                  
-                  <label className="block text-white mb-1">Tendência</label>
-                  <input
-                    type="text"
-                    value={classicCharacter.alignment}
-                    onChange={(e) => setClassicCharacter({...classicCharacter, alignment: e.target.value})}
-                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
+                </div>
+
+                <div>
+                  <Label htmlFor="alignment">Alinhamento</Label>
+                  <Input
+                    id="alignment"
+                    name="alignment"
+                    value={formData.alignment}
+                    onChange={handleInputChange}
+                    className="mt-1"
                   />
                 </div>
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="attributes" className="pt-4">
-            <div className="fantasy-card p-4">
-              <h3 className="text-lg font-medievalsharp text-fantasy-purple mb-4">Atributos</h3>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {Object.entries(classicCharacter.attributes).map(([attr, value]) => (
-                  <div key={attr} className="bg-fantasy-dark/50 rounded-lg p-3 text-center">
-                    <h4 className="text-md font-medievalsharp text-white capitalize mb-2">
-                      {attr === 'strength' ? 'Força' :
-                       attr === 'dexterity' ? 'Destreza' :
-                       attr === 'constitution' ? 'Constituição' :
-                       attr === 'intelligence' ? 'Inteligência' :
-                       attr === 'wisdom' ? 'Sabedoria' :
-                       'Carisma'}
-                    </h4>
+            </TabsContent>
+
+            <TabsContent value="stats" className="fantasy-card p-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map((stat) => (
+                  <div key={stat} className="text-center">
+                    <Label htmlFor={stat} className="block mb-2 capitalize">
+                      {stat === 'strength' && 'Força'}
+                      {stat === 'dexterity' && 'Destreza'}
+                      {stat === 'constitution' && 'Constituição'}
+                      {stat === 'intelligence' && 'Inteligência'}
+                      {stat === 'wisdom' && 'Sabedoria'}
+                      {stat === 'charisma' && 'Carisma'}
+                    </Label>
                     <div className="flex items-center justify-center">
-                      <button
-                        className="fantasy-icon p-1"
-                        onClick={() => {
-                          const newAttributes = {...classicCharacter.attributes};
-                          newAttributes[attr as keyof typeof classicCharacter.attributes] = Math.max(1, value - 1);
-                          setClassicCharacter({...classicCharacter, attributes: newAttributes});
-                        }}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStatChange(stat, formData[stat] - 1)}
+                        disabled={formData[stat] <= 3}
+                        className="h-8 w-8 p-0"
                       >
                         -
-                      </button>
-                      <div className="mx-2 w-10 h-10 bg-fantasy-purple/30 rounded-full flex items-center justify-center">
-                        <span className="text-fantasy-gold font-medievalsharp">{value}</span>
-                      </div>
-                      <button
-                        className="fantasy-icon p-1"
-                        onClick={() => {
-                          const newAttributes = {...classicCharacter.attributes};
-                          newAttributes[attr as keyof typeof classicCharacter.attributes] = Math.min(20, value + 1);
-                          setClassicCharacter({...classicCharacter, attributes: newAttributes});
-                        }}
+                      </Button>
+                      <Input
+                        id={stat}
+                        name={stat}
+                        type="number"
+                        min="3"
+                        max="20"
+                        value={formData[stat]}
+                        onChange={(e) => handleStatChange(stat, e.target.value)}
+                        className="mx-2 w-16 text-center"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStatChange(stat, formData[stat] + 1)}
+                        disabled={formData[stat] >= 20}
+                        className="h-8 w-8 p-0"
                       >
                         +
-                      </button>
+                      </Button>
                     </div>
-                    <div className="text-xs text-fantasy-stone mt-2">
-                      Modificador: {Math.floor((value - 10) / 2)}
+                    <div className="mt-2 text-fantasy-gold font-medievalsharp">
+                      {formatModifier(calculateModifier(formData[stat]))}
                     </div>
                   </div>
                 ))}
               </div>
-              
-              <div className="mt-4">
-                <button
-                  className="fantasy-button secondary"
-                  onClick={() => {
-                    // Rolar 4d6, descartar o menor valor, para cada atributo
-                    const rollAttribute = () => {
-                      const rolls = [
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1,
-                        Math.floor(Math.random() * 6) + 1
-                      ];
-                      rolls.sort((a, b) => a - b);
-                      return rolls.slice(1).reduce((sum, roll) => sum + roll, 0);
-                    };
-                    
-                    const newAttributes = {
-                      strength: rollAttribute(),
-                      dexterity: rollAttribute(),
-                      constitution: rollAttribute(),
-                      intelligence: rollAttribute(),
-                      wisdom: rollAttribute(),
-                      charisma: rollAttribute()
-                    };
-                    
-                    setClassicCharacter({...classicCharacter, attributes: newAttributes});
-                    toast('🎲 Atributos rolados!', {
-                      position: 'bottom-center',
-                      icon: '🎲'
-                    });
-                  }}
-                >
-                  Rolar Atributos (4d6)
-                </button>
+            </TabsContent>
+
+            <TabsContent value="description" className="fantasy-card p-6">
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <Label htmlFor="appearance">Aparência</Label>
+                  <Textarea
+                    id="appearance"
+                    name="appearance"
+                    value={formData.appearance}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="backstory">História de Fundo</Label>
+                  <Textarea
+                    id="backstory"
+                    name="backstory"
+                    value={formData.backstory}
+                    onChange={handleInputChange}
+                    className="mt-1"
+                    rows={8}
+                  />
+                </div>
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="equipment" className="pt-4">
-            <div className="fantasy-card p-4">
-              <h3 className="text-lg font-medievalsharp text-fantasy-purple mb-4">Equipamento</h3>
-              <p className="text-fantasy-stone mb-4">
-                Adicione os equipamentos e itens do seu personagem.
-              </p>
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-6 flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/character')}
+            >
+              Cancelar
+            </Button>
+            
+            <div className="flex gap-2">
+              {activeTab !== 'basic' && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab(activeTab === 'stats' ? 'basic' : 'stats')}
+                >
+                  Anterior
+                </Button>
+              )}
               
-              <textarea
-                className="w-full h-64 bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                placeholder="Liste seu equipamento aqui..."
-              ></textarea>
+              {activeTab !== 'description' ? (
+                <Button
+                  type="button"
+                  onClick={() => setActiveTab(activeTab === 'basic' ? 'stats' : 'description')}
+                  className="fantasy-button secondary"
+                >
+                  Próximo
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="fantasy-button primary"
+                >
+                  {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Personagem' : 'Criar Personagem'}
+                </Button>
+              )}
             </div>
-          </TabsContent>
-          
-          <TabsContent value="spells" className="pt-4">
-            <div className="fantasy-card p-4">
-              <h3 className="text-lg font-medievalsharp text-fantasy-purple mb-4">Magias</h3>
-              <p className="text-fantasy-stone mb-4">
-                Adicione as magias conhecidas pelo seu personagem.
-              </p>
-              
-              <textarea
-                className="w-full h-64 bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                placeholder="Liste suas magias aqui..."
-              ></textarea>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="notes" className="pt-4">
-            <div className="fantasy-card p-4">
-              <h3 className="text-lg font-medievalsharp text-fantasy-purple mb-4">Anotações</h3>
-              <p className="text-fantasy-stone mb-4">
-                Adicione anotações e informações adicionais sobre seu personagem.
-              </p>
-              
-              <textarea
-                className="w-full h-64 bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 mb-4"
-                placeholder="Escreva as anotações do seu personagem aqui..."
-                value={classicCharacter.notes}
-                onChange={(e) => setClassicCharacter({...classicCharacter, notes: e.target.value})}
-              ></textarea>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full bg-fantasy-gold text-fantasy-dark py-3 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
-            onClick={saveCharacter}
-          >
-            <Save size={18} />
-            Salvar Personagem
-          </motion.button>
-        </div>
+          </div>
+        </form>
       </div>
     </MainLayout>
   );

@@ -7,7 +7,7 @@ import {
   Users, 
   MapPin, 
   Scroll,
-  Dice,
+  Dice1,
   Sword
 } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
@@ -52,7 +52,7 @@ const quickActions = [
   },
   {
     title: "Rolar Dados",
-    icon: Dice,
+    icon: Dice1,
     path: "/dice",
     description: "Teste sua sorte"
   }

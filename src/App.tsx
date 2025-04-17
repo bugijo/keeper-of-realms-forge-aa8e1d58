@@ -27,6 +27,7 @@ import CombatSystem from '@/pages/CombatSystem';
 import TacticalCombat from '@/pages/TacticalCombat';
 import CharactersCollection from '@/pages/CharactersCollection';
 import CreationsCollection from '@/pages/CreationsCollection';
+import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 
 function App() {
   return (
@@ -71,6 +72,7 @@ function App() {
         
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <MobileNavigation />
     </Router>
   );
 }

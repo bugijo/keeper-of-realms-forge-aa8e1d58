@@ -4,7 +4,7 @@ import { CombatTracker } from '@/components/game/CombatTracker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Play, Pause, RotateCcw, Dice } from 'lucide-react';
+import { Plus, Trash2, Play, Pause, RotateCcw, Dice1 } from 'lucide-react';
 
 interface Character {
   id: string;
@@ -26,7 +26,6 @@ const CombatSystem = () => {
   const [isCombatActive, setIsCombatActive] = useState(false);
 
   useEffect(() => {
-    // Sort characters by initiative at the start of combat
     if (isCombatActive && characters.length > 0) {
       const sortedCharacters = [...characters].sort((a, b) => b.initiative - a.initiative);
       setCharacters(sortedCharacters);
@@ -82,7 +81,6 @@ const CombatSystem = () => {
   const endCombat = () => {
     setIsCombatActive(false);
     setCurrentTurnIndex(0);
-    // Reset initiative for all characters
     setCharacters(characters.map(character => ({ ...character, initiative: 0 })));
   };
 
@@ -98,7 +96,6 @@ const CombatSystem = () => {
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4 text-white">Combat Tracker</h1>
 
-        {/* Add Character Section */}
         <div className="mb-4 p-4 border rounded shadow-md bg-gray-800">
           <h2 className="text-lg font-semibold mb-2 text-gray-100">Add New Character</h2>
           <div className="grid grid-cols-3 gap-4">
@@ -139,19 +136,19 @@ const CombatSystem = () => {
           </Button>
         </div>
 
-        {/* Combat Tracker Section */}
         {characters.length > 0 && (
           <div className="mb-4 p-4 border rounded shadow-md bg-gray-800">
             <h2 className="text-lg font-semibold mb-2 text-gray-100">Combatants</h2>
             <CombatTracker
-              characters={characters}
-              removeCharacter={removeCharacter}
-              rollInitiative={rollInitiative}
+              data={{
+                characters,
+                removeCharacter,
+                rollInitiative
+              }}
             />
           </div>
         )}
 
-        {/* Combat Controls Section */}
         {characters.length > 0 && (
           <div className="mb-4 p-4 border rounded shadow-md bg-gray-800">
             <h2 className="text-lg font-semibold mb-2 text-gray-100">Combat Controls</h2>
@@ -180,7 +177,6 @@ const CombatSystem = () => {
           </div>
         )}
 
-        {/* Combat Log Section */}
         <div className="p-4 border rounded shadow-md bg-gray-800">
           <h2 className="text-lg font-semibold mb-2 text-gray-100">Combat Log</h2>
           <ul className="text-sm text-gray-300">
