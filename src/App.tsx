@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -23,6 +24,7 @@ import { PlayerView } from "@/pages/PlayerView";
 import { NotFound } from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import CombatSystem from '@/pages/CombatSystem';
+import TacticalCombat from '@/pages/TacticalCombat';
 
 function App() {
   return (
@@ -39,6 +41,7 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/combat" element={<CombatSystem />} />
+          <Route path="/tactical-combat" element={<TacticalCombat />} />
           <Route path="/tables" element={<Tables />} />
           
           {/* Creation routes */}
