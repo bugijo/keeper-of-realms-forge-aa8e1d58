@@ -1,27 +1,17 @@
+
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { CharacterCard } from "@/components/game/CharacterCard";
-import InventoryItem from "@/components/game/InventoryItem";
 import { MedievalButton } from "@/components/rpg/MedievalButton";
 import { Link, useNavigate } from "react-router-dom";
-import DiceRoller from "@/components/dice/DiceRoller";
 import { 
   User2, 
   Sword, 
   MapPin, 
   BookOpen, 
   Skull, 
-  Table as TableIcon, 
-  CheckCircle, 
-  Eye, 
-  Shield, 
-  Coffee, 
-  Dices,
-  Search,
-  PlusCircle
+  Table as TableIcon,
+  Search
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Categorias do inventário
 const inventoryCategories = [
@@ -39,7 +29,7 @@ const inventoryCategories = [
     description: "Armas mágicas, itens encantados e tesouros em seu inventário",
     count: 8,
     action: "Ver Itens",
-    path: "/inventory/items"
+    path: "/items"
   },
   {
     title: "Mapas",
@@ -47,7 +37,7 @@ const inventoryCategories = [
     description: "Mapas de reinos, cidades e calabouços que você criou",
     count: 3,
     action: "Ver Mapas",
-    path: "/inventory/maps"
+    path: "/maps"
   },
   {
     title: "Histórias",
@@ -55,7 +45,7 @@ const inventoryCategories = [
     description: "Aventuras, missões e histórias que você elaborou",
     count: 5,
     action: "Ver Histórias",
-    path: "/inventory/stories"
+    path: "/stories"
   },
   {
     title: "Monstros",
@@ -63,107 +53,19 @@ const inventoryCategories = [
     description: "Criaturas e monstros para desafiar seus jogadores",
     count: 4,
     action: "Ver Monstros",
-    path: "/inventory/monsters"
+    path: "/monsters"
   },
   {
-    title: "Mesas",
+    title: "NPCs",
     icon: TableIcon,
-    description: "Mesas de jogo que você criou ou participa",
+    description: "NPCs e personagens não jogáveis",
     count: 2,
-    action: "Ver Mesas",
-    path: "/inventory/tables"
+    action: "Ver NPCs",
+    path: "/npcs"
   }
-];
-
-// Dados dos personagens para exibição rápida
-const quickCharacters = [
-  {
-    id: '1',
-    name: "Elrond Mithrandir",
-    level: 5,
-    class: "Mago",
-    race: "Elfo",
-    stats: [
-      { name: "Vida", value: 32, max: 40 },
-      { name: "Mana", value: 45, max: 50 },
-      { name: "Força", value: 10 },
-      { name: "Destreza", value: 14 },
-      { name: "Constituição", value: 12 },
-      { name: "Inteligência", value: 18 },
-      { name: "Sabedoria", value: 16 },
-      { name: "Carisma", value: 13 }
-    ]
-  },
-  {
-    id: '2',
-    name: "Thorin Escudocarvalho",
-    level: 4,
-    class: "Guerreiro",
-    race: "Anão",
-    stats: [
-      { name: "Vida", value: 50, max: 55 },
-      { name: "Energia", value: 30, max: 35 },
-      { name: "Força", value: 16 },
-      { name: "Destreza", value: 12 },
-      { name: "Constituição", value: 18 },
-      { name: "Inteligência", value: 10 },
-      { name: "Sabedoria", value: 13 },
-      { name: "Carisma", value: 8 }
-    ]
-  }
-];
-
-// Itens para exibição rápida
-const quickItems = [
-  {
-    name: "Cajado Arcano",
-    description: "Um cajado poderoso que canaliza energias mágicas.",
-    rarity: "rare" as const,
-    type: "Arma - Cajado",
-    stats: {
-      inteligência: 5,
-      danoMágico: 15,
-      regenMana: 2
-    },
-    equipped: true
-  },
-  {
-    name: "Vestes Élficas",
-    description: "Vestes leves tecidas com seda élfica encantada.",
-    rarity: "common" as const,
-    type: "Armadura - Tecido",
-    stats: {
-      defesa: 8,
-      resistênciaMágica: 12,
-      velocidade: 3
-    },
-    equipped: true
-  },
-  {
-    name: "Amuleto da Proteção",
-    description: "Um amuleto antigo que oferece proteção contra forças malignas.",
-    rarity: "rare" as const,
-    type: "Acessório - Amuleto",
-    stats: {
-      resistênciaElemental: 10,
-      carisma: 3,
-      percepção: 5
-    },
-    equipped: false
-  },
-];
-
-// Lista de magias do personagem
-const quickSpells = [
-  { name: "Mísseis Mágicos", level: 1, type: "Evocação", castingTime: "1 ação" },
-  { name: "Escudo Arcano", level: 1, type: "Abjuração", castingTime: "1 reação" },
-  { name: "Bola de Fogo", level: 3, type: "Evocação", castingTime: "1 ação" },
 ];
 
 const Inventory = () => {
-  const [activeTab, setActiveTab] = useState('categories');
-  const [characterTab, setCharacterTab] = useState('attributes');
-  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   
@@ -214,8 +116,6 @@ const Inventory = () => {
             </div>
           ))}
         </div>
-        
-        <DiceRoller />
       </div>
     </MainLayout>
   );
