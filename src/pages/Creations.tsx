@@ -3,61 +3,72 @@ import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Link } from "react-router-dom";
 import { User, Book, Map, Package, Scroll, Skull, Users } from "lucide-react";
+import { DungeonCard } from "@/components/rpg/DungeonCard";
+
+const creationOptions = [
+  {
+    title: "Criar Personagem",
+    description: "Crie um novo personagem para suas aventuras",
+    icon: User,
+    path: "/creations/characters"
+  },
+  {
+    title: "Criar Mapa",
+    description: "Desenhe e crie mapas para suas campanhas",
+    icon: Map,
+    path: "/creations/maps"
+  },
+  {
+    title: "Criar Item",
+    description: "Crie itens mágicos e equipamentos",
+    icon: Package,
+    path: "/creations/items"
+  },
+  {
+    title: "Criar Monstro",
+    description: "Adicione novos monstros ao seu bestiário",
+    icon: Skull,
+    path: "/creations/monsters"
+  },
+  {
+    title: "Criar NPC",
+    description: "Crie personagens não jogáveis para sua campanha",
+    icon: Users,
+    path: "/creations/npcs"
+  },
+  {
+    title: "Criar História",
+    description: "Escreva histórias e eventos para sua campanha",
+    icon: Book,
+    path: "/creations/stories"
+  }
+];
 
 const Creations = () => {
   return (
     <MainLayout>
-      <div className="container mx-auto">
+      <div className="container mx-auto p-4">
         <h1 className="text-3xl font-medievalsharp text-white mb-6">Criações</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Link to="/creations/characters">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <User size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Personagem</h2>
-              <p className="text-fantasy-stone text-center">Crie um novo personagem para suas aventuras.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/maps">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Map size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Mapa</h2>
-              <p className="text-fantasy-stone text-center">Crie um novo mapa para suas aventuras.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/items">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Package size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Item</h2>
-              <p className="text-fantasy-stone text-center">Crie um novo item para seus personagens usarem.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/monsters">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Skull size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Monstro</h2>
-              <p className="text-fantasy-stone text-center">Crie um novo monstro para desafiar seus jogadores.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/npcs">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Users size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar NPC</h2>
-              <p className="text-fantasy-stone text-center">Crie um personagem não jogável para interagir com os jogadores.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/stories">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Book size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar História</h2>
-              <p className="text-fantasy-stone text-center">Escreva uma nova história para compartilhar com seus amigos.</p>
-            </div>
-          </Link>
+          {creationOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <Link key={option.title} to={option.path}>
+                <DungeonCard
+                  title={option.title}
+                  className="h-full hover:scale-105 transition-transform duration-200"
+                >
+                  <div className="flex flex-col items-center gap-4">
+                    <Icon size={48} className="text-fantasy-gold" />
+                    <p className="text-fantasy-stone text-center">
+                      {option.description}
+                    </p>
+                  </div>
+                </DungeonCard>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </MainLayout>
