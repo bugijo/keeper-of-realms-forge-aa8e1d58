@@ -1,9 +1,18 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Gift, Gem, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export type ItemCategory = 'theme' | 'asset' | 'premium' | 'gem';
 
@@ -18,7 +27,6 @@ export interface ShopItemProps {
   category: ItemCategory;
   popular?: boolean;
   new?: boolean;
-  onPurchase?: (id: string) => void;
 }
 
 export const ShopItem = ({
@@ -32,13 +40,75 @@ export const ShopItem = ({
   category,
   popular = false,
   new: isNew = false,
-  onPurchase
 }: ShopItemProps) => {
-  const handlePurchase = () => {
-    // Simular uma compra
-    toast.success(`Item "${name}" adicionado ao carrinho!`);
-    if (onPurchase) {
-      onPurchase(id);
+  const { user } = useAuth();
+  const finalPrice = discountPrice || price;
+
+  const handlePurchase = async () => {
+    if (!user) {
+      toast.error("Você precisa estar logado para fazer compras!");
+      return;
+    }
+
+    try {
+      if (currency === 'gems') {
+        // Verificar saldo de gemas
+        const { data: balance } = await supabase
+          .from('user_balance')
+          .select('gems')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!balance || balance.gems < finalPrice) {
+          toast.error("Saldo de gemas insuficiente!");
+          return;
+        }
+
+        // Criar transação
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: user.id,
+            item_id: id,
+            item_name: name,
+            amount: finalPrice,
+            currency: 'gems',
+            status: 'completed'
+          });
+
+        if (transactionError) throw transactionError;
+
+        // Atualizar saldo
+        const { error: updateError } = await supabase
+          .from('user_balance')
+          .update({ gems: balance.gems - finalPrice })
+          .eq('user_id', user.id);
+
+        if (updateError) throw updateError;
+
+        toast.success(`Item "${name}" comprado com sucesso!`);
+      } else {
+        // Criar transação pendente para pagamento real
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: user.id,
+            item_id: id,
+            item_name: name,
+            amount: finalPrice,
+            currency: 'real',
+            status: 'pending'
+          });
+
+        if (transactionError) throw transactionError;
+
+        // Aqui você redirecionaria para a página de pagamento
+        toast.info("Redirecionando para o pagamento...");
+        // TODO: Implementar redirecionamento para checkout
+      }
+    } catch (error) {
+      console.error('Erro na compra:', error);
+      toast.error("Erro ao processar a compra. Tente novamente.");
     }
   };
 
@@ -99,7 +169,6 @@ export const ShopItem = ({
           <div className="absolute inset-0 bg-gradient-to-t from-fantasy-dark to-transparent opacity-80"></div>
         </div>
 
-        {/* Badges */}
         <div className="absolute top-2 left-2 flex gap-1">
           <Badge variant="outline" className="bg-fantasy-dark/80 text-xs font-normal px-2 py-0.5 flex gap-1 items-center">
             {getCategoryIcon(category)}
@@ -115,7 +184,6 @@ export const ShopItem = ({
           )}
         </div>
 
-        {/* Discount */}
         {discountPrice && (
           <div className="absolute top-2 right-2">
             <Badge className="bg-red-500 text-white border-none">
@@ -147,13 +215,32 @@ export const ShopItem = ({
             )}
           </div>
           
-          <Button 
-            onClick={handlePurchase}
-            className="fantasy-button primary h-8 px-3 py-1 text-xs"
-          >
-            <ShoppingCart size={14} className="mr-1" />
-            Comprar
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                className="fantasy-button primary h-8 px-3 py-1 text-xs"
+              >
+                <ShoppingCart size={14} className="mr-1" />
+                Comprar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-fantasy-dark border-fantasy-purple/30">
+              <DialogHeader>
+                <DialogTitle className="text-fantasy-gold font-medievalsharp">Confirmar Compra</DialogTitle>
+                <DialogDescription>
+                  Você deseja comprar "{name}" por {formatPrice(finalPrice)}?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 flex justify-end gap-3">
+                <Button 
+                  onClick={handlePurchase}
+                  className="fantasy-button primary"
+                >
+                  Confirmar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

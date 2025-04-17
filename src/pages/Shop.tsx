@@ -1,19 +1,14 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import ShopItem, { ShopItemProps } from '@/components/shop/ShopItem';
-import CartDrawer, { CartItem } from '@/components/shop/CartDrawer';
 import { 
   Tabs, 
   TabsList, 
   TabsTrigger, 
   TabsContent 
 } from '@/components/ui/tabs';
-import { Sparkles, Package, Crown, Gem, Search, Filter } from 'lucide-react';
+import { Sparkles, Package, Crown, Gem, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 // Dados de amostra para a loja
 const sampleShopItems: ShopItemProps[] = [
@@ -117,10 +112,8 @@ const sampleShopItems: ShopItemProps[] = [
 ];
 
 const Shop = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   const filteredItems = sampleShopItems.filter(item => {
     // Filtrar por categoria
@@ -137,49 +130,6 @@ const Shop = () => {
     return true;
   });
   
-  const addToCart = (itemId: string) => {
-    const item = sampleShopItems.find(i => i.id === itemId);
-    if (!item) return;
-    
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i.id === itemId);
-      
-      if (existingItem) {
-        return prevItems.map(i => 
-          i.id === itemId ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      
-      return [...prevItems, {
-        id: item.id,
-        name: item.name,
-        price: item.discountPrice || item.price,
-        imageUrl: item.imageUrl,
-        quantity: 1,
-        currency: item.currency
-      }];
-    });
-  };
-  
-  const removeFromCart = (itemId: string) => {
-    setCartItems(prevItems => prevItems.filter(i => i.id !== itemId));
-  };
-  
-  const updateQuantity = (itemId: string, quantity: number) => {
-    setCartItems(prevItems => 
-      prevItems.map(i => i.id === itemId ? { ...i, quantity } : i)
-    );
-  };
-  
-  const clearCart = () => {
-    setCartItems([]);
-  };
-  
-  const handleCheckout = () => {
-    toast.success("Compra finalizada com sucesso! Obrigado pela sua compra.");
-    clearCart();
-  };
-  
   return (
     <MainLayout>
       <div className="container mx-auto py-6">
@@ -188,13 +138,6 @@ const Shop = () => {
             <h1 className="text-3xl font-medievalsharp text-fantasy-gold">Loja</h1>
             <p className="text-fantasy-stone">Encontre itens, temas e recursos para suas aventuras</p>
           </div>
-          <CartDrawer 
-            items={cartItems}
-            onRemove={removeFromCart}
-            onUpdateQuantity={updateQuantity}
-            onCheckout={handleCheckout}
-            onClear={clearCart}
-          />
         </div>
         
         {/* Barra de pesquisa */}
@@ -257,7 +200,6 @@ const Shop = () => {
               <ShopItem 
                 key={item.id} 
                 {...item} 
-                onPurchase={addToCart}
               />
             ))}
           </div>

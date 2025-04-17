@@ -240,6 +240,66 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          item_id: string
+          item_name: string
+          payment_intent_id: string | null
+          payment_method: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency: string
+          id?: string
+          item_id: string
+          item_name: string
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          item_id?: string
+          item_name?: string
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_balance: {
+        Row: {
+          created_at: string | null
+          gems: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          gems?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          gems?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
