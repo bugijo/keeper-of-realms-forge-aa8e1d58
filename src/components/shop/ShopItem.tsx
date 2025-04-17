@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Gift, Gem, Sparkles } from 'lucide-react';
@@ -42,6 +43,7 @@ export const ShopItem = ({
   new: isNew = false,
 }: ShopItemProps) => {
   const { user } = useAuth();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const finalPrice = discountPrice || price;
 
   const handlePurchase = async () => {
@@ -87,6 +89,7 @@ export const ShopItem = ({
         if (updateError) throw updateError;
 
         toast.success(`Item "${name}" comprado com sucesso!`);
+        setIsDialogOpen(false);
       } else {
         // Criar transação pendente para pagamento real
         const { error: transactionError } = await supabase
@@ -102,9 +105,9 @@ export const ShopItem = ({
 
         if (transactionError) throw transactionError;
 
-        // Aqui você redirecionaria para a página de pagamento
+        // TODO: Implement Stripe checkout
         toast.info("Redirecionando para o pagamento...");
-        // TODO: Implementar redirecionamento para checkout
+        setIsDialogOpen(false);
       }
     } catch (error) {
       console.error('Erro na compra:', error);
@@ -215,7 +218,7 @@ export const ShopItem = ({
             )}
           </div>
           
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
                 className="fantasy-button primary h-8 px-3 py-1 text-xs"
