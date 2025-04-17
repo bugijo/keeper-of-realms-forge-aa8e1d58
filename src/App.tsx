@@ -25,6 +25,8 @@ import { NotFound } from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import CombatSystem from '@/pages/CombatSystem';
 import TacticalCombat from '@/pages/TacticalCombat';
+import CharactersCollection from '@/pages/CharactersCollection';
+import CreationsCollection from '@/pages/CreationsCollection';
 
 function App() {
   return (
@@ -36,7 +38,7 @@ function App() {
         
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/character" element={<Character />} />
+          <Route path="/character" element={<CharactersCollection />} />
           <Route path="/character/view/:id" element={<CharacterView />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/shop" element={<Shop />} />
@@ -47,6 +49,13 @@ function App() {
           {/* Creation routes */}
           <Route path="/creations" element={<Creations />} />
           <Route path="/creations/*" element={<CreationRouter />} />
+          
+          {/* Collections routes */}
+          <Route path="/maps" element={<CreationsCollection />} />
+          <Route path="/stories" element={<CreationsCollection />} />
+          <Route path="/items" element={<CreationsCollection />} />
+          <Route path="/monsters" element={<CreationsCollection />} />
+          <Route path="/npcs" element={<CreationsCollection />} />
           
           {/* View routes */}
           <Route path="/items/view/:id" element={<ItemsView />} />
