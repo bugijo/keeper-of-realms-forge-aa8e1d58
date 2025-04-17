@@ -281,18 +281,21 @@ export type Database = {
       }
       user_balance: {
         Row: {
+          coins: number
           created_at: string | null
           gems: number
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          coins?: number
           created_at?: string | null
           gems?: number
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          coins?: number
           created_at?: string | null
           gems?: number
           updated_at?: string | null

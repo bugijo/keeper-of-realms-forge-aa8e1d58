@@ -1,3 +1,4 @@
+
 import { Bell, MessageSquare, Settings, Gem, Coins } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
