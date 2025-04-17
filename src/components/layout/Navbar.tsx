@@ -1,5 +1,4 @@
-
-import { Bell, MessageSquare, Settings } from 'lucide-react';
+import { Bell, MessageSquare, Settings, Gem, Coins } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
@@ -10,6 +9,8 @@ const Navbar = () => {
   const [xp, setXp] = useState(0);
   const [maxXp, setMaxXp] = useState(500);
   const [level, setLevel] = useState(1);
+  const [gems, setGems] = useState(0);
+  const [coins, setCoins] = useState(0);
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -22,9 +23,21 @@ const Navbar = () => {
         .single();
 
       if (profile?.custom_metadata) {
-        setLevel(profile.custom_metadata.character_level || 1);
-        setXp(profile.custom_metadata.xp || 0);
-        setMaxXp(500 * profile.custom_metadata.character_level || 500);
+        const metadata = profile.custom_metadata as { character_level?: number; xp?: number };
+        setLevel(metadata.character_level || 1);
+        setXp(metadata.xp || 0);
+        setMaxXp(500 * (metadata.character_level || 1));
+      }
+
+      const { data: balance } = await supabase
+        .from('user_balance')
+        .select('gems, coins')
+        .eq('user_id', user.id)
+        .single();
+
+      if (balance) {
+        setGems(balance.gems || 0);
+        setCoins(balance.coins || 0);
       }
     };
 
@@ -47,13 +60,26 @@ const Navbar = () => {
           </div>
         </div>
         
-        <div className="flex-1 max-w-xs mx-4">
-          <div className="text-center text-fantasy-gold text-sm mb-1">
-            Nível {level}
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Gem className="text-emerald-400" size={16} />
+              <span className="text-sm font-medium text-fantasy-stone">{gems}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Coins className="text-yellow-400" size={16} />
+              <span className="text-sm font-medium text-fantasy-stone">{coins}</span>
+            </div>
           </div>
-          <Progress value={(xp / maxXp) * 100} className="h-2 bg-fantasy-purple/20" />
-          <div className="text-center text-fantasy-stone text-xs mt-1">
-            {xp}/{maxXp} XP
+          
+          <div className="flex-1 max-w-xs">
+            <div className="text-center text-fantasy-gold text-sm mb-1">
+              Nível {level}
+            </div>
+            <Progress value={(xp / maxXp) * 100} className="h-2 bg-fantasy-purple/20" />
+            <div className="text-center text-fantasy-stone text-xs mt-1">
+              {xp}/{maxXp} XP
+            </div>
           </div>
         </div>
         
