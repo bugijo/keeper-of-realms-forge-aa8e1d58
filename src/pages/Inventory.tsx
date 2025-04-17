@@ -17,7 +17,8 @@ import {
   Shield, 
   Coffee, 
   Dices,
-  Search
+  Search,
+  PlusCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -141,7 +142,7 @@ const quickItems = [
   {
     name: "Amuleto da Proteção",
     description: "Um amuleto antigo que oferece proteção contra forças malignas.",
-    rarity: "uncommon" as const,
+    rarity: "rare" as const,
     type: "Acessório - Amuleto",
     stats: {
       resistênciaElemental: 10,
@@ -553,7 +554,7 @@ const Inventory = () => {
           <TabsContent value="maps" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Link to="/maps/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
-                <Plus size={48} className="text-fantasy-purple mb-4" />
+                <PlusCircle size={48} className="text-fantasy-purple mb-4" />
                 <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Novo Mapa</span>
               </Link>
             </div>
@@ -562,7 +563,7 @@ const Inventory = () => {
           <TabsContent value="stories" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Link to="/stories/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
-                <Plus size={48} className="text-fantasy-purple mb-4" />
+                <PlusCircle size={48} className="text-fantasy-purple mb-4" />
                 <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Nova História</span>
               </Link>
             </div>
