@@ -31,7 +31,7 @@ const inventoryCategories = [
     description: "Heróis, vilões e todos os personagens que você criou",
     count: 4,
     action: "Ver Personagens",
-    path: "/inventory/characters"
+    path: "/character"
   },
   {
     title: "Itens & Armas",
@@ -167,299 +167,6 @@ const Inventory = () => {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   
-  // Função para renderizar a ficha completa de personagem no estilo D&D 5e
-  const renderCharacterSheet = (character: typeof quickCharacters[0]) => {
-    return (
-      <div className="fantasy-card p-4">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Cabeçalho da ficha */}
-          <div className="w-full">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-              <div>
-                <h2 className="text-2xl font-medievalsharp text-fantasy-gold">{character.name}</h2>
-                <p className="text-fantasy-stone">{character.race} • {character.class} • Nível {character.level}</p>
-              </div>
-              
-              <div className="mt-2 md:mt-0 flex gap-2">
-                <button className="fantasy-button secondary text-xs py-1.5">Editar</button>
-                <button className="fantasy-button primary text-xs py-1.5">Imprimir</button>
-              </div>
-            </div>
-
-            <Tabs defaultValue={characterTab} onValueChange={setCharacterTab} className="w-full">
-              <TabsList className="bg-fantasy-dark/70 border-b border-fantasy-purple/30 p-0 rounded-none w-full flex justify-start overflow-x-auto">
-                <TabsTrigger 
-                  value="attributes" 
-                  className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                >
-                  Atributos
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="skills" 
-                  className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                >
-                  Perícias
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="equipment" 
-                  className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                >
-                  Equipamento
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="spells" 
-                  className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                >
-                  Magias
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="background" 
-                  className="py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-fantasy-gold rounded-none data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                >
-                  História
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="attributes" className="pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Vida e recursos */}
-                  <div className="fantasy-border p-3">
-                    <h3 className="text-center font-medievalsharp text-fantasy-purple mb-2">Recursos</h3>
-                    <div className="space-y-3">
-                      {character.stats.filter(stat => stat.max).map((stat, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between">
-                            <span className="text-sm">{stat.name}</span>
-                            <span className="text-sm font-medium">{stat.value}/{stat.max}</span>
-                          </div>
-                          <div className="h-2 bg-fantasy-dark/70 rounded-full mt-1">
-                            <div 
-                              className="h-full bg-gradient-to-r from-fantasy-purple to-fantasy-accent rounded-full" 
-                              style={{ width: `${(stat.value / (stat.max || 1)) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Atributos principais */}
-                  <div className="fantasy-border p-3">
-                    <h3 className="text-center font-medievalsharp text-fantasy-purple mb-2">Atributos Físicos</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {character.stats.filter(stat => ['Força', 'Destreza', 'Constituição'].includes(stat.name)).map((stat, index) => (
-                        <div key={index} className="text-center">
-                          <div className="w-14 h-14 mx-auto rounded-full border-2 border-fantasy-purple/50 bg-fantasy-dark/30 flex items-center justify-center">
-                            <span className="text-xl font-medievalsharp text-fantasy-gold">{stat.value}</span>
-                          </div>
-                          <div className="mt-1 text-xs text-fantasy-stone">
-                            {stat.name}
-                            <div className="text-xxs">
-                              {Math.floor((stat.value - 10) / 2) >= 0 ? '+' : ''}
-                              {Math.floor((stat.value - 10) / 2)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Atributos mentais */}
-                  <div className="fantasy-border p-3">
-                    <h3 className="text-center font-medievalsharp text-fantasy-purple mb-2">Atributos Mentais</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {character.stats.filter(stat => ['Inteligência', 'Sabedoria', 'Carisma'].includes(stat.name)).map((stat, index) => (
-                        <div key={index} className="text-center">
-                          <div className="w-14 h-14 mx-auto rounded-full border-2 border-fantasy-purple/50 bg-fantasy-dark/30 flex items-center justify-center">
-                            <span className="text-xl font-medievalsharp text-fantasy-gold">{stat.value}</span>
-                          </div>
-                          <div className="mt-1 text-xs text-fantasy-stone">
-                            {stat.name}
-                            <div className="text-xxs">
-                              {Math.floor((stat.value - 10) / 2) >= 0 ? '+' : ''}
-                              {Math.floor((stat.value - 10) / 2)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="skills" className="pt-4">
-                <div className="fantasy-border p-4">
-                  <h3 className="text-center font-medievalsharp text-fantasy-purple mb-4">Perícias</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {['Acrobacia', 'Arcanismo', 'Atletismo', 'Atuação', 'Blefar', 'Furtividade', 'História', 'Intimidação', 'Intuição', 'Investigação', 'Lidar com Animais', 'Medicina', 'Natureza', 'Percepção', 'Persuasão', 'Prestidigitação', 'Religião', 'Sobrevivência'].map((skill, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full border border-fantasy-purple/70 flex items-center justify-center">
-                          {index % 3 === 0 && <CheckCircle size={12} className="text-fantasy-gold" />}
-                        </div>
-                        <span className="text-sm text-fantasy-stone">{skill}</span>
-                        <span className="text-xs ml-auto">
-                          {index % 3 === 0 ? '+3' : '+0'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="equipment" className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="fantasy-border p-4">
-                    <h3 className="text-center font-medievalsharp text-fantasy-purple mb-3">Equipamentos</h3>
-                    <div className="space-y-2">
-                      {quickItems.map((item, index) => (
-                        <div key={index} className="fantasy-border p-2 bg-fantasy-dark/20">
-                          <div className="flex justify-between">
-                            <div>
-                              <span className="text-sm font-medievalsharp">{item.name}</span>
-                              <div className="text-xs text-fantasy-stone">{item.type}</div>
-                            </div>
-                            {item.equipped && (
-                              <span className="text-xs bg-fantasy-purple/20 text-fantasy-purple rounded-full px-2 py-0.5 h-fit">
-                                Equipado
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="fantasy-border p-4">
-                    <h3 className="text-center font-medievalsharp text-fantasy-purple mb-3">Inventário</h3>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>Moedas de Ouro</span>
-                        <span>120</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Moedas de Prata</span>
-                        <span>35</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Moedas de Cobre</span>
-                        <span>57</span>
-                      </div>
-                      <div className="h-px bg-fantasy-purple/20 my-2"></div>
-                      <div className="space-y-1">
-                        <div className="text-sm">• Poção de Cura (2)</div>
-                        <div className="text-sm">• Corda (15m)</div>
-                        <div className="text-sm">• Livro de Feitiços</div>
-                        <div className="text-sm">• Componentes Arcanos</div>
-                        <div className="text-sm">• Símbolo Sagrado</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="spells" className="pt-4">
-                <div className="fantasy-border p-4">
-                  <h3 className="text-center font-medievalsharp text-fantasy-purple mb-3">Grimório</h3>
-                  
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-2 text-sm font-medievalsharp text-fantasy-purple mb-1">
-                      <div>Truques</div>
-                      <div>Nível 1</div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="fantasy-border p-2 bg-fantasy-dark/20">
-                        <div className="space-y-1 text-sm">
-                          <div>• Luz</div>
-                          <div>• Mãos Mágicas</div>
-                          <div>• Prestidigitação</div>
-                          <div>• Raio de Gelo</div>
-                        </div>
-                      </div>
-                      
-                      <div className="fantasy-border p-2 bg-fantasy-dark/20">
-                        <div className="space-y-1 text-sm">
-                          {quickSpells.filter(spell => spell.level === 1).map((spell, index) => (
-                            <div key={index}>• {spell.name}</div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-sm font-medievalsharp text-fantasy-purple mb-1 mt-3">
-                      <div>Nível 2</div>
-                      <div>Nível 3</div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="fantasy-border p-2 bg-fantasy-dark/20">
-                        <div className="space-y-1 text-sm">
-                          <div>• Invisibilidade</div>
-                          <div>• Passos Sem Rastros</div>
-                        </div>
-                      </div>
-                      
-                      <div className="fantasy-border p-2 bg-fantasy-dark/20">
-                        <div className="space-y-1 text-sm">
-                          {quickSpells.filter(spell => spell.level === 3).map((spell, index) => (
-                            <div key={index}>• {spell.name}</div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="background" className="pt-4">
-                <div className="fantasy-border p-4">
-                  <h3 className="text-center font-medievalsharp text-fantasy-purple mb-3">História do Personagem</h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Antecedente</h4>
-                      <p className="text-sm text-fantasy-stone">Sábio - Pesquisador Arcano</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Alinhamento</h4>
-                      <p className="text-sm text-fantasy-stone">Neutro e Bom</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Traços de Personalidade</h4>
-                      <p className="text-sm text-fantasy-stone">Curioso e metódico, sempre em busca de conhecimento. Tende a falar de forma complexa mesmo em situações simples.</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Ideais</h4>
-                      <p className="text-sm text-fantasy-stone">Conhecimento - O caminho para o poder e auto-aperfeiçoamento é através do conhecimento.</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Vínculos</h4>
-                      <p className="text-sm text-fantasy-stone">Protege uma antiga biblioteca élfica que contém segredos arcanos.</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">Defeitos</h4>
-                      <p className="text-sm text-fantasy-stone">A maioria das pessoas grita e corre quando vê um demônio. Eu paro e tomo notas sobre sua anatomia.</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medievalsharp text-fantasy-gold mb-1">História</h4>
-                      <p className="text-sm text-fantasy-stone">Nascido em uma família de magos elfos, Elrond dedicou sua vida ao estudo das artes arcanas. Após séculos de aprendizado na Biblioteca de Candlekeep, decidiu aventurar-se pelo mundo em busca de conhecimentos perdidos e artefatos mágicos.</p>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
@@ -483,106 +190,29 @@ const Inventory = () => {
           </div>
         </div>
 
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="categories" className="text-sm">Categorias</TabsTrigger>
-            <TabsTrigger value="character" className="text-sm">Personagens</TabsTrigger>
-            <TabsTrigger value="items" className="text-sm">Itens</TabsTrigger>
-            <TabsTrigger value="maps" className="text-sm">Mapas</TabsTrigger>
-            <TabsTrigger value="stories" className="text-sm">Histórias</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="categories" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {inventoryCategories.map((category, index) => (
-                <div key={index} className="fantasy-card p-6 flex flex-col items-center">
-                  <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
-                  <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
-                  <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
-                  
-                  <div className="mt-auto w-full">
-                    <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
-                      <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
-                    </div>
-                    
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
-                      onClick={() => navigate(category.path)}
-                    >
-                      {category.action}
-                    </motion.button>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {inventoryCategories.map((category, index) => (
+            <div key={index} className="fantasy-card p-6 flex flex-col items-center">
+              <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
+              <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
+              <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
+              
+              <div className="mt-auto w-full">
+                <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
+                  <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
                 </div>
-              ))}
+                
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
+                  onClick={() => navigate(category.path)}
+                >
+                  {category.action}
+                </motion.button>
+              </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="character" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {quickCharacters.map((character, index) => (
-                <Link key={index} to={`/character/view/${character.id}`} className="fantasy-card p-4 hover:border-fantasy-purple/50 transition-colors">
-                  <CharacterCard 
-                    name={character.name}
-                    level={character.level}
-                    class={character.class}
-                    race={character.race}
-                    stats={character.stats}
-                  />
-                </Link>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="items" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {quickItems.map((item, index) => (
-                <InventoryItem 
-                  key={index}
-                  name={item.name}
-                  description={item.description}
-                  rarity={item.rarity}
-                  type={item.type}
-                  stats={item.stats}
-                  equipped={item.equipped}
-                />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="maps" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link to="/maps/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
-                <PlusCircle size={48} className="text-fantasy-purple mb-4" />
-                <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Novo Mapa</span>
-              </Link>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="stories" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link to="/stories/create" className="fantasy-card p-6 flex flex-col items-center justify-center min-h-[200px] hover:border-fantasy-purple/50 transition-colors">
-                <PlusCircle size={48} className="text-fantasy-purple mb-4" />
-                <span className="text-lg font-medievalsharp text-fantasy-purple">Criar Nova História</span>
-              </Link>
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        {/* Componente de rolagem de dados */}
-        <div className="fixed bottom-6 right-6 z-10">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-fantasy-gold text-fantasy-dark w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
-            onClick={() => {
-              const result = Math.floor(Math.random() * 20) + 1;
-              // toast para mostrar o resultado do dado
-            }}
-          >
-            <Dices size={24} />
-          </motion.button>
+          ))}
         </div>
         
         <DiceRoller />
