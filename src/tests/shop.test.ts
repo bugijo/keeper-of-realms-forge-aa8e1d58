@@ -106,7 +106,7 @@ describe('CartDrawer Component', () => {
     
     expect(screen.getByText('Poção de Cura')).toBeDefined();
     expect(screen.getByText('Espada de Aço')).toBeDefined();
-    expect(screen.getByText('350 gemas')).toBeDefined();
+    expect(screen.getByText('450 gemas')).toBeDefined();
   });
   
   it('calls onRemove when remove button is clicked', () => {
