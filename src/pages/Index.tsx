@@ -1,4 +1,3 @@
-
 import MainLayout from "@/components/layout/MainLayout";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -8,7 +7,7 @@ import {
   Users, 
   MapPin, 
   Scroll,
-  DiceIcon,
+  Dice,
   Sword
 } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
@@ -53,7 +52,7 @@ const quickActions = [
   },
   {
     title: "Rolar Dados",
-    icon: DiceIcon,
+    icon: Dice,
     path: "/dice",
     description: "Teste sua sorte"
   }
