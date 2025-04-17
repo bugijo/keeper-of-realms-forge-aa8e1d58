@@ -1,137 +1,73 @@
 
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { 
-  Sidebar as ShadcnSidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem,
-  SidebarTrigger
-} from "@/components/ui/sidebar";
-import { Home, Sword, Book, Shield, Package, Map, Compass, LayoutGrid } from "lucide-react";
-import { Link } from "react-router-dom";
-
-const menuItems = [
-  {
-    title: "Home",
-    icon: Home,
-    path: "/"
-  },
-  {
-    title: "Quests",
-    icon: Compass,
-    path: "/quests"
-  },
-  {
-    title: "Character",
-    icon: Sword,
-    path: "/character"
-  },
-  {
-    title: "Inventory",
-    icon: Package, 
-    path: "/inventory" 
-  },
-  {
-    title: "Guilds",
-    icon: Shield,
-    path: "/guilds"
-  },
-  {
-    title: "Spellbook",
-    icon: Book,
-    path: "/spellbook"
-  },
-  {
-    title: "World Map",
-    icon: Map,
-    path: "/world-map"
-  }
-];
+  Home, User, Book, Map, Sword, Users, ShoppingCart, 
+  Settings, ChevronLeft, ChevronRight, Scroll, Skull,
+  Shield, Crosshair
+} from 'lucide-react';
 
 const Sidebar = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+  
+  const links = [
+    { to: '/', label: 'Início', icon: <Home size={20} /> },
+    { to: '/character', label: 'Personagens', icon: <User size={20} /> },
+    { to: '/creations/npc', label: 'NPCs', icon: <Users size={20} /> },
+    { to: '/creations/monster', label: 'Monstros', icon: <Skull size={20} /> },
+    { to: '/creations/item', label: 'Itens', icon: <Sword size={20} /> },
+    { to: '/creations/map', label: 'Mapas', icon: <Map size={20} /> },
+    { to: '/creations/story', label: 'Histórias', icon: <Book size={20} /> },
+    { to: '/tables', label: 'Mesas', icon: <Scroll size={20} /> },
+    { to: '/combat', label: 'Combate', icon: <Crosshair size={20} /> },
+    { to: '/shop', label: 'Loja', icon: <ShoppingCart size={20} /> },
+    { to: '/settings', label: 'Configurações', icon: <Settings size={20} /> },
+  ];
+  
   return (
-    <>
-      <ShadcnSidebar className="border-r border-fantasy-purple/20 bg-fantasy-dark/80 backdrop-blur-sm">
-        <SidebarContent>
-          <div className="md:hidden p-4">
-            <PlayerStatsCompact />
-          </div>
-          
-          <SidebarGroup>
-            <SidebarGroupLabel className="font-medievalsharp text-lg text-fantasy-gold">
-              Adventures
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.path} className="flex items-center gap-2">
-                        <item.icon className="text-fantasy-purple" size={18} />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          
-          <div className="absolute bottom-4 left-0 right-0 px-4">
-            <div className="fantasy-card p-3 flex flex-col items-center">
-              <div className="text-xs text-fantasy-gold font-medievalsharp mb-1">Daily Login</div>
-              <div className="w-full grid grid-cols-7 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => (
-                  <div 
-                    key={day} 
-                    className={`h-5 w-5 rounded-full flex items-center justify-center text-xs border ${
-                      day <= 3 
-                        ? "bg-fantasy-purple/50 border-fantasy-purple text-white" 
-                        : "bg-fantasy-dark/50 border-fantasy-purple/30 text-fantasy-purple/50"
-                    }`}
-                  >
-                    {day}
+    <div 
+      className={cn(
+        "fixed top-16 left-0 h-screen bg-fantasy-dark border-r border-fantasy-purple/20 transition-all duration-300 z-40",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="flex flex-col h-full">
+        <div className="flex-1 py-4 overflow-y-auto scrollbar-hide">
+          <ul className="space-y-2 px-2">
+            {links.map((link) => (
+              <li key={link.to}>
+                <Link
+                  to={link.to}
+                  className={cn(
+                    "flex items-center p-2 rounded-lg transition-colors",
+                    "hover:bg-fantasy-purple/10 hover:text-fantasy-gold",
+                    location.pathname === link.to || location.pathname.startsWith(link.to + '/') 
+                      ? "bg-fantasy-purple/20 text-fantasy-gold" 
+                      : "text-fantasy-stone"
+                  )}
+                >
+                  <div className="flex-shrink-0">
+                    {link.icon}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </SidebarContent>
-      </ShadcnSidebar>
-      <div className="fixed bottom-4 right-4 md:hidden z-50">
-        <SidebarTrigger>
-          <button className="h-12 w-12 rounded-full bg-fantasy-purple text-white flex items-center justify-center shadow-lg">
-            <LayoutGrid size={20} />
-          </button>
-        </SidebarTrigger>
-      </div>
-    </>
-  );
-};
-
-// Mobile stats component
-const PlayerStatsCompact = () => {
-  return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-fantasy-gold">
-        <img 
-          src="https://images.unsplash.com/photo-1501854140801-50d01698950b" 
-          alt="Player Avatar" 
-          className="h-full w-full object-cover"
-        />
-      </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-center">
-          <div className="font-medievalsharp text-sm">Level 5</div>
-          <div className="flex items-center gap-1">
-            <div className="text-fantasy-gold text-sm">300/500 XP</div>
-          </div>
+                  {!collapsed && (
+                    <span className="ml-3 whitespace-nowrap">{link.label}</span>
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="w-full h-1.5 bg-fantasy-dark rounded-full mt-1">
-          <div className="h-full bg-gradient-to-r from-fantasy-purple to-fantasy-accent rounded-full" style={{ width: '60%' }}></div>
+        
+        <div className="p-4 border-t border-fantasy-purple/20">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="fantasy-button w-full justify-center py-2 secondary"
+          >
+            {collapsed ? <ChevronRight /> : <ChevronLeft />}
+            {!collapsed && <span className="ml-2">Recolher</span>}
+          </button>
         </div>
       </div>
     </div>

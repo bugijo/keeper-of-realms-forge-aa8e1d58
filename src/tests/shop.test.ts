@@ -1,8 +1,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ShopItem } from '../components/shop/ShopItem';
-import { CartDrawer } from '../components/shop/CartDrawer';
+import ShopItem from '../components/shop/ShopItem';
+import CartDrawer from '../components/shop/CartDrawer';
 
 // Mock data for tests
 const mockItem = {
@@ -10,7 +10,7 @@ const mockItem = {
   name: 'Poção de Cura',
   description: 'Restaura 50 pontos de vida',
   price: 100,
-  image: '/placeholder.svg',
+  imageUrl: '/placeholder.svg',
   category: 'potion',
   quantity: 1
 };
@@ -20,7 +20,7 @@ describe('ShopItem Component', () => {
     render(
       <ShopItem 
         item={mockItem}
-        onAddToCart={() => {}}
+        onPurchase={() => {}}
       />
     );
     
@@ -28,25 +28,30 @@ describe('ShopItem Component', () => {
     expect(screen.getByText('100 moedas')).toBeDefined();
   });
   
-  it('calls onAddToCart when add button is clicked', () => {
+  it('calls onPurchase when add button is clicked', () => {
     const mockAddToCart = vi.fn();
     
     render(
       <ShopItem 
-        item={mockItem}
-        onAddToCart={mockAddToCart}
+        id={mockItem.id}
+        name={mockItem.name}
+        description={mockItem.description}
+        price={mockItem.price}
+        imageUrl={mockItem.imageUrl}
+        category={mockItem.category}
+        onPurchase={mockAddToCart}
       />
     );
     
     fireEvent.click(screen.getByText('Adicionar ao Carrinho'));
-    expect(mockAddToCart).toHaveBeenCalledWith(mockItem);
+    expect(mockAddToCart).toHaveBeenCalledWith(mockItem.id);
   });
   
   it('shows item details when clicked', () => {
     render(
       <ShopItem 
         item={mockItem}
-        onAddToCart={() => {}}
+        onPurchase={() => {}}
       />
     );
     
@@ -62,7 +67,7 @@ describe('CartDrawer Component', () => {
       name: 'Poção de Cura',
       description: 'Restaura 50 pontos de vida',
       price: 100,
-      image: '/placeholder.svg',
+      imageUrl: '/placeholder.svg',
       category: 'potion',
       quantity: 2
     },
@@ -71,7 +76,7 @@ describe('CartDrawer Component', () => {
       name: 'Espada de Aço',
       description: '+5 de Dano',
       price: 250,
-      image: '/placeholder.svg',
+      imageUrl: '/placeholder.svg',
       category: 'weapon',
       quantity: 1
     }
@@ -80,11 +85,11 @@ describe('CartDrawer Component', () => {
   it('renders cart items correctly', () => {
     render(
       <CartDrawer 
-        isOpen={true}
-        onClose={() => {}}
         items={mockCartItems}
-        onRemoveItem={() => {}}
+        onRemove={() => {}}
+        onUpdateQuantity={() => {}}
         onCheckout={() => {}}
+        onClear={() => {}}
       />
     );
     
@@ -93,16 +98,16 @@ describe('CartDrawer Component', () => {
     expect(screen.getByText('Total: 450 moedas')).toBeDefined();
   });
   
-  it('calls onRemoveItem when remove button is clicked', () => {
+  it('calls onRemove when remove button is clicked', () => {
     const mockRemoveItem = vi.fn();
     
     render(
       <CartDrawer 
-        isOpen={true}
-        onClose={() => {}}
         items={mockCartItems}
-        onRemoveItem={mockRemoveItem}
+        onRemove={mockRemoveItem}
+        onUpdateQuantity={() => {}}
         onCheckout={() => {}}
+        onClear={() => {}}
       />
     );
     
