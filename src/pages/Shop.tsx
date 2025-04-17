@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ShopItem, { ShopItemProps } from '@/components/shop/ShopItem';
+import { Button } from '@/components/ui/button';
 import { 
   Tabs, 
   TabsList, 
@@ -10,7 +11,6 @@ import {
 import { Sparkles, Package, Crown, Gem, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-// Dados de amostra para a loja
 const sampleShopItems: ShopItemProps[] = [
   {
     id: '1',
@@ -116,12 +116,10 @@ const Shop = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredItems = sampleShopItems.filter(item => {
-    // Filtrar por categoria
     if (activeTab !== 'all' && item.category !== activeTab) {
       return false;
     }
     
-    // Filtrar por termo de pesquisa
     if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !item.description.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
@@ -140,7 +138,6 @@ const Shop = () => {
           </div>
         </div>
         
-        {/* Barra de pesquisa */}
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-fantasy-stone" size={18} />
           <Input
@@ -152,7 +149,6 @@ const Shop = () => {
           />
         </div>
         
-        {/* Abas de categorias */}
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
           <TabsList className="bg-fantasy-dark/70 border border-fantasy-purple/30 w-full grid grid-cols-5 h-auto">
             <TabsTrigger 
@@ -193,7 +189,6 @@ const Shop = () => {
           </TabsList>
         </Tabs>
         
-        {/* Grade de itens */}
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredItems.map(item => (
