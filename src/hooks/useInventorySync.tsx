@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,26 +21,12 @@ interface UseInventoryOptions {
   isMaster?: boolean;
 }
 
-interface CharacterInventoryItem {
-  id: string;
-  character_id: string;
-  name: string;
-  description: string;
-  quantity: number;
-  weight: number;
-  value: number;
-  type: string;
-  rarity: string;
-  equipped?: boolean;
-  imageUrl?: string;
-}
-
 export function useInventorySync({ characterId, isMaster = false }: UseInventoryOptions) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalWeight, setTotalWeight] = useState(0);
-  const [maxWeight, setMaxWeight] = useState(150); // Default max weight (can be calculated based on strength)
+  const [maxWeight, setMaxWeight] = useState(150);
 
   // Calculate encumbrance status
   const encumbranceStatus = () => {
@@ -57,18 +42,15 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
       try {
         setLoading(true);
         
-        // Use direct fetch approach to avoid type issues with non-existing tables
         const { data, error } = await supabase
-          .rpc('get_character_inventory', {
-            p_character_id: characterId
-          });
+          .from('character_inventory')
+          .select('*')
+          .eq('character_id', characterId);
         
         if (error) throw error;
         
-        // Map the data to match our InventoryItem interface
-        const inventoryItems: InventoryItem[] = (data || []).map((item: any) => ({
+        const inventoryItems = data?.map((item) => ({
           id: item.id,
-          character_id: item.character_id,
           name: item.name,
           description: item.description || '',
           quantity: item.quantity || 1,
@@ -77,28 +59,17 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
           type: item.type || 'misc',
           rarity: item.rarity || 'common',
           equipped: item.equipped || false,
-          imageUrl: item.imageUrl
-        }));
+          imageUrl: item.imageUrl,
+          character_id: item.character_id
+        })) || [];
         
         setInventory(inventoryItems);
         
-        // Calculate total weight
         const total = inventoryItems.reduce((sum, item) => {
           return sum + (item.weight * item.quantity);
         }, 0);
         
         setTotalWeight(total);
-        
-        // For real-time updates, we would need to set up a subscription
-        // but since the "character_inventory" table doesn't exist in Supabase yet,
-        // we'll use a polling mechanism instead
-        const intervalId = setInterval(() => {
-          loadInventory();
-        }, 60000); // Refresh every minute
-        
-        return () => {
-          clearInterval(intervalId);
-        };
       } catch (err: any) {
         console.error("Error loading inventory:", err);
         setError(err.message);

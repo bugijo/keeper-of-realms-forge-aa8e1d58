@@ -1,15 +1,46 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { MapPin, Backpack, Scroll, Map, Sword, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
+import { 
+  MapPin, 
+  Backpack, 
+  Scroll, 
+  Sword, 
+  ShoppingCart 
+} from "lucide-react";
 
 const navItems = [
-  { path: "/", icon: MapPin, label: "Missões" },
-  { path: "/inventory", icon: Backpack, label: "Inventário" },
-  { path: "/creations", icon: Scroll, label: "Criações" },
-  { path: "/tables", icon: Sword, label: "Mesas" },
-  { path: "/shop", icon: ShoppingCart, label: "Loja" },
+  { 
+    path: "/", 
+    icon: MapPin, 
+    label: "Missões",
+    testId: "missions-tab"
+  },
+  { 
+    path: "/character", 
+    icon: Scroll, 
+    label: "Personagens",
+    testId: "characters-tab"
+  },
+  { 
+    path: "/tables", 
+    icon: Sword, 
+    label: "Mesas",
+    testId: "tables-tab"
+  },
+  { 
+    path: "/inventory", 
+    icon: Backpack, 
+    label: "Inventário",
+    testId: "inventory-tab"
+  },
+  { 
+    path: "/shop", 
+    icon: ShoppingCart, 
+    label: "Loja",
+    testId: "shop-tab"
+  }
 ];
 
 export const MobileNavigation = () => {
@@ -17,7 +48,7 @@ export const MobileNavigation = () => {
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-fantasy-dark border-t border-fantasy-purple/20 py-1 px-2 z-50"
-         style={{ boxShadow: `0 -2px 10px rgba(0,0,0,0.2)` }}>
+         style={{ boxShadow: '0 -2px 10px rgba(0,0,0,0.2)' }}>
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -27,6 +58,7 @@ export const MobileNavigation = () => {
             <Link
               key={item.path}
               to={item.path}
+              data-testid={item.testId}
               className={cn(
                 "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
                 isActive ? "text-fantasy-gold" : "text-fantasy-stone/70 hover:text-fantasy-stone"
