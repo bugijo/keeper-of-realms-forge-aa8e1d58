@@ -104,14 +104,12 @@ const Inventory = () => {
                   <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
                 </div>
                 
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
+                <button
+                  className="w-full hover:scale-103 active:scale-98 transition-transform bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
                   onClick={() => navigate(category.path)}
                 >
                   {category.action}
-                </motion.button>
+                </button>
               </div>
             </div>
           ))}
