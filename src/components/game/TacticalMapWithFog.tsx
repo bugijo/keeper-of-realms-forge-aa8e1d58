@@ -1,8 +1,9 @@
+
 import React from 'react';
 
 interface TacticalMapWithFogProps {
-  fogPoints: { x: number; y: number }[];
-  onMapClick: (x: number; y: number) => void;
+  fogPoints: { x: number, y: number }[], // Changed semicolon to comma
+  onMapClick: (x: number, y: number) => void // Comma here
 }
 
 const TacticalMapWithFog = ({ fogPoints, onMapClick }: TacticalMapWithFogProps) => {
