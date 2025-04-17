@@ -139,13 +139,7 @@ const CombatSystem = () => {
         {characters.length > 0 && (
           <div className="mb-4 p-4 border rounded shadow-md bg-gray-800">
             <h2 className="text-lg font-semibold mb-2 text-gray-100">Combatants</h2>
-            <CombatTracker
-              data={{
-                characters,
-                removeCharacter,
-                rollInitiative
-              }}
-            />
+            <CombatTracker />
           </div>
         )}
 
