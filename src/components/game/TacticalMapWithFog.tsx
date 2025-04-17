@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -32,7 +31,6 @@ interface TacticalMapWithFogProps {
   onTokenMove: (id: string, x: number, y: number) => void;
 }
 
-// Token component - draggable
 const Token: React.FC<TokenProps> = ({ id, x, y, type, label, image, color, size, onTokenMove }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'token',
@@ -73,7 +71,6 @@ const Token: React.FC<TokenProps> = ({ id, x, y, type, label, image, color, size
   );
 };
 
-// Fog cell component
 const FogCell: React.FC<FogCellProps> = ({ x, y, isRevealed, toggleCell }) => {
   return (
     <div
@@ -93,7 +90,6 @@ const FogCell: React.FC<FogCellProps> = ({ x, y, isRevealed, toggleCell }) => {
   );
 };
 
-// Grid cell component for token dropping
 const GridCell: React.FC<{
   x: number;
   y: number;
@@ -126,7 +122,6 @@ const GridCell: React.FC<{
   );
 };
 
-// Main Tactical Map with Fog component
 const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
   mapImage = '/placeholder.svg',
   gridSize = 20,
@@ -135,12 +130,11 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
   onTokenMove,
 }) => {
   const [fogGrid, setFogGrid] = useState<boolean[][]>(() => {
-    // Initialize fog grid (true = revealed, false = fogged)
     const grid = [];
     for (let y = 0; y < gridSize; y++) {
       const row: boolean[] = [];
       for (let x = 0; x < gridSize; x++) {
-        row.push(false); // Start with all cells fogged
+        row.push(false);
       }
       grid.push(row);
     }
@@ -153,14 +147,11 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
 
-  // Update tokens when props change
   useEffect(() => {
     setMapTokens(tokens);
   }, [tokens]);
 
-  // Handle token movement
   const handleTokenMove = (x: number, y: number, tokenId: string) => {
-    // Update token position
     const newTokens = mapTokens.map(token => {
       if (token.id === tokenId) {
         return { ...token, x, y };
@@ -171,7 +162,6 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
     onTokenMove(tokenId, x, y);
   };
 
-  // Toggle fog cell
   const toggleFogCell = (x: number, y: number) => {
     const gridX = Math.floor(x / cellSize);
     const gridY = Math.floor(y / cellSize);
@@ -186,7 +176,6 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
     }
   };
 
-  // Handle mouse events for drawing fog
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!mapRef.current) return;
     
@@ -210,14 +199,12 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
     setIsDrawing(false);
   };
 
-  // Clear all fog
   const revealAll = () => {
     setFogGrid(prevGrid => 
       prevGrid.map(row => row.map(() => true))
     );
   };
 
-  // Reset all fog
   const hideAll = () => {
     setFogGrid(prevGrid => 
       prevGrid.map(row => row.map(() => false))
@@ -282,14 +269,12 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          {/* Map Background */}
           <img 
             src={mapImage} 
             alt="Tactical Map" 
             className="absolute top-0 left-0 w-full h-full object-cover"
           />
           
-          {/* Grid Overlay */}
           {showGrid && Array.from({ length: gridSize }).map((_, y) =>
             Array.from({ length: gridSize }).map((_, x) => (
               <GridCell
@@ -302,7 +287,6 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
             ))
           )}
           
-          {/* Fog of War */}
           {Array.from({ length: gridSize }).map((_, y) =>
             Array.from({ length: gridSize }).map((_, x) => (
               <FogCell
@@ -315,7 +299,6 @@ const TacticalMapWithFog: React.FC<TacticalMapWithFogProps> = ({
             ))
           )}
           
-          {/* Tokens */}
           {mapTokens.map(token => (
             <Token
               key={token.id}

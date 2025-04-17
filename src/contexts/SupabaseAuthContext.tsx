@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -15,6 +14,8 @@ interface AuthContextType {
   facebookSignIn: () => Promise<void>;
   anonymousSignIn: () => Promise<void>;
   updateUserProfile: (displayName: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  verifyEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,7 +28,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Mensagens de notificação
 const messages = {
   loginSuccess: (nome: string) => `🔥 Tochas Acesas! Bem-vindo, ${nome || 'Aventureiro'}!`,
   loginError: "🧙 Magia Falhou! Credenciais incorretas.",
@@ -48,26 +48,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("Setting up auth state listener");
     
-    // Configurar ouvinte de mudança de estado de autenticação PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Mostrar mensagem de boas-vindas no login
         if (event === 'SIGNED_IN' && session) {
           toast.success(messages.loginSuccess(session.user?.user_metadata?.name || ''));
         }
         
-        // Mostrar mensagem de logout
         if (event === 'SIGNED_OUT') {
           toast.success(messages.logoutSuccess);
         }
       }
     );
 
-    // DEPOIS verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Got initial session:", session?.user?.email);
       setSession(session);
@@ -81,7 +77,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  // Funções de autenticação
   const signUp = async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signUp({ 
@@ -182,17 +177,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const anonymousSignIn = async () => {
     console.log("Anonymous sign in initiated");
     try {
-      // Como o Supabase não tem login anônimo direto, vamos criar uma conta temporária
       const randomEmail = `demo_${Math.random().toString(36).substring(2, 15)}@example.com`;
       const randomPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      // Primeiro, fazemos login diretamente (sem registro prévio)
       const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: randomEmail,
         password: randomPassword
       });
       
-      // Se não conseguir fazer login (esperado, pois o usuário não existe), criamos um
       if (signInError) {
         const { error: signUpError } = await supabase.auth.signUp({
           email: randomEmail,
@@ -210,7 +202,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           throw signUpError;
         }
         
-        // Agora fazemos login com o usuário criado
         const { error: loginError } = await supabase.auth.signInWithPassword({
           email: randomEmail,
           password: randomPassword
@@ -224,7 +215,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         toast.success(messages.loginSuccess("Aventureiro Anônimo"));
       } else {
-        // Caso o usuário já exista (improvável)
         toast.success(messages.loginSuccess("Aventureiro Anônimo"));
       }
     } catch (error: any) {
@@ -250,6 +240,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login'
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
+      
+      toast.success(messages.resetPassword);
+    } catch (error: any) {
+      toast.error("Erro ao resetar senha: " + error.message);
+      throw error;
+    }
+  };
+
+  const verifyEmail = async () => {
+    try {
+      if (!user || !session) {
+        throw new Error("Usuário não está autenticado");
+      }
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email || '',
+        options: {
+          emailRedirectTo: window.location.origin + '/login'
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        throw error;
+      }
+      
+      toast.success(messages.verifyEmail);
+    } catch (error: any) {
+      toast.error("Erro ao enviar email de verificação: " + error.message);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -261,7 +295,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       googleSignIn,
       facebookSignIn,
       anonymousSignIn,
-      updateUserProfile
+      updateUserProfile,
+      resetPassword,
+      verifyEmail
     }}>
       {children}
     </AuthContext.Provider>

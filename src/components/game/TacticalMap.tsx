@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -51,26 +50,26 @@ const Token: React.FC<TokenProps> = ({ token, onMove, gridSize, isDMView }) => {
   const sizeMultiplier = getSizeMultiplier();
   const tokenSize = gridSize * sizeMultiplier;
 
+  const tokenStyles: React.CSSProperties = {
+    position: 'absolute',
+    left: `${token.x * gridSize}px`,
+    top: `${token.y * gridSize}px`,
+    width: `${tokenSize}px`,
+    height: `${tokenSize}px`,
+    transform: `translate(-${tokenSize / 2}px, -${tokenSize / 2}px)`,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDMView ? 'move' : 'default',
+    zIndex: 10,
+    pointerEvents: isDMView ? 'auto' : 'none',
+    backgroundColor: token.color || '#6366F1',
+    borderColor: token.type === 'player' ? '#34D399' : '#F87171',
+  };
+
   return (
     <div
       ref={drag}
-      style={{
-        position: 'absolute',
-        left: `${token.x * gridSize}px`,
-        top: `${token.y * gridSize}px`,
-        width: `${tokenSize}px`,
-        height: `${tokenSize}px`,
-        transform: `translate(-${tokenSize / 2}px, -${tokenSize / 2}px)`,
-        opacity: isDragging ? 0.5 : 1,
-        cursor: isDMView ? 'move' : 'default',
-        zIndex: 10,
-        pointerEvents: isDMView ? 'auto' : 'none',
-      }}
+      style={tokenStyles}
       className="rounded-full flex items-center justify-center text-center text-xs font-bold border-2 transition-all"
-      style={{
-        backgroundColor: token.color || '#6366F1',
-        borderColor: token.type === 'player' ? '#34D399' : '#F87171',
-      }}
     >
       {token.imageUrl ? (
         <img 
@@ -92,10 +91,21 @@ interface DropSquareProps {
   gridSize: number;
   inFog: boolean;
   isDMView: boolean;
+  onClick?: () => void;
+  onMouseEnter?: (e: React.MouseEvent) => void;
 }
 
 // Droppable square on the grid
-const DropSquare: React.FC<DropSquareProps> = ({ x, y, onDrop, gridSize, inFog, isDMView }) => {
+const DropSquare: React.FC<DropSquareProps> = ({ 
+  x, 
+  y, 
+  onDrop, 
+  gridSize, 
+  inFog, 
+  isDMView,
+  onClick,
+  onMouseEnter 
+}) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TOKEN',
     drop: (item: { id: string }) => {
@@ -120,6 +130,8 @@ const DropSquare: React.FC<DropSquareProps> = ({ x, y, onDrop, gridSize, inFog, 
       className={cn({
         'fog-of-war': inFog && !isDMView,
       })}
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
     />
   );
 };
@@ -239,8 +251,8 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
   };
 
   // Handle painting by dragging
-  const handleGridDrag = (x: number, y: number) => {
-    if (!isDMView || !showFogOfWar) return;
+  const handleGridDrag = (e: React.MouseEvent, x: number, y: number) => {
+    if (!isDMView || !showFogOfWar || !e.buttons) return;
     if (measuring) return;
     
     toggleFogAt(x, y, paintMode === 'reveal');
@@ -352,11 +364,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                     inFog={fogOfWarMap[y]?.[x]}
                     isDMView={isDMView}
                     onClick={() => handleGridClick(x, y)}
-                    onMouseEnter={(e) => {
-                      if (e.buttons === 1) {
-                        handleGridDrag(x, y);
-                      }
-                    }}
+                    onMouseEnter={(e) => handleGridDrag(e, x, y)}
                   />
                 ))}
               </div>

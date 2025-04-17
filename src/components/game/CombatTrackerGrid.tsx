@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Rulers, Move, Grid3x3, Grid2x2, Trash2 } from 'lucide-react';
+import { Ruler, Move, Grid3x3, Grid2x2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -370,7 +369,7 @@ export function CombatTrackerGrid({
               onClick={handleToggleMeasuring}
               className={measuring ? "bg-fantasy-purple" : ""}
             >
-              <Rulers size={16} className="mr-1" />
+              <Ruler size={16} className="mr-1" />
               Medir
             </Button>
             
