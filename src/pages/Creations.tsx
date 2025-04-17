@@ -1,9 +1,8 @@
+
 import React from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { MedievalButton } from "@/components/rpg/MedievalButton";
 import { Link } from "react-router-dom";
-import { Plus, Sword, Book, Map, User, Wand2, Scroll } from "lucide-react";
-import DiceRoller from "@/components/dice/DiceRoller";
+import { Plus, Sword, Book, Map, User, Package, Scroll, Skull, Users } from "lucide-react";
 
 const Creations = () => {
   return (
@@ -20,22 +19,6 @@ const Creations = () => {
             </div>
           </Link>
           
-          <Link to="/creations/stories">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Book size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar História</h2>
-              <p className="text-fantasy-stone text-center">Escreva uma nova história para compartilhar com seus amigos.</p>
-            </div>
-          </Link>
-          
-          <Link to="/creations/npcs">
-            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Wand2 size={64} className="text-fantasy-gold mb-4" />
-              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar NPC</h2>
-              <p className="text-fantasy-stone text-center">Crie um personagem não jogável para interagir com os jogadores.</p>
-            </div>
-          </Link>
-          
           <Link to="/creations/maps">
             <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
               <Map size={64} className="text-fantasy-gold mb-4" />
@@ -46,7 +29,7 @@ const Creations = () => {
           
           <Link to="/creations/items">
             <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Plus size={64} className="text-fantasy-gold mb-4" />
+              <Package size={64} className="text-fantasy-gold mb-4" />
               <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Item</h2>
               <p className="text-fantasy-stone text-center">Crie um novo item para seus personagens usarem.</p>
             </div>
@@ -54,15 +37,27 @@ const Creations = () => {
           
           <Link to="/creations/monsters">
             <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
-              <Sword size={64} className="text-fantasy-gold mb-4" />
+              <Skull size={64} className="text-fantasy-gold mb-4" />
               <h2 className="text-xl font-medievalsharp text-white mb-2">Criar Monstro</h2>
               <p className="text-fantasy-stone text-center">Crie um novo monstro para desafiar seus jogadores.</p>
             </div>
           </Link>
-        </div>
-        
-        <div className="mt-8">
-          <DiceRoller />
+          
+          <Link to="/creations/npcs">
+            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
+              <Users size={64} className="text-fantasy-gold mb-4" />
+              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar NPC</h2>
+              <p className="text-fantasy-stone text-center">Crie um personagem não jogável para interagir com os jogadores.</p>
+            </div>
+          </Link>
+          
+          <Link to="/creations/stories">
+            <div className="fantasy-card p-6 flex flex-col items-center justify-center hover:shadow-lg transition-shadow duration-200">
+              <Book size={64} className="text-fantasy-gold mb-4" />
+              <h2 className="text-xl font-medievalsharp text-white mb-2">Criar História</h2>
+              <p className="text-fantasy-stone text-center">Escreva uma nova história para compartilhar com seus amigos.</p>
+            </div>
+          </Link>
         </div>
       </div>
     </MainLayout>
