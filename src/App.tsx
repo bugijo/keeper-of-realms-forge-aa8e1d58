@@ -4,24 +4,24 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
-import { Index } from "@/pages/Index";
-import { Login } from "@/pages/Login";
-import { Register } from "@/pages/Register";
-import { Character } from "@/pages/Character";
-import { CharacterView } from "@/pages/CharacterView";
-import { Inventory } from "@/pages/Inventory";
+import Index from "@/pages/Index";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Character from "@/pages/Character";
+import CharacterView from "@/pages/CharacterView";
+import Inventory from "@/pages/Inventory";
 import Shop from "@/pages/Shop";
-import { Tables } from "@/pages/Tables";
-import { Creations } from "@/pages/Creations";
-import { CreationRouter } from "@/pages/CreationRouter";
-import { ItemsView } from "@/pages/ItemsView";
-import { MapsView } from "@/pages/MapsView";
-import { MonstersView } from "@/pages/MonstersView";
-import { NpcsView } from "@/pages/NpcsView";
-import { StoriesView } from "@/pages/StoriesView";
-import { GameMasterView } from "@/pages/GameMasterView";
-import { PlayerView } from "@/pages/PlayerView";
-import { NotFound } from "@/pages/NotFound";
+import Tables from "@/pages/Tables";
+import Creations from "@/pages/Creations";
+import CreationRouter from "@/pages/CreationRouter";
+import ItemsView from "@/pages/ItemsView";
+import MapsView from "@/pages/MapsView";
+import MonstersView from "@/pages/MonstersView";
+import NpcsView from "@/pages/NpcsView";
+import StoriesView from "@/pages/StoriesView";
+import GameMasterView from "@/pages/GameMasterView";
+import PlayerView from "@/pages/PlayerView";
+import NotFound from "@/pages/NotFound";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import CombatSystem from '@/pages/CombatSystem';
 import TacticalCombat from '@/pages/TacticalCombat';
@@ -37,7 +37,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         
         {/* Protected routes */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute children={undefined} />}>
           <Route path="/character" element={<CharactersCollection />} />
           <Route path="/character/view/:id" element={<CharacterView />} />
           <Route path="/inventory" element={<Inventory />} />
