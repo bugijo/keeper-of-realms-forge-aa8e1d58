@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,40 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+
+// Define character archetypes based on the image
+const characterArchetypes = [
+  { 
+    name: 'Clérigo', 
+    description: 'Portador de um cajado sagrado, dedicado a servir sua divindade',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  },
+  { 
+    name: 'Mago', 
+    description: 'Conjurador de magias, dominando as energias arcanas',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  },
+  { 
+    name: 'Guerreiro', 
+    description: 'Combatente habilidoso, maestro em armas e estratégia',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  },
+  { 
+    name: 'Paladino', 
+    description: 'Cavaleiro sagrado, justiceiro e protetor',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  },
+  { 
+    name: 'Bárbaro', 
+    description: 'Guerreiro selvagem, força bruta e resistência',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  },
+  { 
+    name: 'Feiticeiro', 
+    description: 'Manipulador de energia mística, com poderes inatos',
+    imageUrl: '/lovable-uploads/474a96aa-79a3-40c1-96e2-1d95a6be7b5e.png'
+  }
+];
 
 const classes = [
   'Bárbaro',
@@ -92,6 +126,21 @@ const CharacterCreation = () => {
     }
   }, [id, isEditing]);
 
+  const [selectedArchetype, setSelectedArchetype] = useState<string | null>(null);
+
+  const handleArchetypeSelect = (archetype: string) => {
+    setSelectedArchetype(archetype);
+    // Update form data with archetype details
+    const selectedType = characterArchetypes.find(type => type.name === archetype);
+    if (selectedType) {
+      setFormData(prev => ({
+        ...prev,
+        class: selectedType.name,
+        imageUrl: selectedType.imageUrl
+      }));
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -154,8 +203,38 @@ const CharacterCreation = () => {
           {isEditing ? 'Editar Personagem' : 'Criar Novo Personagem'}
         </h1>
 
-        <form onSubmit={handleSubmit}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="mb-6">
+          <h2 className="text-xl font-medievalsharp text-fantasy-stone mb-4">Escolha seu Arquétipo</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {characterArchetypes.map((archetype) => (
+              <div 
+                key={archetype.name}
+                onClick={() => handleArchetypeSelect(archetype.name)}
+                className={`
+                  fantasy-card p-4 cursor-pointer transition-all 
+                  ${selectedArchetype === archetype.name ? 'border-2 border-fantasy-purple' : ''}
+                `}
+              >
+                <div className="flex items-center">
+                  <img 
+                    src={archetype.imageUrl} 
+                    alt={archetype.name} 
+                    className="w-16 h-16 object-cover mr-4 rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-medievalsharp text-white">{archetype.name}</h3>
+                    <p className="text-sm text-fantasy-stone">{archetype.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rest of the existing form, only showing when an archetype is selected */}
+        {selectedArchetype && (
+          <form onSubmit={handleSubmit}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
               <TabsTrigger value="stats">Atributos</TabsTrigger>
@@ -400,6 +479,7 @@ const CharacterCreation = () => {
             </div>
           </div>
         </form>
+        )}
       </div>
     </MainLayout>
   );
