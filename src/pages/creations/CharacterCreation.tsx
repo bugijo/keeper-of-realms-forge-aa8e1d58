@@ -58,6 +58,7 @@ const CharacterCreation = () => {
     charisma: 10,
     appearance: '',
     backstory: '',
+    imageUrl: '/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png', // Added default character image
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -84,6 +85,7 @@ const CharacterCreation = () => {
           charisma: 14,
           appearance: 'Alto, cabelos escuros, olhos cinzentos, vestido com roupas de couro desgastadas.',
           backstory: 'Herdeiro do trono de Gondor, criado entre os elfos, agora vive como um ranger protegendo as terras do norte.',
+          imageUrl: '/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png',
         });
         setIsLoading(false);
       }, 1000);
@@ -335,6 +337,28 @@ const CharacterCreation = () => {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* New image upload section */}
+          <div className="mb-6">
+            <Label>Imagem do Personagem</Label>
+            <div className="flex items-center space-x-4">
+              <img 
+                src={formData.imageUrl} 
+                alt="Personagem" 
+                className="w-32 h-32 object-cover rounded-lg"
+              />
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  // Future: Implement image upload functionality
+                  toast.info('Funcionalidade de upload de imagem em desenvolvimento');
+                }}
+              >
+                Alterar Imagem
+              </Button>
+            </div>
+          </div>
 
           <div className="mt-6 flex justify-between">
             <Button
