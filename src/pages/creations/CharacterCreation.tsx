@@ -58,7 +58,7 @@ const CharacterCreation = () => {
     charisma: 10,
     appearance: '',
     backstory: '',
-    imageUrl: '/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png', // Added default character image
+    imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png', // Updated default character image
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +85,7 @@ const CharacterCreation = () => {
           charisma: 14,
           appearance: 'Alto, cabelos escuros, olhos cinzentos, vestido com roupas de couro desgastadas.',
           backstory: 'Herdeiro do trono de Gondor, criado entre os elfos, agora vive como um ranger protegendo as terras do norte.',
-          imageUrl: '/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png',
+          imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
         });
         setIsLoading(false);
       }, 1000);

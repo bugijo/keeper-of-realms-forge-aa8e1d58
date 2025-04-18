@@ -36,7 +36,7 @@ const CharacterGrid = ({ characters, onDelete }: CharacterGridProps) => {
         <div key={character.id} className="fantasy-card p-4 relative group">
           <div className="h-32 w-32 mx-auto rounded-full overflow-hidden border-4 border-fantasy-purple/30 mb-3">
             <img 
-              src={character.imageUrl || "/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png"} 
+              src={character.imageUrl || "/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png"} 
               alt={character.name}
               className="w-full h-full object-cover"
             />

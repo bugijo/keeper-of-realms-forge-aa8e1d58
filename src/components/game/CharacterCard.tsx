@@ -22,7 +22,7 @@ export const CharacterCard = ({
   class: characterClass, 
   race, 
   stats, 
-  imageUrl 
+  imageUrl = "/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png"
 }: CharacterCardProps) => {
   return (
     <div className="fantasy-card">
@@ -31,7 +31,7 @@ export const CharacterCard = ({
         <div className="md:w-1/3">
           <div className="h-48 w-full md:h-full rounded-lg overflow-hidden border-2 border-fantasy-purple/30 relative">
             <img 
-              src={imageUrl || "https://images.unsplash.com/photo-1501854140801-50d01698950b"} 
+              src={imageUrl} 
               alt={name}
               className="w-full h-full object-cover"
             />
@@ -81,5 +81,4 @@ export const CharacterCard = ({
   );
 };
 
-// Also export as default for backward compatibility
 export default CharacterCard;

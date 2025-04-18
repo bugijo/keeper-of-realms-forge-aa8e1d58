@@ -21,7 +21,7 @@ const CharacterHeader = ({
   characterClass, 
   background, 
   alignment,
-  imageUrl = "/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png"
+  imageUrl = "/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png"
 }: CharacterHeaderProps) => {
   return (
     <div className="fantasy-card p-6 md:col-span-1">
