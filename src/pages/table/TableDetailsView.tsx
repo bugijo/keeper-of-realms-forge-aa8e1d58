@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Calendar, Users, Sword, MapPin, Clock, Book } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { v4 as uuidv4 } from 'uuid'; // Used to validate UUID format
 
 const TableDetailsView = () => {
   const { id } = useParams();
@@ -19,10 +20,27 @@ const TableDetailsView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Function to check if string is a valid UUID
+  const isValidUUID = (uuid: string) => {
+    try {
+      // Try parsing the UUID - will throw if invalid
+      const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return regex.test(uuid);
+    } catch(e) {
+      return false;
+    }
+  };
+
   useEffect(() => {
     const fetchTableDetails = async () => {
       if (!id) {
         setError("ID da mesa não fornecido");
+        setLoading(false);
+        return;
+      }
+
+      if (!isValidUUID(id)) {
+        setError(`ID de mesa inválido: ${id}. Use um UUID válido.`);
         setLoading(false);
         return;
       }
@@ -39,7 +57,7 @@ const TableDetailsView = () => {
 
         if (tableError) {
           console.error("Erro ao carregar detalhes da mesa:", tableError);
-          setError("Erro ao carregar detalhes da mesa");
+          setError("Erro ao carregar detalhes da mesa: " + tableError.message);
           setLoading(false);
           return;
         }
@@ -82,9 +100,9 @@ const TableDetailsView = () => {
         }
 
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao carregar dados:", err);
-        setError("Ocorreu um erro ao carregar os dados");
+        setError("Ocorreu um erro ao carregar os dados: " + (err.message || ''));
         setLoading(false);
       }
     };
@@ -95,6 +113,7 @@ const TableDetailsView = () => {
   const handleJoinRequest = async () => {
     if (!session?.user) {
       toast.error('Você precisa estar logado para solicitar participação');
+      navigate('/login');
       return;
     }
 
@@ -109,15 +128,15 @@ const TableDetailsView = () => {
 
       if (error) {
         console.error("Erro ao enviar solicitação:", error);
-        toast.error('Erro ao enviar solicitação');
+        toast.error('Erro ao enviar solicitação: ' + error.message);
         return;
       }
 
       toast.success('Solicitação de participação enviada');
       setJoinRequestStatus('pending');
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao enviar solicitação:", err);
-      toast.error('Erro ao enviar solicitação');
+      toast.error('Erro ao enviar solicitação: ' + (err.message || ''));
     }
   };
 

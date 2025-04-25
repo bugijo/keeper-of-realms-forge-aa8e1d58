@@ -1,59 +1,171 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Plus, Book, Users, Calendar, Sword, Search, Filter, Dices } from "lucide-react";
 import { motion } from "framer-motion";
 import DiceRoller from "@/components/dice/DiceRoller";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-
-const tableMockData = [
-  {
-    id: 1,
-    name: "A Masmorra do Dragão Vermelho",
-    dm: "Mestre Gabriel",
-    players: ["João", "Maria", "Pedro", "Ana"],
-    nextSession: "Amanhã às 19h",
-    campaign: "Águas Profundas",
-    tags: ["Dungeons", "Combate", "Tesouro"],
-    isMaster: true
-  },
-  {
-    id: 2,
-    name: "Caçadores de Recompensas",
-    dm: "Mestre Lucas",
-    players: ["Clara", "Rafael", "Mariana", "Gustavo", "Tiago"],
-    nextSession: "Sábado às 14h",
-    campaign: "Reinos Esquecidos",
-    tags: ["Cidade", "Intriga", "Investigação"],
-    isMaster: false
-  },
-  {
-    id: 3,
-    name: "A Coroa do Rei Lich",
-    dm: "Mestra Júlia",
-    players: ["Fernando", "Rodrigo", "Camila"],
-    nextSession: "Sexta-feira às 20h",
-    campaign: "Ravenloft",
-    tags: ["Terror", "Mistério", "Survival"],
-    isMaster: false
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { Spinner } from "@/components/ui/spinner";
 
 const Tables = () => {
+  const { session } = useAuth();
   const [showNewTableModal, setShowNewTableModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
+  const [tables, setTables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const filteredTables = tableMockData.filter(table => {
-    if (searchTerm && !table.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !table.dm.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !table.campaign.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
+  // Form state for creating a new table
+  const [formData, setFormData] = useState({
+    name: "",
+    campaign: "",
+    description: "",
+    system: "D&D 5ª Edição",
+    weekday: "Sábado",
+    time: "19:00",
+    max_players: 5,
+    synopsis: ""
+  });
+
+  // Fetch tables from the database
+  useEffect(() => {
+    const fetchTables = async () => {
+      setLoading(true);
+      try {
+        let query = supabase.from('tables').select('*');
+        
+        if (filter === "dm" && session?.user) {
+          query = query.eq('user_id', session.user.id);
+        } else if (filter === "player" && session?.user) {
+          // Get tables where the user is a participant
+          const { data: participations } = await supabase
+            .from('table_participants')
+            .select('table_id')
+            .eq('user_id', session.user.id);
+          
+          if (participations && participations.length > 0) {
+            const tableIds = participations.map(p => p.table_id);
+            query = query.in('id', tableIds);
+          } else {
+            // If no participations, return empty result
+            setTables([]);
+            setLoading(false);
+            return;
+          }
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error('Error fetching tables:', error);
+          toast.error('Erro ao carregar mesas');
+        } else {
+          setTables(data || []);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+        toast.error('Erro ao carregar dados');
+      }
+      setLoading(false);
+    };
+
+    fetchTables();
+  }, [filter, session]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleCreateTable = async () => {
+    if (!session?.user) {
+      toast.error('Você precisa estar logado para criar uma mesa');
+      return;
     }
-    
-    if (filter === "dm" && !table.isMaster) {
-      return false;
-    } else if (filter === "player" && table.isMaster) {
+
+    if (!formData.name.trim()) {
+      toast.error('Nome da mesa é obrigatório');
+      return;
+    }
+
+    try {
+      // Insert the new table into the database
+      const { data, error } = await supabase
+        .from('tables')
+        .insert({
+          name: formData.name,
+          campaign: formData.campaign,
+          description: formData.description,
+          system: formData.system,
+          weekday: formData.weekday,
+          time: formData.time,
+          max_players: parseInt(formData.max_players.toString()),
+          synopsis: formData.synopsis,
+          user_id: session.user.id,
+          status: 'open'
+        })
+        .select();
+
+      if (error) {
+        console.error('Error creating table:', error);
+        toast.error('Erro ao criar mesa: ' + error.message);
+        return;
+      }
+
+      // Also add the creator as the first participant (game master)
+      if (data && data.length > 0) {
+        const { error: partError } = await supabase
+          .from('table_participants')
+          .insert({
+            table_id: data[0].id,
+            user_id: session.user.id,
+            role: 'dm'
+          });
+
+        if (partError) {
+          console.error('Error adding participant:', partError);
+        }
+      }
+
+      toast.success('Mesa criada com sucesso!', {
+        description: "Sua nova mesa está pronta para receber jogadores.",
+        action: data && data.length > 0 ? {
+          label: "Ver Mesa",
+          onClick: () => {
+            window.location.href = `/tables/details/${data[0].id}`;
+          }
+        } : undefined
+      });
+
+      // Reset form and close modal
+      setFormData({
+        name: "",
+        campaign: "",
+        description: "",
+        system: "D&D 5ª Edição",
+        weekday: "Sábado",
+        time: "19:00",
+        max_players: 5,
+        synopsis: ""
+      });
+      setShowNewTableModal(false);
+      
+      // Refresh tables list
+      const { data: newTables } = await supabase.from('tables').select('*');
+      if (newTables) setTables(newTables);
+      
+    } catch (err: any) {
+      console.error('Error:', err);
+      toast.error('Erro ao criar mesa: ' + (err.message || ''));
+    }
+  };
+  
+  const filteredTables = tables.filter(table => {
+    if (searchTerm && !table.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !(table.campaign && table.campaign.toLowerCase().includes(searchTerm.toLowerCase()))) {
       return false;
     }
     
@@ -107,40 +219,47 @@ const Tables = () => {
           </div>
         </div>
         
-        <div className="space-y-6">
-          {filteredTables.length > 0 ? (
-            filteredTables.map((table) => (
+        {loading ? (
+          <div className="fantasy-card p-8 text-center">
+            <Spinner size="lg" className="mx-auto mb-4" />
+            <p className="text-fantasy-stone">Carregando mesas...</p>
+          </div>
+        ) : filteredTables.length > 0 ? (
+          <div className="space-y-6">
+            {filteredTables.map((table) => (
               <div key={table.id} className="fantasy-card p-6">
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   <div className="flex-1">
                     <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-1">{table.name}</h2>
                     <div className="flex items-center gap-2 mb-2">
                       <Users size={16} className="text-fantasy-gold" />
-                      <span className="text-fantasy-stone text-sm">{table.dm}</span>
+                      <span className="text-fantasy-stone text-sm">
+                        {table.user_id === session?.user?.id ? 'Você (Mestre)' : 'Mestre da Mesa'}
+                      </span>
                       <span className="text-xs bg-fantasy-purple/30 px-2 py-0.5 rounded-full text-fantasy-gold">
-                        {table.players.length} jogadores
+                        {table.max_players} jogadores max
                       </span>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {table.tags.map((tag, index) => (
-                        <span key={index} className="text-xs bg-fantasy-dark px-2 py-1 rounded text-fantasy-stone">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    {table.system && (
+                      <span className="text-xs bg-fantasy-dark px-2 py-1 rounded text-fantasy-stone mr-2">
+                        {table.system}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2 mb-2 text-fantasy-stone">
                       <Calendar size={16} className="text-fantasy-gold" />
-                      <span className="text-sm">{table.nextSession}</span>
+                      <span className="text-sm">{table.weekday || 'Dia'} às {table.time || 'Horário'}</span>
                     </div>
                     
-                    <div className="flex items-center gap-2 mb-2 text-fantasy-stone">
-                      <Book size={16} className="text-fantasy-gold" />
-                      <span className="text-sm">{table.campaign}</span>
-                    </div>
+                    {table.campaign && (
+                      <div className="flex items-center gap-2 mb-2 text-fantasy-stone">
+                        <Book size={16} className="text-fantasy-gold" />
+                        <span className="text-sm">{table.campaign}</span>
+                      </div>
+                    )}
                     
                     <Link to={`/tables/details/${table.id}`}>
                       <motion.button
@@ -155,26 +274,26 @@ const Tables = () => {
                   </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="fantasy-card p-8 text-center">
-              <Users className="mx-auto text-fantasy-purple/40 mb-4" size={48} />
-              <h3 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Nenhuma mesa encontrada</h3>
-              <p className="text-fantasy-stone mb-4">
-                Não encontramos mesas com os filtros atuais. Tente mudar os critérios de busca ou crie uma nova mesa.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="fantasy-button primary mx-auto"
-                onClick={() => setShowNewTableModal(true)}
-              >
-                <Plus size={18} />
-                Criar Nova Mesa
-              </motion.button>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="fantasy-card p-8 text-center">
+            <Users className="mx-auto text-fantasy-purple/40 mb-4" size={48} />
+            <h3 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Nenhuma mesa encontrada</h3>
+            <p className="text-fantasy-stone mb-4">
+              Não encontramos mesas com os filtros atuais. Tente mudar os critérios de busca ou crie uma nova mesa.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="fantasy-button primary mx-auto"
+              onClick={() => setShowNewTableModal(true)}
+            >
+              <Plus size={18} />
+              Criar Nova Mesa
+            </motion.button>
+          </div>
+        )}
         
         {showNewTableModal && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -198,6 +317,9 @@ const Tables = () => {
                   <label className="block text-white mb-1">Nome da Mesa</label>
                   <input
                     type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
                     className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
                     placeholder="Dê um nome para sua mesa"
                   />
@@ -207,22 +329,43 @@ const Tables = () => {
                   <label className="block text-white mb-1">Campanha</label>
                   <input
                     type="text"
+                    name="campaign"
+                    value={formData.campaign}
+                    onChange={handleInputChange}
                     className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
                     placeholder="Em qual campanha sua mesa se passa?"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-white mb-1">Descrição</label>
+                  <label className="block text-white mb-1">Sinopse</label>
                   <textarea
+                    name="synopsis"
+                    value={formData.synopsis}
+                    onChange={handleInputChange}
                     className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 min-h-[100px]"
                     placeholder="Descreva sua mesa para os jogadores"
                   ></textarea>
                 </div>
                 
                 <div>
+                  <label className="block text-white mb-1">Descrição Adicional (opcional)</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2 min-h-[80px]"
+                    placeholder="Detalhes adicionais sobre a mesa"
+                  ></textarea>
+                </div>
+                
+                <div>
                   <label className="block text-white mb-1">Sistema</label>
-                  <select className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2">
+                  <select 
+                    name="system"
+                    value={formData.system}
+                    onChange={handleInputChange}
+                    className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2">
                     <option>D&D 5ª Edição</option>
                     <option>Pathfinder</option>
                     <option>Call of Cthulhu</option>
@@ -234,7 +377,11 @@ const Tables = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-white mb-1">Dia da Semana</label>
-                    <select className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2">
+                    <select 
+                      name="weekday"
+                      value={formData.weekday}
+                      onChange={handleInputChange}
+                      className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2">
                       <option>Segunda-feira</option>
                       <option>Terça-feira</option>
                       <option>Quarta-feira</option>
@@ -249,6 +396,9 @@ const Tables = () => {
                     <label className="block text-white mb-1">Horário</label>
                     <input
                       type="time"
+                      name="time"
+                      value={formData.time}
+                      onChange={handleInputChange}
                       className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
                     />
                   </div>
@@ -258,10 +408,12 @@ const Tables = () => {
                   <label className="block text-white mb-1">Máximo de Jogadores</label>
                   <input
                     type="number"
+                    name="max_players"
+                    value={formData.max_players}
+                    onChange={handleInputChange}
                     className="w-full bg-fantasy-dark/80 border border-fantasy-purple/30 text-white rounded-lg p-2"
                     min={1}
                     max={10}
-                    defaultValue={5}
                   />
                 </div>
                 
@@ -270,16 +422,7 @@ const Tables = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full bg-fantasy-gold text-fantasy-dark py-3 rounded-lg font-medievalsharp"
-                    onClick={() => {
-                      setShowNewTableModal(false);
-                      toast("Mesa criada com sucesso!", {
-                        description: "Sua nova mesa está pronta para receber jogadores.",
-                        action: {
-                          label: "Ver Mesa",
-                          onClick: () => { /* link to new table */ }
-                        }
-                      });
-                    }}
+                    onClick={handleCreateTable}
                   >
                     Criar Mesa
                   </motion.button>
