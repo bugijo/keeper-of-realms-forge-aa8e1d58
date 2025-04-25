@@ -1,51 +1,92 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import CharacterGrid from '@/components/character/CharacterGrid';
 import { Search, Plus, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
-// Mock data - replace with actual API call in production
-const mockCharacters = [
-  {
-    id: '1',
-    name: 'Eldric',
-    race: 'Elfo',
-    class: 'Mago',
-    level: 5,
-    imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'
-  },
-  {
-    id: '2',
-    name: 'Thorgar',
-    race: 'Anão',
-    class: 'Guerreiro',
-    level: 7,
-    imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d'
-  },
-  {
-    id: '3',
-    name: 'Lyra',
-    race: 'Humana',
-    class: 'Ladina',
-    level: 4,
-    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80'
-  }
-];
+interface Character {
+  id: string;
+  name: string;
+  race: string;
+  class: string;
+  level: number;
+  imageUrl?: string;
+}
 
 const CharactersCollection = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [characters, setCharacters] = useState(mockCharacters);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   
+  // Fetch characters from database
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('characters')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        // Transform database data to match Character interface
+        const formattedCharacters: Character[] = (data || []).map(char => ({
+          id: char.id,
+          name: char.name,
+          race: char.race || 'Desconhecido',
+          class: char.class || 'Desconhecido',
+          level: char.level || 1,
+          // Use a default image if none is provided
+          imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
+        }));
+        
+        setCharacters(formattedCharacters);
+      } catch (err: any) {
+        console.error('Error fetching characters:', err);
+        toast.error('Erro ao carregar personagens');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCharacters();
+  }, [user]);
+  
+  // Filter characters based on search term
   const filteredCharacters = characters.filter(character => 
     character.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    character.race.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    character.class.toLowerCase().includes(searchTerm.toLowerCase())
+    (character.race && character.race.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (character.class && character.class.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const handleDelete = (id: string) => {
-    setCharacters(prev => prev.filter(character => character.id !== id));
-    // In actual implementation, make API call to delete from database
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este personagem?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setCharacters(prev => prev.filter(char => char.id !== id));
+      toast.success('Personagem excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Error deleting character:', error);
+      toast.error('Erro ao excluir personagem');
+    }
   };
   
   return (
@@ -76,12 +117,24 @@ const CharactersCollection = () => {
           </div>
         </div>
         
-        <div className="mb-6">
-          <CharacterGrid 
-            characters={filteredCharacters} 
-            onDelete={handleDelete}
-          />
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="fantasy-card p-4 animate-pulse">
+                <div className="h-32 w-32 bg-fantasy-purple/30 rounded-full mb-4 mx-auto"></div>
+                <div className="h-6 bg-fantasy-dark/50 rounded mb-2 mx-auto w-3/4"></div>
+                <div className="h-4 bg-fantasy-dark/30 rounded mb-4 mx-auto w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mb-6">
+            <CharacterGrid 
+              characters={filteredCharacters} 
+              onDelete={handleDelete}
+            />
+          </div>
+        )}
       </div>
     </MainLayout>
   );

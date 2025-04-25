@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
 import { ArrowLeft } from "lucide-react";
@@ -8,60 +8,112 @@ import CharacterStats from '@/components/character/CharacterStats';
 import CharacterSkills from '@/components/character/CharacterSkills';
 import CharacterEquipment from '@/components/character/CharacterEquipment';
 import CharacterSpells from '@/components/character/CharacterSpells';
-
-// This would come from the database in a real app
-const mockCharacter = {
-  id: '1',
-  name: 'Thorian Greystone',
-  level: 5,
-  class: 'Paladino',
-  race: 'Anão',
-  background: 'Ferreiro de Guildas',
-  alignment: 'Leal e Bom',
-  stats: {
-    strength: 16,
-    dexterity: 10,
-    constitution: 18,
-    intelligence: 12,
-    wisdom: 14,
-    charisma: 16
-  },
-  abilities: {
-    hp: { current: 45, max: 45 },
-    ac: 18,
-    speed: 25,
-    initiative: 0,
-    proficiencyBonus: 3
-  },
-  skills: [
-    { name: 'Atletismo', proficient: true, value: 6 },
-    { name: 'Intimidação', proficient: true, value: 6 },
-    { name: 'Religião', proficient: true, value: 4 },
-    { name: 'Persuasão', proficient: true, value: 6 }
-  ],
-  equipment: [
-    { name: 'Martelo de Guerra', type: 'weapon', damage: '1d8+3', properties: 'Versatile (1d10)' },
-    { name: 'Escudo', type: 'shield', ac: '+2' },
-    { name: 'Cota de Malha', type: 'armor', ac: '16' },
-    { name: 'Símbolo Sagrado', type: 'item' }
-  ],
-  spells: [
-    { name: 'Curar Ferimentos', level: 1, description: 'Cura 1d8 + modificador de habilidade de conjuração de pontos de vida.' },
-    { name: 'Destruir Mortos-Vivos', level: 1, description: 'Mortos-vivos com menos de CR 1/2 devem passar em um teste de sabedoria ou são destruídos.' },
-    { name: 'Sopro Curativo', level: 0, description: 'Estabiliza uma criatura com 0 pontos de vida.' }
-  ]
-};
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
 const CharacterView = () => {
   const { id } = useParams();
-  // In a real application, you would fetch the character data based on the ID
-  const character = mockCharacter;
+  const { user } = useAuth();
+  const [character, setCharacter] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchCharacter = async () => {
+      if (!id || !user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('characters')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Format character data to display in the UI
+          const formattedCharacter = {
+            id: data.id,
+            name: data.name,
+            level: data.level || 1,
+            class: data.class || 'Desconhecido',
+            race: data.race || 'Desconhecido',
+            background: data.background || 'Desconhecido',
+            alignment: data.attributes?.alignment || 'Neutro',
+            stats: {
+              strength: data.attributes?.strength || 10,
+              dexterity: data.attributes?.dexterity || 10,
+              constitution: data.attributes?.constitution || 10,
+              intelligence: data.attributes?.intelligence || 10,
+              wisdom: data.attributes?.wisdom || 10,
+              charisma: data.attributes?.charisma || 10
+            },
+            abilities: {
+              hp: { 
+                current: data.attributes?.hp?.current || 10, 
+                max: data.attributes?.hp?.max || 10 
+              },
+              ac: data.attributes?.ac || 10,
+              speed: data.attributes?.speed || 30,
+              initiative: data.attributes?.initiative || 0,
+              proficiencyBonus: Math.ceil(data.level / 4) + 1
+            },
+            skills: data.attributes?.skills || [
+              { name: 'Atletismo', proficient: false, value: 0 }
+            ],
+            equipment: data.equipment || [],
+            spells: data.spells || [],
+            imageUrl: data.attributes?.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
+          };
+          
+          setCharacter(formattedCharacter);
+        }
+      } catch (error) {
+        console.error('Error fetching character:', error);
+        toast.error('Erro ao carregar o personagem');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCharacter();
+  }, [id, user]);
+  
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <p className="text-fantasy-stone">Carregando personagem...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  if (!character) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto py-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-medievalsharp text-fantasy-gold mb-4">Personagem não encontrado</h2>
+            <Link to="/character" className="fantasy-button primary">
+              Voltar para a lista de personagens
+            </Link>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
   
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
         <div className="flex items-center mb-6">
-          <Link to="/inventory" className="mr-4">
+          <Link to="/character" className="mr-4">
             <ArrowLeft className="text-fantasy-stone hover:text-white transition-colors" />
           </Link>
           <h1 className="text-3xl font-medievalsharp text-white">{character.name}</h1>
@@ -76,6 +128,7 @@ const CharacterView = () => {
             characterClass={character.class}
             background={character.background}
             alignment={character.alignment}
+            imageUrl={character.imageUrl}
           />
           
           <div className="md:col-span-2 space-y-6">

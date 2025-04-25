@@ -1,8 +1,11 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash } from "lucide-react";
+import { Link, useNavigate } from 'react-router-dom';
+import { Edit, Trash } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
 interface CharacterHeaderProps {
   name: string;
@@ -12,9 +15,11 @@ interface CharacterHeaderProps {
   background: string;
   alignment: string;
   imageUrl?: string;
+  id?: string;
 }
 
 const CharacterHeader = ({ 
+  id,
   name, 
   level, 
   race, 
@@ -23,6 +28,33 @@ const CharacterHeader = ({
   alignment,
   imageUrl = "/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png"
 }: CharacterHeaderProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const handleDelete = async () => {
+    if (!id || !user) return;
+    
+    if (!window.confirm('Tem certeza que deseja excluir este personagem?')) {
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      toast.success('Personagem excluído com sucesso!');
+      navigate('/character');
+    } catch (error) {
+      console.error('Error deleting character:', error);
+      toast.error('Erro ao excluir personagem');
+    }
+  };
+  
   return (
     <div className="fantasy-card p-6 md:col-span-1">
       <div className="h-40 w-40 mx-auto rounded-full overflow-hidden border-4 border-fantasy-purple/30 mb-4">
@@ -50,21 +82,27 @@ const CharacterHeader = ({
       </div>
       
       <div className="flex gap-2 mt-6">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex-1 bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
-        >
-          <Edit size={16} />
-          Editar
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-fantasy-dark/80 text-red-400 py-2 px-3 rounded-lg"
-        >
-          <Trash size={16} />
-        </motion.button>
+        {id && (
+          <>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate(`/creations/characters/${id}`)}
+              className="flex-1 bg-fantasy-purple text-white py-2 rounded-lg font-medievalsharp flex items-center justify-center gap-2"
+            >
+              <Edit size={16} />
+              Editar
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleDelete}
+              className="bg-fantasy-dark/80 text-red-400 py-2 px-3 rounded-lg"
+            >
+              <Trash size={16} />
+            </motion.button>
+          </>
+        )}
       </div>
     </div>
   );

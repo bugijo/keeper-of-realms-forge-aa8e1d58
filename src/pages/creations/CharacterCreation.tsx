@@ -9,8 +9,8 @@ import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
 
-// Define character archetypes based on the image
 const characterArchetypes = [
   { 
     name: 'Clérigo', 
@@ -92,45 +92,63 @@ const CharacterCreation = () => {
     charisma: 10,
     appearance: '',
     backstory: '',
-    imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png', // Updated default character image
+    imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && id) {
       setIsLoading(true);
-      // Here you would fetch the character data from your database
-      // For now, we'll simulate it with a timeout
-      setTimeout(() => {
-        setFormData({
-          name: 'Aragorn',
-          race: 'Humano',
-          class: 'Ranger',
-          level: 5,
-          background: 'Forasteiro',
-          alignment: 'Neutro e Bom',
-          strength: 16,
-          dexterity: 14,
-          constitution: 14,
-          intelligence: 12,
-          wisdom: 14,
-          charisma: 14,
-          appearance: 'Alto, cabelos escuros, olhos cinzentos, vestido com roupas de couro desgastadas.',
-          backstory: 'Herdeiro do trono de Gondor, criado entre os elfos, agora vive como um ranger protegendo as terras do norte.',
-          imageUrl: '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
-        });
-        setIsLoading(false);
-      }, 1000);
+      const fetchCharacter = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('characters')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', user?.id)
+            .single();
+            
+          if (error) throw error;
+          
+          if (data) {
+            setFormData({
+              name: data.name || '',
+              race: data.race || '',
+              class: data.class || '',
+              level: data.level || 1,
+              background: data.background || '',
+              alignment: data.attributes?.alignment || '',
+              strength: data.attributes?.strength || 10,
+              dexterity: data.attributes?.dexterity || 10,
+              constitution: data.attributes?.constitution || 10,
+              intelligence: data.attributes?.intelligence || 10,
+              wisdom: data.attributes?.wisdom || 10,
+              charisma: data.attributes?.charisma || 10,
+              appearance: data.attributes?.appearance || '',
+              backstory: data.notes || '',
+              imageUrl: data.attributes?.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching character:', error);
+          toast.error('Erro ao carregar o personagem');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      if (user) {
+        fetchCharacter();
+      }
     }
-  }, [id, isEditing]);
+  }, [id, isEditing, user]);
 
   const [selectedArchetype, setSelectedArchetype] = useState<string | null>(null);
 
   const handleArchetypeSelect = (archetype: string) => {
     setSelectedArchetype(archetype);
-    // Update form data with archetype details
     const selectedType = characterArchetypes.find(type => type.name === archetype);
     if (selectedType) {
       setFormData(prev => ({
@@ -159,12 +177,51 @@ const CharacterCreation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error('Você precisa estar logado para criar um personagem');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      // Here you would save the character to your database
-      // For now, we'll just simulate it with a timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const characterData = {
+        name: formData.name,
+        race: formData.race,
+        class: formData.class,
+        level: formData.level,
+        background: formData.background,
+        user_id: user.id,
+        attributes: {
+          strength: formData.strength,
+          dexterity: formData.dexterity,
+          constitution: formData.constitution,
+          intelligence: formData.intelligence,
+          wisdom: formData.wisdom,
+          charisma: formData.charisma,
+          alignment: formData.alignment,
+          appearance: formData.appearance,
+          imageUrl: formData.imageUrl
+        },
+        notes: formData.backstory
+      };
+      
+      let result;
+      
+      if (isEditing) {
+        result = await supabase
+          .from('characters')
+          .update(characterData)
+          .eq('id', id)
+          .eq('user_id', user.id);
+      } else {
+        result = await supabase
+          .from('characters')
+          .insert(characterData);
+      }
+      
+      if (result.error) throw result.error;
       
       toast.success(isEditing ? 'Personagem atualizado com sucesso!' : 'Personagem criado com sucesso!');
       navigate('/character');
@@ -231,254 +288,251 @@ const CharacterCreation = () => {
           </div>
         </div>
 
-        {/* Rest of the existing form, only showing when an archetype is selected */}
         {selectedArchetype && (
           <form onSubmit={handleSubmit}>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6">
-              <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-              <TabsTrigger value="stats">Atributos</TabsTrigger>
-              <TabsTrigger value="description">Descrição</TabsTrigger>
-            </TabsList>
+              <TabsList className="grid grid-cols-3 mb-6">
+                <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
+                <TabsTrigger value="stats">Atributos</TabsTrigger>
+                <TabsTrigger value="description">Descrição</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="basic" className="fantasy-card p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="name">Nome do Personagem</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="level">Nível</Label>
-                  <Input
-                    id="level"
-                    name="level"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={formData.level}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="race">Raça</Label>
-                  <Select
-                    value={formData.race}
-                    onValueChange={(value) => handleSelectChange('race', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Selecione uma raça" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {races.map((race) => (
-                          <SelectItem key={race} value={race}>
-                            {race}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="class">Classe</Label>
-                  <Select
-                    value={formData.class}
-                    onValueChange={(value) => handleSelectChange('class', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Selecione uma classe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls} value={cls}>
-                            {cls}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="background">Antecedente</Label>
-                  <Input
-                    id="background"
-                    name="background"
-                    value={formData.background}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="alignment">Alinhamento</Label>
-                  <Input
-                    id="alignment"
-                    name="alignment"
-                    value={formData.alignment}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="stats" className="fantasy-card p-6">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map((stat) => (
-                  <div key={stat} className="text-center">
-                    <Label htmlFor={stat} className="block mb-2 capitalize">
-                      {stat === 'strength' && 'Força'}
-                      {stat === 'dexterity' && 'Destreza'}
-                      {stat === 'constitution' && 'Constituição'}
-                      {stat === 'intelligence' && 'Inteligência'}
-                      {stat === 'wisdom' && 'Sabedoria'}
-                      {stat === 'charisma' && 'Carisma'}
-                    </Label>
-                    <div className="flex items-center justify-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStatChange(stat, formData[stat] - 1)}
-                        disabled={formData[stat] <= 3}
-                        className="h-8 w-8 p-0"
-                      >
-                        -
-                      </Button>
-                      <Input
-                        id={stat}
-                        name={stat}
-                        type="number"
-                        min="3"
-                        max="20"
-                        value={formData[stat]}
-                        onChange={(e) => handleStatChange(stat, e.target.value)}
-                        className="mx-2 w-16 text-center"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStatChange(stat, formData[stat] + 1)}
-                        disabled={formData[stat] >= 20}
-                        className="h-8 w-8 p-0"
-                      >
-                        +
-                      </Button>
-                    </div>
-                    <div className="mt-2 text-fantasy-gold font-medievalsharp">
-                      {formatModifier(calculateModifier(formData[stat]))}
-                    </div>
+              <TabsContent value="basic" className="fantasy-card p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="name">Nome do Personagem</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      required
+                    />
                   </div>
-                ))}
-              </div>
-            </TabsContent>
 
-            <TabsContent value="description" className="fantasy-card p-6">
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <Label htmlFor="appearance">Aparência</Label>
-                  <Textarea
-                    id="appearance"
-                    name="appearance"
-                    value={formData.appearance}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                    rows={4}
-                  />
+                  <div>
+                    <Label htmlFor="level">Nível</Label>
+                    <Input
+                      id="level"
+                      name="level"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={formData.level}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="race">Raça</Label>
+                    <Select
+                      value={formData.race}
+                      onValueChange={(value) => handleSelectChange('race', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione uma raça" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {races.map((race) => (
+                            <SelectItem key={race} value={race}>
+                              {race}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="class">Classe</Label>
+                    <Select
+                      value={formData.class}
+                      onValueChange={(value) => handleSelectChange('class', value)}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Selecione uma classe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {classes.map((cls) => (
+                            <SelectItem key={cls} value={cls}>
+                              {cls}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="background">Antecedente</Label>
+                    <Input
+                      id="background"
+                      name="background"
+                      value={formData.background}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="alignment">Alinhamento</Label>
+                    <Input
+                      id="alignment"
+                      name="alignment"
+                      value={formData.alignment}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
+              </TabsContent>
 
-                <div>
-                  <Label htmlFor="backstory">História de Fundo</Label>
-                  <Textarea
-                    id="backstory"
-                    name="backstory"
-                    value={formData.backstory}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                    rows={8}
-                  />
+              <TabsContent value="stats" className="fantasy-card p-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map((stat) => (
+                    <div key={stat} className="text-center">
+                      <Label htmlFor={stat} className="block mb-2 capitalize">
+                        {stat === 'strength' && 'Força'}
+                        {stat === 'dexterity' && 'Destreza'}
+                        {stat === 'constitution' && 'Constituição'}
+                        {stat === 'intelligence' && 'Inteligência'}
+                        {stat === 'wisdom' && 'Sabedoria'}
+                        {stat === 'charisma' && 'Carisma'}
+                      </Label>
+                      <div className="flex items-center justify-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatChange(stat, formData[stat] - 1)}
+                          disabled={formData[stat] <= 3}
+                          className="h-8 w-8 p-0"
+                        >
+                          -
+                        </Button>
+                        <Input
+                          id={stat}
+                          name={stat}
+                          type="number"
+                          min="3"
+                          max="20"
+                          value={formData[stat]}
+                          onChange={(e) => handleStatChange(stat, e.target.value)}
+                          className="mx-2 w-16 text-center"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatChange(stat, formData[stat] + 1)}
+                          disabled={formData[stat] >= 20}
+                          className="h-8 w-8 p-0"
+                        >
+                          +
+                        </Button>
+                      </div>
+                      <div className="mt-2 text-fantasy-gold font-medievalsharp">
+                        {formatModifier(calculateModifier(formData[stat]))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
 
-          {/* New image upload section */}
-          <div className="mb-6">
-            <Label>Imagem do Personagem</Label>
-            <div className="flex items-center space-x-4">
-              <img 
-                src={formData.imageUrl} 
-                alt="Personagem" 
-                className="w-32 h-32 object-cover rounded-lg"
-              />
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={() => {
-                  // Future: Implement image upload functionality
-                  toast.info('Funcionalidade de upload de imagem em desenvolvimento');
-                }}
-              >
-                Alterar Imagem
-              </Button>
-            </div>
-          </div>
+              <TabsContent value="description" className="fantasy-card p-6">
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <Label htmlFor="appearance">Aparência</Label>
+                    <Textarea
+                      id="appearance"
+                      name="appearance"
+                      value={formData.appearance}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      rows={4}
+                    />
+                  </div>
 
-          <div className="mt-6 flex justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate('/character')}
-            >
-              Cancelar
-            </Button>
-            
-            <div className="flex gap-2">
-              {activeTab !== 'basic' && (
-                <Button
-                  type="button"
+                  <div>
+                    <Label htmlFor="backstory">História de Fundo</Label>
+                    <Textarea
+                      id="backstory"
+                      name="backstory"
+                      value={formData.backstory}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                      rows={8}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="mb-6">
+              <Label>Imagem do Personagem</Label>
+              <div className="flex items-center space-x-4">
+                <img 
+                  src={formData.imageUrl} 
+                  alt="Personagem" 
+                  className="w-32 h-32 object-cover rounded-lg"
+                />
+                <Button 
+                  type="button" 
                   variant="outline"
-                  onClick={() => setActiveTab(activeTab === 'stats' ? 'basic' : 'stats')}
+                  onClick={() => {
+                    toast.info('Funcionalidade de upload de imagem em desenvolvimento');
+                  }}
                 >
-                  Anterior
+                  Alterar Imagem
                 </Button>
-              )}
-              
-              {activeTab !== 'description' ? (
-                <Button
-                  type="button"
-                  onClick={() => setActiveTab(activeTab === 'basic' ? 'stats' : 'description')}
-                  className="fantasy-button secondary"
-                >
-                  Próximo
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="fantasy-button primary"
-                >
-                  {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Personagem' : 'Criar Personagem'}
-                </Button>
-              )}
+              </div>
             </div>
-          </div>
-        </form>
+
+            <div className="mt-6 flex justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/character')}
+              >
+                Cancelar
+              </Button>
+              
+              <div className="flex gap-2">
+                {activeTab !== 'basic' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveTab(activeTab === 'stats' ? 'basic' : 'stats')}
+                  >
+                    Anterior
+                  </Button>
+                )}
+                
+                {activeTab !== 'description' ? (
+                  <Button
+                    type="button"
+                    onClick={() => setActiveTab(activeTab === 'basic' ? 'stats' : 'description')}
+                    className="fantasy-button secondary"
+                  >
+                    Próximo
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="fantasy-button primary"
+                  >
+                    {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Personagem' : 'Criar Personagem'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </form>
         )}
       </div>
     </MainLayout>
