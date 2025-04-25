@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 interface Monster {
   id: string;
+  user_id: string;
   name: string;
   type: string;
   challenge: number;
@@ -16,6 +17,8 @@ interface Monster {
   alignment: string;
   hp: number;
   ac: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const MonstersView = () => {
@@ -95,7 +98,6 @@ const MonstersView = () => {
           </Link>
         </div>
         
-        {/* Search and Filter Controls */}
         <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

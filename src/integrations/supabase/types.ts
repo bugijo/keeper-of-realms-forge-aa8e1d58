@@ -63,6 +63,45 @@ export type Database = {
         }
         Relationships: []
       }
+      items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          properties: string[] | null
+          rarity: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          properties?: string[] | null
+          rarity?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          properties?: string[] | null
+          rarity?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       maps: {
         Row: {
           created_at: string
@@ -88,6 +127,48 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      monsters: {
+        Row: {
+          ac: number
+          alignment: string
+          challenge: number
+          created_at: string
+          hp: number
+          id: string
+          name: string
+          size: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ac?: number
+          alignment?: string
+          challenge?: number
+          created_at?: string
+          hp?: number
+          id?: string
+          name: string
+          size?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ac?: number
+          alignment?: string
+          challenge?: number
+          created_at?: string
+          hp?: number
+          id?: string
+          name?: string
+          size?: string
+          type?: string
           updated_at?: string
           user_id?: string
         }

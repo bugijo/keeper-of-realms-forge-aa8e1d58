@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
-import { Search, Filter, Sword, Shield, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Filter, Sword, Shield, Eye, Edit, Trash2, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -9,12 +9,15 @@ import { toast } from 'sonner';
 
 interface Item {
   id: string;
+  user_id: string;
   name: string;
   type: string;
   rarity: string;
   description: string | null;
-  properties: string[];
+  properties: string[] | null;
   image_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 const ItemsView = () => {
@@ -93,7 +96,6 @@ const ItemsView = () => {
           </Link>
         </div>
         
-        {/* Search and Filter Controls */}
         <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
