@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // Definindo o tipo para tokens no mapa
-interface Token {
+export interface MapToken {
   id: string;
   name: string;
   type: string;
@@ -59,7 +59,7 @@ const LiveSession = () => {
   const [tableData, setTableData] = useState<any>(null);
   const [isGameMaster, setIsGameMaster] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [tokens, setTokens] = useState<Token[]>([]);
+  const [tokens, setTokens] = useState<MapToken[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -198,7 +198,7 @@ const LiveSession = () => {
     console.log("Adicionando token:", tokenData);
     
     // Adicionar token temporariamente na UI
-    const newToken: Token = {
+    const newToken: MapToken = {
       id: `temp-${Date.now()}`,
       name: tokenData.name,
       type: tokenData.type,

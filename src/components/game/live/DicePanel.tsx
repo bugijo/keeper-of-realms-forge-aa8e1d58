@@ -24,6 +24,14 @@ interface DiceRoll {
   character_name?: string;
 }
 
+// Type for the metadata in chat_messages
+interface DiceMetadata {
+  dice_type: string;
+  result: number;
+  user_name: string;
+  character_name?: string;
+}
+
 const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = false, isGameMaster = false }) => {
   const [diceRolls, setDiceRolls] = useState<DiceRoll[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,7 +64,8 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         
         // Converter para o formato esperado
         const formattedRolls: DiceRoll[] = data ? data.map(message => {
-          const metadata = message.metadata || {};
+          // Cast metadata to the appropriate type or provide defaults
+          const metadata = message.metadata as DiceMetadata || {};
           return {
             id: message.id,
             user_id: message.user_id,
@@ -90,7 +99,7 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         },
         (payload) => {
           const message = payload.new;
-          const metadata = message.metadata || {};
+          const metadata = message.metadata as DiceMetadata || {};
           
           const newRoll: DiceRoll = {
             id: message.id,
