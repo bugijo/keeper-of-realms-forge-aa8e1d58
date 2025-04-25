@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -16,7 +17,7 @@ import CreationRouter from "@/pages/CreationRouter";
 import ItemsView from "@/pages/ItemsView";
 import MapsView from "@/pages/MapsView";
 import MonstersView from "@/pages/MonstersView";
-import NpcsView from "@/pages/NpcsView";
+import NpcsView from "@/pages/npcs/NpcsView";
 import StoriesView from "@/pages/StoriesView";
 import GameMasterView from "@/pages/GameMasterView";
 import PlayerView from "@/pages/PlayerView";
@@ -29,6 +30,7 @@ import CreationsCollection from '@/pages/CreationsCollection';
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import Missions from "@/pages/Missions";
 import TableDetailsView from "@/pages/table/TableDetailsView";
+import NpcDetailsView from "@/pages/NpcsView"; // Import for NPC details view
 
 function App() {
   return (
@@ -57,13 +59,13 @@ function App() {
           <Route path="/stories" element={<CreationsCollection />} />
           <Route path="/items" element={<CreationsCollection />} />
           <Route path="/monsters" element={<CreationsCollection />} />
-          <Route path="/npcs" element={<CreationsCollection />} />
+          <Route path="/npcs" element={<NpcsView />} />
           
           {/* View routes */}
           <Route path="/items/view/:id" element={<ItemsView />} />
           <Route path="/maps/view/:id" element={<MapsView />} />
           <Route path="/monsters/view/:id" element={<MonstersView />} />
-          <Route path="/npcs/view/:id" element={<NpcsView />} />
+          <Route path="/npcs/view/:id" element={<NpcDetailsView />} />
           <Route path="/stories/view/:id" element={<StoriesView />} />
           
           {/* Table routes */}

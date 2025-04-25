@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
 import { Search, Filter, Users, ArrowBigRight, Plus, Eye, Edit, Trash2 } from "lucide-react";
@@ -27,19 +28,27 @@ const NpcsView = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchNpcs();
+    if (user) {
+      fetchNpcs();
+    } else {
+      setLoading(false);
+    }
   }, [user]);
 
   const fetchNpcs = async () => {
     if (!user) return;
 
     try {
+      setLoading(true);
+      console.log("Fetching NPCs for user:", user.id);
       const { data, error } = await supabase
         .from('npcs')
         .select('*')
         .eq('user_id', user.id);
 
       if (error) throw error;
+      
+      console.log("NPCs fetched:", data);
       setNpcs(data || []);
     } catch (error: any) {
       console.error('Error fetching NPCs:', error);
@@ -172,7 +181,7 @@ const NpcsView = () => {
                 
                 <div className="flex justify-end gap-2 mt-4">
                   <button
-                    onClick={() => navigate(`/npcs/${npc.id}`)}
+                    onClick={() => navigate(`/npcs/view/${npc.id}`)}
                     className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
                     title="Ver detalhes"
                   >
