@@ -19,6 +19,7 @@ import MonstersView from './pages/MonstersView';
 import NpcsView from './pages/NpcsView';
 import StoriesView from './pages/StoriesView';
 import ItemView from './pages/items/ItemView';
+import Creations from './pages/Creations';
 
 function App() {
   return (
@@ -49,6 +50,9 @@ function App() {
         <Route path="/items" element={<ItemsView />} />
         <Route path="/items/view" element={<ItemsView />} />
         <Route path="/items/view/:id" element={<ItemView />} />
+        
+        {/* Creations routes */}
+        <Route path="/creations" element={<Creations />} />
         <Route path="/creations/items" element={<ItemCreation />} />
         <Route path="/creations/items/:id" element={<ItemCreation />} />
       </Routes>
