@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
@@ -11,17 +10,18 @@ interface Npc {
   id: string;
   name: string;
   race: string;
-  occupation: string;
-  location: string;
-  alignment: string;
-  appearance: string;
+  occupation: string | null;
+  location: string | null;
+  alignment: string | null;
+  appearance: string | null;
   personality: string[];
-  background: string;
-  motivations: string;
-  connections: string;
-  voice: string;
+  background: string | null;
+  motivations: string | null;
+  connections: string | null;
+  voice: string | null;
   user_id: string;
   created_at: string;
+  updated_at: string;
 }
 
 const NpcsView = () => {

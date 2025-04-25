@@ -93,6 +93,60 @@ export type Database = {
         }
         Relationships: []
       }
+      npcs: {
+        Row: {
+          alignment: string | null
+          appearance: string | null
+          background: string | null
+          connections: string | null
+          created_at: string
+          id: string
+          location: string | null
+          motivations: string | null
+          name: string
+          occupation: string | null
+          personality: string[] | null
+          race: string
+          updated_at: string
+          user_id: string
+          voice: string | null
+        }
+        Insert: {
+          alignment?: string | null
+          appearance?: string | null
+          background?: string | null
+          connections?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          motivations?: string | null
+          name: string
+          occupation?: string | null
+          personality?: string[] | null
+          race: string
+          updated_at?: string
+          user_id: string
+          voice?: string | null
+        }
+        Update: {
+          alignment?: string | null
+          appearance?: string | null
+          background?: string | null
+          connections?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          motivations?: string | null
+          name?: string
+          occupation?: string | null
+          personality?: string[] | null
+          race?: string
+          updated_at?: string
+          user_id?: string
+          voice?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

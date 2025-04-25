@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
 import { ArrowLeft, Save, Users, Trash2 } from "lucide-react";
@@ -7,6 +6,24 @@ import { motion } from "framer-motion";
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+interface Npc {
+  id: string;
+  name: string;
+  race: string;
+  occupation: string | null;
+  location: string | null;
+  alignment: string | null;
+  appearance: string | null;
+  personality: string[];
+  background: string | null;
+  motivations: string | null;
+  connections: string | null;
+  voice: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const NpcCreation = () => {
   const { id } = useParams();
@@ -27,35 +44,45 @@ const NpcCreation = () => {
   const [connections, setConnections] = useState('');
   const [voice, setVoice] = useState('');
   const [newTrait, setNewTrait] = useState("");
-  
+
   useEffect(() => {
     if (isEditing && user) {
       const fetchNpcDetails = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('npcs')
-          .select('*')
-          .eq('id', id)
-          .eq('user_id', user.id)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('npcs')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .single();
 
-        if (error) {
-          toast.error('Erro ao carregar detalhes do NPC');
+          if (error) {
+            toast.error('Erro ao carregar detalhes do NPC');
+            navigate('/npcs');
+            return;
+          }
+
+          if (data) {
+            const npc = data as Npc;
+            setName(npc.name);
+            setRace(npc.race);
+            setOccupation(npc.occupation || '');
+            setLocation(npc.location || '');
+            setAlignment(npc.alignment || 'NG');
+            setAppearance(npc.appearance || '');
+            setPersonality(npc.personality || []);
+            setBackground(npc.background || '');
+            setMotivations(npc.motivations || '');
+            setConnections(npc.connections || '');
+            setVoice(npc.voice || '');
+          }
+        } catch (error: any) {
+          toast.error('Erro ao carregar NPC');
           navigate('/npcs');
-        } else if (data) {
-          setName(data.name || '');
-          setRace(data.race || 'humano');
-          setOccupation(data.occupation || '');
-          setLocation(data.location || '');
-          setAlignment(data.alignment || 'NG');
-          setAppearance(data.appearance || '');
-          setPersonality(data.personality || []);
-          setBackground(data.background || '');
-          setMotivations(data.motivations || '');
-          setConnections(data.connections || '');
-          setVoice(data.voice || '');
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
       };
 
       fetchNpcDetails();
@@ -81,8 +108,8 @@ const NpcCreation = () => {
       return;
     }
 
-    if (!name) {
-      toast.error('Por favor, informe ao menos o nome do NPC');
+    if (!name || !race) {
+      toast.error('Por favor, informe ao menos o nome e a raça do NPC');
       return;
     }
 
@@ -131,7 +158,6 @@ const NpcCreation = () => {
     }
   };
   
-  // Suggested traits
   const suggestedTraits = [
     "Desconfiado", "Leal", "Ambicioso", "Orgulhoso", "Corajoso", 
     "Tímido", "Generoso", "Mesquinho", "Sábio", "Impulsivo"
@@ -158,7 +184,6 @@ const NpcCreation = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* NPC Preview */}
           <div className="md:col-span-1">
             <div className="fantasy-card p-6">
               <h3 className="text-lg font-medievalsharp text-white mb-4">Pré-visualização</h3>
@@ -211,7 +236,6 @@ const NpcCreation = () => {
             </div>
           </div>
           
-          {/* NPC Form */}
           <div className="md:col-span-2">
             <div className="fantasy-card p-6">
               <h3 className="text-lg font-medievalsharp text-white mb-4">Informações Básicas</h3>
@@ -303,7 +327,6 @@ const NpcCreation = () => {
                   ></textarea>
                 </div>
                 
-                {/* Personality Traits */}
                 <div>
                   <label className="block text-fantasy-stone mb-1">Traços de Personalidade</label>
                   <div className="flex mb-2">
