@@ -28,6 +28,7 @@ interface LiveSessionMapProps {
   onTokenMove: (tokenId: string, x: number, y: number) => void;
   onAddToken: (token: any) => void;
   participants: any[];
+  isPaused?: boolean;
 }
 
 const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
@@ -35,7 +36,8 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
   isGameMaster,
   onTokenMove,
   onAddToken,
-  participants
+  participants,
+  isPaused = false
 }) => {
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [scale, setScale] = useState(1);

@@ -22,17 +22,16 @@ import {
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
 
-// Definindo o tipo para tokens no mapa
+// Define the Token type to match the LiveSessionMap component
 export interface MapToken {
   id: string;
   name: string;
-  type: string;
+  token_type: string;
   x: number;
   y: number;
   size: number;
   color: string;
   image_url?: string;
-  token_type?: string;
 }
 
 // Definindo o tipo para os participantes
@@ -253,7 +252,7 @@ const LiveSession = () => {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-pulse text-fantasy-purple">Carregando sessão...</div>
+          <div className="animate-pulse text-fantasy-purple">Carregando sess��o...</div>
         </div>
       </MainLayout>
     );

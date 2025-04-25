@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +46,7 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
       try {
         setLoading(true);
         
-        // Buscar participantes da mesa
+        // Fetch participants from the table
         const { data: participants, error: participantsError } = await supabase
           .from('table_participants')
           .select(`
@@ -62,13 +63,18 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
         }
         
         if (participants) {
-          // Processar os dados e mapear para o formato esperado
+          // Process the data and handle potential errors
           const processedPlayers: GamePlayer[] = participants.map(participant => {
-            // Safely cast the profiles data and handle potential errors
-            const profile = participant.profiles as { display_name: string } | null;
-            const displayName = profile && typeof profile === 'object' && 'display_name' in profile
-              ? profile.display_name
-              : 'Jogador';
+            // Safely handle the profiles data with type checking
+            let displayName = "Jogador";
+            
+            if (participant.profiles) {
+              // Check if profiles is an object (not an error) and has display_name
+              const profilesData = participant.profiles as any;
+              if (typeof profilesData === 'object' && profilesData !== null && 'display_name' in profilesData) {
+                displayName = profilesData.display_name || "Jogador";
+              }
+            }
               
             return {
               id: participant.id,
@@ -78,7 +84,7 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
               characterClass: participant.characters?.class || null,
               characterRace: participant.characters?.race || null,
               characterLevel: participant.characters?.level || null,
-              online: true // Podemos atualizar isso com status real depois
+              online: true // We can update this with real status later
             };
           });
           
@@ -187,19 +193,19 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
         </TabsContent>
         
         <TabsContent value="map" className="flex-1 overflow-y-auto p-4">
-          <MapTab sessionId={sessionId} />
+          <MapTab />
         </TabsContent>
         
         <TabsContent value="chat" className="flex-1 overflow-y-auto p-4">
-          <ChatTab sessionId={sessionId} userId={userId} />
+          <ChatTab />
         </TabsContent>
         
         <TabsContent value="notes" className="flex-1 overflow-y-auto p-4">
-          <NotesTab sessionId={sessionId} userId={userId} />
+          <NotesTab />
         </TabsContent>
         
         <TabsContent value="story" className="flex-1 overflow-y-auto p-4">
-          <StoryTab sessionId={sessionId} />
+          <StoryTab />
         </TabsContent>
       </Tabs>
     </div>
