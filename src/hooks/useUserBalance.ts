@@ -44,7 +44,11 @@ export const useUserBalance = (): UserBalance => {
           throw error;
         }
       } else {
-        setBalance(data || { gems: 0, coins: 0 });
+        // Ensure we're dealing with integer values
+        const gems = data?.gems ? Math.round(Number(data.gems)) : 0;
+        const coins = data?.coins ? Math.round(Number(data.coins)) : 0;
+        
+        setBalance({ gems, coins });
       }
     } catch (error) {
       console.error('Error fetching user balance:', error);

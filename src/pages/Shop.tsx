@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ShopItem, { ShopItemProps } from '@/components/shop/ShopItem';
@@ -64,7 +65,7 @@ const sampleShopItems: ShopItemProps[] = [
     id: '6',
     name: 'Assinatura Premium - 1 Mês',
     description: 'Acesso a todas as funcionalidades premium por 1 mês.',
-    price: 29.90,
+    price: 30, // Using integers for prices
     currency: 'real',
     imageUrl: 'https://images.unsplash.com/photo-1518364538800-6bae3c2ea0f2',
     category: 'premium',
@@ -74,8 +75,8 @@ const sampleShopItems: ShopItemProps[] = [
     id: '7',
     name: 'Assinatura Premium - 6 Meses',
     description: 'Acesso a todas as funcionalidades premium por 6 meses.',
-    price: 149.90,
-    discountPrice: 129.90,
+    price: 150, // Using integers for prices
+    discountPrice: 130, // Using integers for prices
     currency: 'real',
     imageUrl: 'https://images.unsplash.com/photo-1594322436404-5a0526db4d13',
     category: 'premium'
@@ -84,7 +85,7 @@ const sampleShopItems: ShopItemProps[] = [
     id: '8',
     name: '500 Gemas',
     description: 'Pacote com 500 gemas para comprar itens na loja.',
-    price: 19.90,
+    price: 20, // Using integers for prices
     currency: 'real',
     imageUrl: 'https://images.unsplash.com/photo-1611689102192-1f6e0e52bf00',
     category: 'gem'
@@ -93,7 +94,7 @@ const sampleShopItems: ShopItemProps[] = [
     id: '9',
     name: '1000 Gemas + 100 Bônus',
     description: 'Pacote com 1100 gemas pelo preço de 1000.',
-    price: 39.90,
+    price: 40, // Using integers for prices
     currency: 'real',
     imageUrl: 'https://images.unsplash.com/photo-1567446100022-588d16803521',
     category: 'gem',
@@ -103,7 +104,7 @@ const sampleShopItems: ShopItemProps[] = [
     id: '10',
     name: '3000 Gemas + 500 Bônus',
     description: 'Pacote com 3500 gemas pelo preço de 3000.',
-    price: 99.90,
+    price: 100, // Using integers for prices
     currency: 'real',
     imageUrl: 'https://images.unsplash.com/photo-1623001468263-a075c782bfbf',
     category: 'gem',

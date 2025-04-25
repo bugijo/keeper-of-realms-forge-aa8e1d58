@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,13 +66,16 @@ export const ShopItem = ({
           return;
         }
 
+        // Ensure we're using integers for the transaction amount
+        const transactionAmount = Math.round(finalPrice);
+
         const { error: transactionError } = await supabase
           .from('transactions')
           .insert({
             user_id: user.id,
             item_id: id,
             item_name: name,
-            amount: finalPrice,
+            amount: transactionAmount,
             currency: 'gems',
             status: 'completed'
           });
@@ -80,7 +84,7 @@ export const ShopItem = ({
 
         const { error: updateError } = await supabase
           .from('user_balance')
-          .update({ gems: gems - finalPrice })
+          .update({ gems: gems - transactionAmount })
           .eq('user_id', user.id);
 
         if (updateError) throw updateError;
@@ -89,13 +93,16 @@ export const ShopItem = ({
         toast.success(`Item "${name}" comprado com sucesso!`);
         setIsDialogOpen(false);
       } else {
+        // For real currency purchases, ensure we're using integers (cents)
+        const transactionAmount = Math.round(finalPrice * 100);
+        
         const { error: transactionError } = await supabase
           .from('transactions')
           .insert({
             user_id: user.id,
             item_id: id,
             item_name: name,
-            amount: finalPrice,
+            amount: transactionAmount, // Store amount in cents for real currency
             currency: 'real',
             status: 'pending'
           });
