@@ -1,34 +1,22 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { InventoryItemData } from '@/components/game/inventory/DraggableInventoryItem';
 
-export interface InventoryItem {
-  id: string;
-  name: string;
-  description: string;
-  quantity: number;
-  weight: number;
-  value: number;
-  type: string;
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-  equipped?: boolean;
-  imageUrl?: string;
-  character_id?: string;
-}
-
-interface UseInventoryOptions {
+interface UseInventorySyncOptions {
   characterId: string;
   isMaster?: boolean;
 }
 
-export function useInventorySync({ characterId, isMaster = false }: UseInventoryOptions) {
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+export function useInventorySync({ characterId, isMaster = false }: UseInventorySyncOptions) {
+  const [inventory, setInventory] = useState<InventoryItemData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalWeight, setTotalWeight] = useState(0);
-  const [maxWeight, setMaxWeight] = useState(150);
+  const [maxWeight, setMaxWeight] = useState(150); // Valor padrão, pode ser ajustado com base nos atributos
 
-  // Calculate encumbrance status
+  // Calcula o status de sobrecarga
   const encumbranceStatus = () => {
     if (totalWeight <= maxWeight * 0.33) return 'light';
     if (totalWeight <= maxWeight * 0.66) return 'medium';
@@ -36,56 +24,26 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     return 'overencumbered';
   };
 
-  // Load inventory from database
+  // Carrega os itens do inventário do banco de dados
   useEffect(() => {
     const loadInventory = async () => {
       try {
         setLoading(true);
         
-        // Mock inventory data since we don't have character_inventory table yet
-        // In a real implementation, we would query the database
-        const mockItems: InventoryItem[] = [
-          {
-            id: '1',
-            name: 'Potion of Healing',
-            description: 'Restores 2d4+2 hit points when consumed',
-            quantity: 3,
-            weight: 0.5,
-            value: 50,
-            type: 'potion',
-            rarity: 'common',
-            character_id: characterId
-          },
-          {
-            id: '2',
-            name: 'Longsword',
-            description: 'A standard longsword',
-            quantity: 1,
-            weight: 3,
-            value: 15,
-            type: 'weapon',
-            rarity: 'common',
-            equipped: true,
-            character_id: characterId
-          },
-          {
-            id: '3',
-            name: 'Studded Leather Armor',
-            description: 'Light armor that offers decent protection',
-            quantity: 1,
-            weight: 13,
-            value: 45,
-            type: 'armor',
-            rarity: 'common',
-            equipped: true,
-            character_id: characterId
-          }
-        ];
+        if (!characterId) return;
         
-        setInventory(mockItems);
+        const { data, error } = await supabase
+          .from('character_inventory')
+          .select('*')
+          .eq('character_id', characterId);
+          
+        if (error) throw error;
         
-        const total = mockItems.reduce((sum, item) => {
-          return sum + (item.weight * item.quantity);
+        setInventory(data as InventoryItemData[]);
+        
+        // Calcula o peso total
+        const total = data.reduce((sum, item) => {
+          return sum + (Number(item.weight) * item.quantity);
         }, 0);
         
         setTotalWeight(total);
@@ -100,24 +58,70 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     
     if (characterId) {
       loadInventory();
+      
+      // Configurar assinatura em tempo real para atualizações do inventário
+      const channel = supabase
+        .channel('character_inventory_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'character_inventory',
+            filter: `character_id=eq.${characterId}`,
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setInventory((current) => [...current, payload.new as InventoryItemData]);
+              setTotalWeight((current) => current + Number(payload.new.weight) * payload.new.quantity);
+              toast.success(`Item adicionado: ${payload.new.name}`);
+            } 
+            else if (payload.eventType === 'UPDATE') {
+              setInventory((current) => 
+                current.map((item) => 
+                  item.id === payload.new.id ? payload.new as InventoryItemData : item
+                )
+              );
+              
+              // Recalcular peso total após atualização
+              setInventory((current) => {
+                const total = current.reduce((sum, item) => {
+                  return sum + (Number(item.weight) * item.quantity);
+                }, 0);
+                
+                setTotalWeight(total);
+                return current;
+              });
+            } 
+            else if (payload.eventType === 'DELETE') {
+              setInventory((current) => 
+                current.filter((item) => item.id !== payload.old.id)
+              );
+              setTotalWeight((current) => current - Number(payload.old.weight) * payload.old.quantity);
+              toast.success(`Item removido: ${payload.old.name}`);
+            }
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [characterId]);
 
-  // Add item to inventory (placeholder until we create the proper table)
-  const addItem = async (item: Omit<InventoryItem, 'id'>) => {
+  // Adiciona um item ao inventário
+  const addItem = async (item: Omit<InventoryItemData, 'id'>) => {
     try {
-      // Since we don't have the character_inventory table yet,
-      // we'll mock the addition and update local state
-      const mockItem: InventoryItem = {
-        id: `temp-${Date.now()}`,
-        ...item
-      };
+      const { data, error } = await supabase
+        .from('character_inventory')
+        .insert({ ...item })
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-      setInventory(prev => [...prev, mockItem]);
-      setTotalWeight(prev => prev + (mockItem.weight * mockItem.quantity));
-      
-      toast.success(`${item.name} adicionado ao inventário!`);
-      return mockItem;
+      return data as InventoryItemData;
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao adicionar item: ${err.message}`);
@@ -125,16 +129,16 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     }
   };
 
-  // Remove item from inventory (placeholder)
+  // Remove um item do inventário
   const removeItem = async (itemId: string) => {
     try {
-      const item = inventory.find(i => i.id === itemId);
-      if (!item) throw new Error('Item não encontrado');
+      const { error } = await supabase
+        .from('character_inventory')
+        .delete()
+        .eq('id', itemId);
+        
+      if (error) throw error;
       
-      setInventory(prev => prev.filter(i => i.id !== itemId));
-      setTotalWeight(prev => prev - (item.weight * item.quantity));
-      
-      toast.success(`${item.name} removido do inventário!`);
       return true;
     } catch (err: any) {
       setError(err.message);
@@ -143,28 +147,23 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     }
   };
 
-  // Update item quantity (placeholder)
+  // Atualiza a quantidade de um item
   const updateItemQuantity = async (itemId: string, newQuantity: number) => {
     try {
-      const item = inventory.find(i => i.id === itemId);
-      if (!item) throw new Error('Item não encontrado');
-      
       if (newQuantity <= 0) {
         return removeItem(itemId);
       }
       
-      const oldQuantity = item.quantity;
+      const { data, error } = await supabase
+        .from('character_inventory')
+        .update({ quantity: newQuantity })
+        .eq('id', itemId)
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-      setInventory(prev => 
-        prev.map(i => 
-          i.id === itemId ? { ...i, quantity: newQuantity } : i
-        )
-      );
-      
-      setTotalWeight(prev => prev - (item.weight * oldQuantity) + (item.weight * newQuantity));
-      
-      toast.success(`Quantidade de ${item.name} atualizada!`);
-      return { ...item, quantity: newQuantity };
+      return data as InventoryItemData;
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao atualizar quantidade: ${err.message}`);
@@ -172,27 +171,51 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     }
   };
 
-  // Toggle equipped status (placeholder)
+  // Alterna o status de equipado de um item
   const toggleEquipped = async (itemId: string) => {
     try {
       const item = inventory.find(i => i.id === itemId);
       if (!item) throw new Error('Item não encontrado');
       
-      setInventory(prev => 
-        prev.map(i => 
-          i.id === itemId ? { ...i, equipped: !i.equipped } : i
-        )
-      );
+      const { data, error } = await supabase
+        .from('character_inventory')
+        .update({ equipped: !item.equipped })
+        .eq('id', itemId)
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-      toast.success(item.equipped ? 
-        `${item.name} desequipado!` : 
-        `${item.name} equipado!`
-      );
-      
-      return { ...item, equipped: !item.equipped };
+      return data as InventoryItemData;
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao atualizar status de equipamento: ${err.message}`);
+      return null;
+    }
+  };
+
+  // Transfere um item para outro personagem
+  const transferItem = async (itemId: string, targetCharacterId: string) => {
+    try {
+      if (itemId === targetCharacterId) return null; // Evita transferir para o mesmo personagem
+      
+      const item = inventory.find(i => i.id === itemId);
+      if (!item) throw new Error('Item não encontrado');
+      
+      // Transferir o item para o novo personagem
+      const { data, error } = await supabase
+        .from('character_inventory')
+        .update({ character_id: targetCharacterId })
+        .eq('id', itemId)
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success(`Item transferido com sucesso!`);
+      return data as InventoryItemData[];
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Erro ao transferir item: ${err.message}`);
       return null;
     }
   };
@@ -207,6 +230,7 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
     addItem,
     removeItem,
     updateItemQuantity,
-    toggleEquipped
+    toggleEquipped,
+    transferItem
   };
 }

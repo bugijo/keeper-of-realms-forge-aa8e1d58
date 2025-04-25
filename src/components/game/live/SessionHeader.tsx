@@ -9,16 +9,19 @@ interface SessionHeaderProps {
   startTime: Date | null;
   onEndSession: () => void;
   isGameMaster: boolean;
+  isPaused?: boolean;
+  onTogglePause?: () => void;
 }
 
 const SessionHeader: React.FC<SessionHeaderProps> = ({
   sessionName,
   startTime,
   onEndSession,
-  isGameMaster
+  isGameMaster,
+  isPaused = false,
+  onTogglePause
 }) => {
   const [elapsedTime, setElapsedTime] = useState<string>('00:00:00');
-  const [isPaused, setIsPaused] = useState<boolean>(false);
   
   useEffect(() => {
     if (!startTime || isPaused) return;
@@ -37,10 +40,6 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
     return () => clearInterval(intervalId);
   }, [startTime, isPaused]);
   
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
-  
   return (
     <div className="px-4 py-3 bg-fantasy-dark border-b border-fantasy-purple/30 flex justify-between items-center">
       <div className="flex items-center">
@@ -57,14 +56,16 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
           <Clock size={20} className="text-fantasy-gold" />
           <span className="font-mono text-lg text-white">{elapsedTime}</span>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={togglePause}
-            className="ml-1"
-          >
-            {isPaused ? <Play size={18} /> : <Pause size={18} />}
-          </Button>
+          {onTogglePause && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onTogglePause}
+              className="ml-1"
+            >
+              {isPaused ? <Play size={18} /> : <Pause size={18} />}
+            </Button>
+          )}
         </div>
         
         {isGameMaster && (

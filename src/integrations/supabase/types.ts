@@ -9,6 +9,62 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      character_inventory: {
+        Row: {
+          character_id: string
+          created_at: string
+          description: string | null
+          equipped: boolean | null
+          id: string
+          image_url: string | null
+          name: string
+          quantity: number
+          rarity: string
+          type: string
+          updated_at: string
+          value: number | null
+          weight: number
+        }
+        Insert: {
+          character_id: string
+          created_at?: string
+          description?: string | null
+          equipped?: boolean | null
+          id?: string
+          image_url?: string | null
+          name: string
+          quantity?: number
+          rarity?: string
+          type?: string
+          updated_at?: string
+          value?: number | null
+          weight?: number
+        }
+        Update: {
+          character_id?: string
+          created_at?: string
+          description?: string | null
+          equipped?: boolean | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          quantity?: number
+          rarity?: string
+          type?: string
+          updated_at?: string
+          value?: number | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_inventory_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           attributes: Json | null
