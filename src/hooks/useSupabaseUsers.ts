@@ -10,7 +10,7 @@ export const useSupabaseUsers = () => {
     const fetchUsers = async () => {
       try {
         const { data, error } = await supabase
-          .from('auth.users')
+          .from('profiles')
           .select('id, email');
         
         if (error) throw error;

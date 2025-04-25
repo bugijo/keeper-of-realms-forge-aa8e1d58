@@ -39,6 +39,11 @@ const CharacterView = () => {
             ? data.attributes
             : {};
           
+          // Safely access nested properties with type checking
+          const hpObj = typeof attributesObj.hp === 'object' && attributesObj.hp !== null && !Array.isArray(attributesObj.hp)
+            ? attributesObj.hp
+            : { current: 10, max: 10 };
+          
           // Format character data to display in the UI
           const formattedCharacter = {
             id: data.id,
@@ -58,12 +63,8 @@ const CharacterView = () => {
             },
             abilities: {
               hp: { 
-                current: typeof attributesObj.hp === 'object' && attributesObj.hp !== null 
-                  ? Number(attributesObj.hp.current || 10)
-                  : 10, 
-                max: typeof attributesObj.hp === 'object' && attributesObj.hp !== null
-                  ? Number(attributesObj.hp.max || 10)
-                  : 10
+                current: Number(hpObj.current || 10), 
+                max: Number(hpObj.max || 10)
               },
               ac: Number(attributesObj.ac || 10),
               speed: Number(attributesObj.speed || 30),
