@@ -104,6 +104,41 @@ export type Database = {
           },
         ]
       }
+      fog_of_war: {
+        Row: {
+          created_at: string
+          grid_positions: Json
+          id: string
+          is_revealed: boolean | null
+          session_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grid_positions?: Json
+          id?: string
+          is_revealed?: boolean | null
+          session_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grid_positions?: Json
+          id?: string
+          is_revealed?: boolean | null
+          session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fog_of_war_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           created_at: string
@@ -172,6 +207,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      master_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          last_updated: string
+          table_id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_updated?: string
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_updated?: string
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "master_notes_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       monsters: {
         Row: {
@@ -457,6 +527,7 @@ export type Database = {
           max_players: number | null
           meeting_url: string | null
           name: string
+          session_paused: boolean | null
           status: string | null
           synopsis: string | null
           system: string | null
@@ -473,6 +544,7 @@ export type Database = {
           max_players?: number | null
           meeting_url?: string | null
           name: string
+          session_paused?: boolean | null
           status?: string | null
           synopsis?: string | null
           system?: string | null
@@ -489,6 +561,7 @@ export type Database = {
           max_players?: number | null
           meeting_url?: string | null
           name?: string
+          session_paused?: boolean | null
           status?: string | null
           synopsis?: string | null
           system?: string | null

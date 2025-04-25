@@ -1,126 +1,131 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders,
-    });
+interface DiceRollRequest {
+  formula: string;
+  sessionId: string;
+  userId: string;
+  visibleToAll: boolean;
+}
+
+// Parse dice notation like "2d6+3"
+function parseDiceNotation(notation: string) {
+  // Handle common dice notations
+  const regex = /^(\d+)?d(\d+)([+-]\d+)?$/i;
+  const match = notation.trim().match(regex);
+  
+  if (!match) {
+    throw new Error("Invalid dice notation. Format: [number]d[sides][+/-modifier]");
   }
+  
+  const numDice = match[1] ? parseInt(match[1]) : 1;
+  const numSides = parseInt(match[2]);
+  const modifier = match[3] ? parseInt(match[3]) : 0;
+  
+  if (numDice <= 0 || numDice > 100) {
+    throw new Error("Number of dice must be between 1 and 100");
+  }
+  
+  if (numSides <= 0 || numSides > 1000) {
+    throw new Error("Number of sides must be between 1 and 1000");
+  }
+  
+  return { numDice, numSides, modifier };
+}
 
+// Roll dice
+function rollDice(numDice: number, numSides: number): number[] {
+  const results = [];
+  for (let i = 0; i < numDice; i++) {
+    results.push(Math.floor(Math.random() * numSides) + 1);
+  }
+  return results;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders, status: 204 });
+  }
+  
   try {
-    const supabaseClient = createClient(
-      // Use a direct URL reference
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
-    const { formula, sessionId, isPrivate } = await req.json();
-
-    // Verificar a entrada
-    if (!formula || !sessionId) {
-      return new Response(
-        JSON.stringify({ error: 'Fórmula de dados e ID da sessão são necessários' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Analisar a fórmula dos dados
-    const diceRegex = /(\d*)d(\d+)(?:([+-])(\d+))?/;
-    const match = formula.match(diceRegex);
+    // Get the dice roll data from the request
+    const data = await req.json() as DiceRollRequest;
+    const { formula, sessionId, userId, visibleToAll } = data;
     
-    if (!match) {
-      return new Response(
-        JSON.stringify({ error: 'Fórmula de dados inválida' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    if (!formula || !sessionId || !userId) {
+      throw new Error("Missing required fields");
     }
     
-    const count = match[1] ? parseInt(match[1]) : 1;
-    const sides = parseInt(match[2]);
-    const hasModifier = match[3] !== undefined;
-    const modifierSign = match[3] === '+' ? 1 : -1;
-    const modifierValue = hasModifier ? parseInt(match[4]) : 0;
+    // Parse the dice formula
+    const { numDice, numSides, modifier } = parseDiceNotation(formula);
     
-    // Rolar os dados
-    const dice: number[] = [];
-    for (let i = 0; i < count; i++) {
-      dice.push(Math.floor(Math.random() * sides) + 1);
-    }
+    // Roll the dice
+    const diceResults = rollDice(numDice, numSides);
+    const total = diceResults.reduce((sum, val) => sum + val, 0) + modifier;
     
-    // Calcular o resultado
-    const diceSum = dice.reduce((sum, value) => sum + value, 0);
-    const result = hasModifier ? diceSum + (modifierSign * modifierValue) : diceSum;
-
-    // Obter usuário atual da sessão
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    // Format for display (e.g., "2d6+3")
+    const displayFormula = `${numDice}d${numSides}${modifier > 0 ? `+${modifier}` : modifier < 0 ? modifier : ''}`;
     
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Usuário não autenticado' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Salvar a rolagem no banco de dados
-    const { data, error } = await supabaseClient
-      .from('dice_rolls')
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Store the result in the database
+    const { data: rollData, error } = await supabase
+      .from("dice_rolls")
       .insert({
+        user_id: userId,
         session_id: sessionId,
-        user_id: user.id,
-        roll_formula: formula,
-        roll_result: result,
+        roll_formula: displayFormula,
+        roll_result: total,
         roll_details: {
-          dice,
-          modifier: hasModifier ? modifierSign * modifierValue : undefined
+          dice: diceResults,
+          modifier: modifier || undefined,
         },
-        visible_to_all: !isPrivate
+        visible_to_all: visibleToAll,
       })
-      .select('*')
+      .select("id")
       .single();
-
+      
     if (error) {
-      console.error('Erro ao salvar rolagem:', error);
-      throw error;
+      throw new Error(`Failed to store roll result: ${error.message}`);
     }
     
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        roll: data
+      JSON.stringify({
+        id: rollData?.id,
+        formula: displayFormula,
+        results: diceResults,
+        modifier,
+        total,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+        status: 200,
       }
     );
   } catch (error) {
-    console.error('Erro:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: error.message,
+      }),
       {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+        status: 400,
       }
     );
   }

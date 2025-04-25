@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Timer, Play, Stop } from 'lucide-react';
+import { Clock, Timer, Play, Pause } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface SessionHeaderProps {
@@ -63,7 +63,7 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
             onClick={togglePause}
             className="ml-1"
           >
-            {isPaused ? <Play size={18} /> : <Stop size={18} />}
+            {isPaused ? <Play size={18} /> : <Pause size={18} />}
           </Button>
         </div>
         

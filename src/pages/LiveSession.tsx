@@ -9,6 +9,37 @@ import LiveSessionMap from '@/components/game/live/LiveSessionMap';
 import ChatPanel from '@/components/game/live/ChatPanel';
 import DicePanel from '@/components/game/live/DicePanel';
 import SessionHeader from '@/components/game/live/SessionHeader';
+import GameMasterPanel from '@/components/game/master/GameMasterPanel';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Database } from '@/integrations/supabase/types';
+
+// Definir tipos para os tokens na sessão
+interface SessionToken {
+  id: string;
+  name: string;
+  token_type: string;
+  x: number;
+  y: number;
+  color?: string;
+  size: number;
+  image_url?: string;
+}
+
+// Definindo o tipo para os participantes
+interface Participant {
+  id: string;
+  user_id: string;
+  role: string;
+  profiles?: {
+    display_name: string;
+  };
+  characters?: {
+    id: string;
+    name: string;
+    race: string;
+    class: string;
+  };
+}
 
 const LiveSession = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,8 +49,9 @@ const LiveSession = () => {
   const [tableData, setTableData] = useState<any>(null);
   const [isGameMaster, setIsGameMaster] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const [tokens, setTokens] = useState<any[]>([]);
-  const [participants, setParticipants] = useState<any[]>([]);
+  const [tokens, setTokens] = useState<SessionToken[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const fetchSessionData = async () => {
@@ -50,7 +82,7 @@ const LiveSession = () => {
         // Buscar dados da mesa
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
-          .select('*')
+          .select('*, session_paused')
           .eq('id', id)
           .single();
 
@@ -61,18 +93,23 @@ const LiveSession = () => {
         }
 
         setTableData(tableData);
+        setIsPaused(tableData.session_paused || false);
         setSessionStartTime(new Date());
 
         // Buscar tokens da sessão
-        const { data: tokenData } = await supabase
+        const { data: tokenData, error: tokenError } = await supabase
           .from('session_tokens')
           .select('*')
           .eq('session_id', id);
-
-        setTokens(tokenData || []);
+          
+        if (tokenError) {
+          console.error("Erro ao buscar tokens:", tokenError);
+        } else {
+          setTokens(tokenData || []);
+        }
 
         // Buscar participantes da mesa
-        const { data: participants } = await supabase
+        const { data: participants, error: participantsError } = await supabase
           .from('table_participants')
           .select(`
             id, user_id, role,
@@ -80,8 +117,12 @@ const LiveSession = () => {
             characters:character_id (id, name, race, class)
           `)
           .eq('table_id', id);
-
-        setParticipants(participants || []);
+          
+        if (participantsError) {
+          console.error("Erro ao buscar participantes:", participantsError);
+        } else {
+          setParticipants(participants || []);
+        }
 
         // Configurar assinatura em tempo real para os tokens
         const tokenChannel = supabase
@@ -96,10 +137,10 @@ const LiveSession = () => {
             },
             (payload) => {
               if (payload.eventType === 'INSERT') {
-                setTokens(prev => [...prev, payload.new]);
+                setTokens(prev => [...prev, payload.new as SessionToken]);
               } else if (payload.eventType === 'UPDATE') {
                 setTokens(prev => 
-                  prev.map(token => token.id === payload.new.id ? payload.new : token)
+                  prev.map(token => token.id === payload.new.id ? payload.new as SessionToken : token)
                 );
               } else if (payload.eventType === 'DELETE') {
                 setTokens(prev => prev.filter(token => token.id !== payload.old.id));
@@ -108,8 +149,34 @@ const LiveSession = () => {
           )
           .subscribe();
 
+        // Configurar assinatura para mudanças de estado da sessão (pausada/ativa)
+        const tableChannel = supabase
+          .channel('table_status_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'tables',
+              filter: `id=eq.${id}`
+            },
+            (payload) => {
+              if (payload.new && 'session_paused' in payload.new) {
+                setIsPaused(payload.new.session_paused as boolean);
+                
+                if (payload.new.session_paused) {
+                  toast.info("A sessão foi pausada pelo mestre");
+                } else {
+                  toast.info("A sessão foi retomada pelo mestre");
+                }
+              }
+            }
+          )
+          .subscribe();
+
         return () => {
           supabase.removeChannel(tokenChannel);
+          supabase.removeChannel(tableChannel);
         };
       } catch (error) {
         console.error('Erro ao carregar dados da sessão:', error);
@@ -122,28 +189,15 @@ const LiveSession = () => {
     fetchSessionData();
   }, [id, user, navigate]);
 
-  const handleEndSession = async () => {
+  const handleEndSession = () => {
     if (!isGameMaster) return;
-
-    const confirm = window.confirm('Tem certeza que deseja encerrar esta sessão?');
-    if (!confirm) return;
-
-    try {
-      await supabase
-        .from('tables')
-        .update({ status: 'completed' })
-        .eq('id', id);
-
-      toast.success('Sessão encerrada com sucesso');
-      navigate('/tables');
-    } catch (error) {
-      console.error('Erro ao encerrar sessão:', error);
-      toast.error('Erro ao encerrar sessão');
-    }
   };
 
   const handleTokenMove = async (tokenId: string, newX: number, newY: number) => {
-    if (!isGameMaster) return;
+    if (!isGameMaster && isPaused) {
+      toast.error("A sessão está pausada. Aguarde o mestre retomá-la.");
+      return;
+    }
 
     try {
       await supabase
@@ -166,17 +220,55 @@ const LiveSession = () => {
     if (!isGameMaster) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('session_tokens')
         .insert({
           ...tokenData,
           session_id: id,
         });
 
+      if (error) throw error;
       toast.success('Token adicionado');
     } catch (error) {
       console.error('Erro ao adicionar token:', error);
       toast.error('Erro ao adicionar token');
+    }
+  };
+
+  const toggleSessionPause = async () => {
+    if (!isGameMaster || !id) return;
+
+    try {
+      const newPausedState = !isPaused;
+      const { error } = await supabase
+        .from('tables')
+        .update({ session_paused: newPausedState })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setIsPaused(newPausedState);
+      toast.success(newPausedState ? 'Sessão pausada' : 'Sessão retomada');
+    } catch (error) {
+      console.error('Erro ao alterar estado da sessão:', error);
+      toast.error('Erro ao alterar estado da sessão');
+    }
+  };
+
+  const confirmEndSession = async () => {
+    if (!isGameMaster) return;
+
+    try {
+      await supabase
+        .from('tables')
+        .update({ status: 'completed' })
+        .eq('id', id);
+
+      toast.success('Sessão encerrada com sucesso');
+      navigate('/tables');
+    } catch (error) {
+      console.error('Erro ao encerrar sessão:', error);
+      toast.error('Erro ao encerrar sessão');
     }
   };
 
@@ -193,25 +285,87 @@ const LiveSession = () => {
   return (
     <MainLayout>
       <div className="flex flex-col h-[calc(100vh-80px)]">
-        <SessionHeader 
-          sessionName={tableData?.name} 
-          startTime={sessionStartTime} 
-          onEndSession={handleEndSession} 
-          isGameMaster={isGameMaster}
-        />
+        <div className="flex justify-between items-center px-4 py-3 bg-fantasy-dark border-b border-fantasy-purple/30">
+          <div className="flex items-center">
+            <SessionHeader 
+              sessionName={tableData?.name} 
+              startTime={sessionStartTime} 
+              onEndSession={handleEndSession} 
+              isGameMaster={isGameMaster}
+            />
+          </div>
+          
+          {isGameMaster && (
+            <div className="flex items-center gap-2">
+              <GameMasterPanel 
+                sessionId={id || ''} 
+                userId={user?.id || ''} 
+                isPaused={isPaused}
+                onTogglePause={toggleSessionPause}
+              />
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="fantasy-button destructive">
+                    Encerrar Sessão
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-fantasy-dark border border-fantasy-purple/50">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-fantasy-gold font-medievalsharp">
+                      Encerrar Sessão
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-fantasy-stone">
+                      Tem certeza que deseja encerrar esta sessão? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="hover:bg-fantasy-dark/50 hover:text-white">
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={confirmEndSession} 
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Encerrar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Painel de Dados - Barra Lateral Esquerda */}
-          <DicePanel sessionId={id || ''} userId={user?.id || ''} />
+          <DicePanel 
+            sessionId={id || ''} 
+            userId={user?.id || ''} 
+            isPaused={isPaused}
+            isGameMaster={isGameMaster}
+          />
           
           {/* Área Central - Mapa Tático */}
           <div className="flex-1 h-full overflow-hidden">
+            {isPaused && !isGameMaster && (
+              <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center">
+                <div className="text-center bg-fantasy-dark/90 p-6 rounded-lg border border-fantasy-purple max-w-md">
+                  <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-3">
+                    Sessão Pausada
+                  </h2>
+                  <p className="text-fantasy-stone">
+                    O mestre pausou a sessão. Por favor, aguarde até que a sessão seja retomada.
+                  </p>
+                </div>
+              </div>
+            )}
             <LiveSessionMap
               tokens={tokens}
               isGameMaster={isGameMaster}
               onTokenMove={handleTokenMove}
               onAddToken={addToken}
               participants={participants}
+              isPaused={isPaused && !isGameMaster}
             />
           </div>
           
