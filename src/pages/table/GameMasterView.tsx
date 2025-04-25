@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
@@ -116,7 +115,7 @@ const GameMasterView = () => {
         
         const profilesMap: Record<string, ProfileData> = {};
         if (profilesData) {
-          profilesData.forEach(profile => {
+          profilesData.forEach((profile: ProfileData) => {
             profilesMap[profile.id] = profile;
           });
         }
@@ -137,7 +136,7 @@ const GameMasterView = () => {
         const playersData = (participantsData || [])
           .filter(p => p.role !== 'gm')
           .map(p => {
-            const profileData = profilesMap[p.user_id] || {};
+            const profileData = profilesMap[p.user_id] || { id: p.user_id, display_name: "Jogador sem nome" };
             
             return {
               id: p.id,
@@ -377,7 +376,6 @@ const GameMasterView = () => {
     // Implement copy invite link logic here
   };
 
-  // Adding missing function for StoryTab component
   const addStorySegment = () => {
     const newSegment = {
       id: storySegments.length > 0 ? Math.max(...storySegments.map(s => s.id)) + 1 : 1,
