@@ -390,14 +390,14 @@ const Tables = () => {
                         <div className="flex gap-2">
                           <Link 
                             to={`/table/${table.id}`} 
-                            className="fantasy-button secondary flex-1 text-center"
+                            className="fantasy-button secondary flex-1 text-center flex items-center justify-center"
                           >
                             <Eye size={16} className="mr-2" />
-                            Detalhes
+                            Visualizar
                           </Link>
                           <Link 
                             to={`/gm/${table.id}`}
-                            className="fantasy-button primary flex-1 text-center"
+                            className="fantasy-button primary flex-1 text-center flex items-center justify-center"
                           >
                             <Edit size={16} className="mr-2" />
                             Painel

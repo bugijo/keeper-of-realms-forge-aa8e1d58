@@ -5,11 +5,10 @@ import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { Calendar, Users, Sword, MapPin, Clock, Book } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { v4 as uuidv4 } from 'uuid';
-import { Link } from 'react-router-dom';
-import { Eye } from 'lucide-react';
+import { TableHeader } from '@/components/table/TableHeader';
+import { ParticipantsList } from '@/components/table/ParticipantsList';
+import { TableActions } from '@/components/table/TableActions';
 
 const TableDetailsView = () => {
   const { id } = useParams();
@@ -211,106 +210,36 @@ const TableDetailsView = () => {
     );
   }
 
-  const isTableFull = participants.length >= (tableDetails.max_players || 5);
+  const isTableFull = participants.length >= (tableDetails?.max_players || 5);
 
   return (
     <MainLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="fantasy-card p-6 mb-6">
           <h1 className="text-3xl font-medievalsharp text-fantasy-purple mb-4">
-            {tableDetails.name}
+            {tableDetails?.name}
           </h1>
           
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <div className="flex items-center mb-2">
-                <Book className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">Campanha: {tableDetails.campaign || 'Não definida'}</span>
-              </div>
-              <div className="flex items-center mb-2">
-                <Sword className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">Sistema: {tableDetails.system || 'D&D 5e'}</span>
-              </div>
-              <div className="flex items-center mb-2">
-                <Calendar className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">
-                  {tableDetails.weekday || 'Dia não definido'} - {tableDetails.time || 'Horário não definido'}
-                </span>
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex items-center mb-2">
-                <Users className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">
-                  Participantes: {participants.length} / {tableDetails.max_players || 5}
-                </span>
-              </div>
-              <div className="flex items-center mb-2">
-                <MapPin className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">{tableDetails.meeting_url || 'Local não definido'}</span>
-              </div>
-              <div className="flex items-center mb-2">
-                <Clock className="mr-2 text-fantasy-gold" />
-                <span className="text-fantasy-stone">Status: {tableDetails.status || 'aberto'}</span>
-              </div>
-            </div>
-          </div>
+          {tableDetails && <TableHeader tableDetails={tableDetails} />}
 
           <div className="mb-6">
             <h2 className="text-xl font-medievalsharp text-fantasy-stone mb-2">Sinopse</h2>
-            <p className="text-fantasy-stone">{tableDetails.synopsis || 'Nenhuma sinopse disponível'}</p>
+            <p className="text-fantasy-stone">{tableDetails?.synopsis || 'Nenhuma sinopse disponível'}</p>
           </div>
 
-          <div className="mb-6">
-            <h2 className="text-xl font-medievalsharp text-fantasy-stone mb-2">
-              Participantes Confirmados ({participants.length})
-            </h2>
-            {participants.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {participants.map((participant) => (
-                  <div 
-                    key={participant.id} 
-                    className="bg-fantasy-dark/50 px-3 py-1 rounded-full text-fantasy-stone"
-                  >
-                    {participant.profiles?.display_name || 'Jogador'}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-fantasy-stone italic">Nenhum participante confirmado ainda</p>
-            )}
-          </div>
+          <ParticipantsList participants={participants} />
 
-          {tableDetails.status === 'open' && (
-            <div className="flex justify-center">
-              {isTableFull ? (
-                <div className="text-red-500 font-bold">Mesa completa</div>
-              ) : joinRequestStatus === 'approved' ? (
-                <div className="text-green-500 font-bold">Você já é um participante desta mesa</div>
-              ) : (
-                <Button 
-                  onClick={handleJoinRequest} 
-                  disabled={joinRequestStatus === 'pending'}
-                  className="fantasy-button primary"
-                >
-                  {joinRequestStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Participação'}
-                </Button>
-              )}
-            </div>
-          )}
-
-          {(isParticipant || tableDetails?.user_id === user?.id) && (
-            <div className="flex justify-center mt-6">
-              <Link 
-                to={userRole === 'dm' ? `/gm/${id}` : `/table/player/${id}`}
-                className="fantasy-button primary flex items-center gap-2"
-              >
-                <Eye size={16} />
-                {userRole === 'dm' ? 'Ver Painel do Mestre' : 'Ver Mesa de Jogo'}
-              </Link>
-            </div>
-          )}
+          <TableActions 
+            tableId={id || ''}
+            isTableFull={participants.length >= (tableDetails?.max_players || 5)}
+            joinRequestStatus={joinRequestStatus}
+            isParticipant={isParticipant}
+            userRole={userRole}
+            tableStatus={tableDetails?.status || 'open'}
+            onJoinRequest={handleJoinRequest}
+            userId={user?.id}
+            tableOwnerId={tableDetails?.user_id}
+          />
         </div>
       </div>
     </MainLayout>
