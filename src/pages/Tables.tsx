@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import MainLayout from '@/components/layout/MainLayout';
@@ -29,8 +28,8 @@ const Tables = () => {
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("discover");
   
-  // Fetch tables the user has created
   const fetchMyTables = async () => {
     if (!user) return;
     
@@ -49,7 +48,6 @@ const Tables = () => {
     }
   };
   
-  // Fetch tables the user participates in (but didn't create)
   const fetchParticipatingTables = async () => {
     if (!user) return;
     
@@ -62,7 +60,6 @@ const Tables = () => {
         
       if (error) throw error;
       
-      // Filter out tables the user created (to avoid duplication)
       const participatingTablesData = data
         ?.filter(item => item.tables?.user_id !== user.id)
         .map(item => item.tables) || [];
@@ -74,12 +71,10 @@ const Tables = () => {
     }
   };
   
-  // Fetch join requests for tables the user owns
   const fetchJoinRequests = async () => {
     if (!user) return;
     
     try {
-      // First get all tables created by the user
       const { data: userTables, error: tablesError } = await supabase
         .from('tables')
         .select('id')
@@ -88,7 +83,6 @@ const Tables = () => {
       if (tablesError) throw tablesError;
       
       if (userTables && userTables.length > 0) {
-        // Get all pending join requests for these tables
         const tableIds = userTables.map(table => table.id);
         
         const { data: requests, error: requestsError } = await supabase
@@ -107,7 +101,6 @@ const Tables = () => {
     }
   };
 
-  // Fetch all public tables for discovery
   const fetchAllTables = async () => {
     try {
       const { data, error } = await supabase
@@ -159,7 +152,6 @@ const Tables = () => {
     setLoadingAction(tableId);
     
     try {
-      // Check if user already has a request for this table
       const { data: existingRequest, error: checkError } = await supabase
         .from('table_join_requests')
         .select('*')
@@ -174,7 +166,6 @@ const Tables = () => {
         return;
       }
       
-      // Create new request
       const { error } = await supabase
         .from('table_join_requests')
         .insert({
@@ -186,7 +177,7 @@ const Tables = () => {
       if (error) throw error;
       
       toast.success('Solicitação de participação enviada');
-      fetchAllTables();  // Refresh the tables list
+      fetchAllTables();
     } catch (err) {
       console.error('Error sending join request:', err);
       toast.error('Erro ao enviar solicitação');
@@ -200,7 +191,6 @@ const Tables = () => {
     
     try {
       if (action === 'approve') {
-        // Get the request details first
         const { data: request, error: requestError } = await supabase
           .from('table_join_requests')
           .select('*')
@@ -209,7 +199,6 @@ const Tables = () => {
           
         if (requestError) throw requestError;
         
-        // Add user as a participant
         const { error: participantError } = await supabase
           .from('table_participants')
           .insert({
@@ -221,7 +210,6 @@ const Tables = () => {
         if (participantError) throw participantError;
       }
       
-      // Update request status
       const { error } = await supabase
         .from('table_join_requests')
         .update({ status: action === 'approve' ? 'approved' : 'rejected' })
@@ -235,7 +223,6 @@ const Tables = () => {
           : `Solicitação rejeitada para mesa ${tableName}`
       );
       
-      // Refresh requests list
       fetchJoinRequests();
     } catch (err) {
       console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, err);
@@ -243,6 +230,10 @@ const Tables = () => {
     } finally {
       setLoadingAction(null);
     }
+  };
+
+  const handleSwitchToDiscoverTab = () => {
+    setActiveTab("discover");
   };
 
   if (loading) {
@@ -272,7 +263,7 @@ const Tables = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="discover">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="discover">Descobrir</TabsTrigger>
             {user && (
@@ -307,7 +298,6 @@ const Tables = () => {
                     <div className="flex items-center text-fantasy-stone mb-2">
                       <Users className="mr-2 text-fantasy-gold" size={16} />
                       <span>
-                        {/* We don't have participant count here, would require a join */}
                         {table.max_players || 5} vagas
                       </span>
                     </div>
@@ -492,7 +482,7 @@ const Tables = () => {
                         Explore as mesas disponíveis e solicite participação
                       </p>
                       <Button 
-                        onClick={() => document.querySelector('button[value="discover"]')?.click()} 
+                        onClick={handleSwitchToDiscoverTab} 
                         className="fantasy-button secondary"
                       >
                         Descobrir Mesas
