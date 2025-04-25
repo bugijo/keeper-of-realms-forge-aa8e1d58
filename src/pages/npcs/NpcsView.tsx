@@ -1,68 +1,83 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
-import { Search, Filter, Users, ArrowBigRight, Plus } from "lucide-react";
+import { Search, Filter, Users, ArrowBigRight, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
-// Mock data for NPCs
-const mockNpcs = [
-  {
-    id: '1',
-    name: 'Elric o Ferreiro',
-    race: 'Humano',
-    occupation: 'Ferreiro',
-    location: 'Cidade da Coroa',
-    alignment: 'Neutro e Bom',
-    description: 'Um ferreiro habilidoso que forja as melhores armas da região. Tem um temperamento forte, mas é justo nos negócios.',
-    traits: ['Justo', 'Orgulhoso', 'Trabalhador']
-  },
-  {
-    id: '2',
-    name: 'Lyra Silversong',
-    race: 'Elfo',
-    occupation: 'Barda',
-    location: 'Floresta de Silverleaf',
-    alignment: 'Caótico e Bom',
-    description: 'Uma barda élfica que conhece histórias e canções antigas. Está sempre em busca de novas histórias para compor.',
-    traits: ['Curiosa', 'Carismática', 'Aventureira']
-  },
-  {
-    id: '3',
-    name: 'Grommash Punho de Ferro',
-    race: 'Anão',
-    occupation: 'Taberneiro',
-    location: 'Cidade da Coroa',
-    alignment: 'Leal e Neutro',
-    description: 'Dono da taverna "O Machado Embriagado". Conhece todos os rumores da cidade e é respeitado pelos frequentadores.',
-    traits: ['Leal', 'Observador', 'Hospitaleiro']
-  },
-  {
-    id: '4',
-    name: 'Senhora Vex',
-    race: 'Tiefling',
-    occupation: 'Mercadora',
-    location: 'Mercado da Cidade',
-    alignment: 'Neutro',
-    description: 'Uma comerciante astuta que vende itens raros e exóticos. Tem contatos em todas as partes do continente.',
-    traits: ['Negociadora', 'Esperta', 'Misteriosa']
-  }
-];
+interface Npc {
+  id: string;
+  name: string;
+  race: string;
+  occupation: string | null;
+  location: string | null;
+  alignment: string | null;
+  description?: string;
+  traits?: string[];
+}
 
 const NpcsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  
+  const [npcs, setNpcs] = useState<Npc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchNpcs();
+  }, [user]);
+
+  const fetchNpcs = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('npcs')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setNpcs(data || []);
+    } catch (error: any) {
+      console.error('Error fetching NPCs:', error);
+      toast.error('Erro ao carregar NPCs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este NPC?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('npcs')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setNpcs(npcs.filter(npc => npc.id !== id));
+      toast.success('NPC excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Error deleting NPC:', error);
+      toast.error('Erro ao excluir NPC');
+    }
+  };
+
   // Filter NPCs based on search and filter settings
-  const filteredNpcs = mockNpcs.filter(npc => {
-    // Text search filter
-    if (searchTerm && !npc.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !npc.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+  const filteredNpcs = npcs.filter(npc => {
+    if (searchTerm && !npc.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
-    // Location filter (simplified for demo)
-    if (filter !== "all" && !npc.location.toLowerCase().includes(filter.toLowerCase())) {
+    if (filter !== "all" && npc.location && !npc.location.toLowerCase().includes(filter.toLowerCase())) {
       return false;
     }
     
@@ -121,52 +136,66 @@ const NpcsView = () => {
         
         {/* NPCs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNpcs.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="fantasy-card p-4 animate-pulse">
+                <div className="h-12 w-12 bg-fantasy-purple/30 rounded-full mb-4"></div>
+                <div className="h-6 bg-fantasy-dark/50 rounded mb-2"></div>
+                <div className="h-4 bg-fantasy-dark/30 rounded mb-4"></div>
+                <div className="h-10 bg-fantasy-dark/20 rounded"></div>
+              </div>
+            ))
+          ) : filteredNpcs.length > 0 ? (
             filteredNpcs.map((npc) => (
-              <Link to={`/npcs/${npc.id}`} key={npc.id}>
-                <motion.div 
-                  whileHover={{ y: -5 }}
-                  className="fantasy-card p-4 overflow-hidden"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-medievalsharp text-white">{npc.name}</h3>
-                    <div className="p-1 rounded-full bg-fantasy-purple/20">
-                      <Users size={16} className="text-fantasy-gold" />
-                    </div>
+              <div key={npc.id} className="fantasy-card p-4 overflow-hidden">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-medievalsharp text-white">{npc.name}</h3>
+                  <div className="p-1 rounded-full bg-fantasy-purple/20">
+                    <Users size={16} className="text-fantasy-gold" />
                   </div>
-                  
-                  <div className="text-sm text-fantasy-stone mb-2">
-                    <span className="font-medium">{npc.race} • {npc.occupation}</span>
+                </div>
+                
+                <div className="text-sm text-fantasy-stone mb-2">
+                  <span className="font-medium">{npc.race} • {npc.occupation || 'Sem ocupação'}</span>
+                </div>
+                
+                <div className="space-y-1 mb-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-fantasy-stone">Localização:</span>
+                    <span className="text-white">{npc.location || 'Não especificada'}</span>
                   </div>
-                  
-                  <div className="space-y-1 mb-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-fantasy-stone">Localização:</span>
-                      <span className="text-white">{npc.location}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-fantasy-stone">Alinhamento:</span>
-                      <span className="text-white">{npc.alignment}</span>
-                    </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-fantasy-stone">Alinhamento:</span>
+                    <span className="text-white">{npc.alignment || 'Não especificado'}</span>
                   </div>
+                </div>
+                
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => navigate(`/npcs/${npc.id}`)}
+                    className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                    title="Ver detalhes"
+                  >
+                    <Eye size={16} className="text-fantasy-purple" />
+                  </button>
                   
-                  <p className="text-fantasy-stone text-sm line-clamp-2 mb-3">{npc.description}</p>
+                  <button
+                    onClick={() => navigate(`/creations/npcs/${npc.id}`)}
+                    className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                    title="Editar"
+                  >
+                    <Edit size={16} className="text-fantasy-purple" />
+                  </button>
                   
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {npc.traits.map((trait, idx) => (
-                      <span key={idx} className="text-xs bg-fantasy-dark px-2 py-0.5 rounded text-fantasy-stone">
-                        {trait}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-4 flex justify-end">
-                    <span className="text-fantasy-purple flex items-center text-sm">
-                      Ver detalhes <ArrowBigRight size={16} className="ml-1" />
-                    </span>
-                  </div>
-                </motion.div>
-              </Link>
+                  <button
+                    onClick={() => handleDelete(npc.id)}
+                    className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 size={16} className="text-red-400" />
+                  </button>
+                </div>
+              </div>
             ))
           ) : (
             <div className="col-span-full fantasy-card p-8 text-center">
