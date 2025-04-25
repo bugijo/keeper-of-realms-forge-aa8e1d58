@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
@@ -25,6 +26,7 @@ import MapTab from '@/components/game/master/MapTab';
 import ChatTab from '@/components/game/master/ChatTab';
 import PlayersTab from '@/components/game/master/PlayersTab';
 import NotesTab from '@/components/game/master/NotesTab';
+import { GamePlayer, MapToken, CombatCharacter, ProfileData } from '@/types/game';
 
 const GameMasterView = () => {
   const { id } = useParams();
@@ -78,6 +80,8 @@ const GameMasterView = () => {
     { sender: "Mestre", text: "Bem-vindos à aventura!" }
   ]);
   const [newMessage, setNewMessage] = useState("");
+  
+  const [notes, setNotes] = useState(""); // Added missing state for notes
 
   useEffect(() => {
     const fetchTableData = async () => {
@@ -371,6 +375,18 @@ const GameMasterView = () => {
   
   const copyInviteLink = () => {
     // Implement copy invite link logic here
+  };
+
+  // Adding missing function for StoryTab component
+  const addStorySegment = () => {
+    const newSegment = {
+      id: storySegments.length > 0 ? Math.max(...storySegments.map(s => s.id)) + 1 : 1,
+      text: "Novo segmento da história...",
+      notes: "Notas para o mestre..."
+    };
+    
+    setStorySegments([...storySegments, newSegment]);
+    setCurrentStorySegment(storySegments.length);
   };
 
   if (loading) {
