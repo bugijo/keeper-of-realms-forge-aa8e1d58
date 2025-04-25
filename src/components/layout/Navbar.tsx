@@ -1,111 +1,81 @@
-import { Bell, MessageSquare, Settings, Gem, Coins } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useUserBalance } from '@/hooks/useUserBalance';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useTheme } from 'next-themes';
+import { MoonIcon, SunIcon } from '@radix-ui/react-icons';
+import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 
 const Navbar = () => {
-  const { user } = useAuth();
-  const { gems, coins, loading } = useUserBalance();
-  const [xp, setXp] = useState(0);
-  const [maxXp, setMaxXp] = useState(500);
-  const [level, setLevel] = useState(1);
-
-  useEffect(() => {
-    const fetchUserStats = async () => {
-      if (!user) return;
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('custom_metadata')
-        .eq('id', user.id)
-        .single();
-
-      if (profile?.custom_metadata) {
-        const metadata = profile.custom_metadata as { character_level?: number; xp?: number };
-        setLevel(metadata.character_level || 1);
-        setXp(metadata.xp || 0);
-        setMaxXp(500 * (metadata.character_level || 1));
-      }
-    };
-
-    fetchUserStats();
-  }, [user]);
-
+  const navigate = useNavigate();
+  const { user, logOut } = useAuth();
+  const { setTheme } = useTheme();
+  
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-fantasy-purple/20 bg-fantasy-dark/90 backdrop-blur-sm px-4 py-2">
-      <div className="container mx-auto flex justify-between items-center">
-        {/* Logo section */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <img 
-              src="/lovable-uploads/03a33b04-e3b4-4b96-b0ab-e978d67fe3ee.png" 
-              alt="Keeper of Realms" 
-              className="h-10 w-10 object-contain" 
-            />
-            <h1 className="text-xl font-medievalsharp font-bold text-white hidden md:block">
-              <span className="text-fantasy-gold">Keeper</span> of <span className="text-fantasy-accent">Realms</span>
-            </h1>
-          </div>
-        </div>
+    <nav className="bg-fantasy-dark/95 border-b border-fantasy-purple/30">
+      <div className="container mx-auto py-4 px-6 flex items-center justify-between">
+        <Link to="/" className="text-2xl font-medievalsharp text-white">
+          Keeper of Realms
+        </Link>
         
-        {/* Character stats section */}
-        <div className="flex items-center gap-6">
-          {/* Currency display */}
-          <div className="flex items-center gap-4 bg-fantasy-dark/30 px-4 py-2 rounded-lg border border-fantasy-purple/20">
-            <div className="flex items-center gap-2">
-              <Gem className="text-emerald-400" size={16} />
-              <span className="text-sm font-medium text-white">{loading ? '...' : gems}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Coins className="text-yellow-400" size={16} />
-              <span className="text-sm font-medium text-white">{loading ? '...' : coins}</span>
-            </div>
+        {user ? (
+          <div className="flex items-center gap-4">
+            <NotificationsDropdown />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://avatars.dicebear.com/api/pixel-art-neutral/${user.email}.svg`} alt={user.email} />
+                    <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem>
+                  Olá, {user.user_metadata?.name || user.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('system')}>
+                  Usar tema do sistema
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('light')}>
+                  <SunIcon className="mr-2 h-4 w-4" />
+                  Claro
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme('dark')}>
+                  <MoonIcon className="mr-2 h-4 w-4" />
+                  Escuro
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logOut}>
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
-          {/* Level and XP */}
-          <div className="min-w-[200px]">
-            <div className="text-center text-fantasy-gold text-sm font-medievalsharp">
-              Nível {level}
-            </div>
-            <Progress value={(xp / maxXp) * 100} className="h-2 bg-fantasy-purple/20" />
-            <div className="text-center text-fantasy-stone text-xs mt-1">
-              {xp}/{maxXp} XP
-            </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <Button variant="secondary" onClick={() => navigate('/login')}>
+              Entrar
+            </Button>
+            <Button onClick={() => navigate('/register')}>
+              Cadastrar
+            </Button>
           </div>
-        </div>
-        
-        {/* User actions section */}
-        <div className="flex items-center gap-4">
-          <button className="fantasy-icon-button group relative">
-            <Bell size={18} className="text-fantasy-gold" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-              3
-            </span>
-            <span className="sr-only">Notificações</span>
-          </button>
-          
-          <button className="fantasy-icon-button group relative">
-            <MessageSquare size={18} className="text-fantasy-purple" />
-            <span className="sr-only">Mensagens</span>
-          </button>
-          
-          <button className="fantasy-icon-button group relative">
-            <Settings size={18} className="text-fantasy-purple" />
-            <span className="sr-only">Configurações</span>
-          </button>
-          
-          <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-fantasy-gold/50">
-            <img 
-              src="https://images.unsplash.com/photo-1501854140801-50d01698950b" 
-              alt="Avatar do Jogador" 
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </div>
+        )}
       </div>
-    </header>
+    </nav>
   );
 };
 
