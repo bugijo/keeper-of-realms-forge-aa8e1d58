@@ -1,3 +1,6 @@
+
+// Since this file is 554 lines long, I'll only update the specific parts that need fixing
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -113,8 +116,9 @@ const CharacterCreation = () => {
           if (error) throw error;
           
           if (data) {
-            const attributes = typeof data.attributes === 'object' && data.attributes !== null 
-              ? data.attributes 
+            // Make sure attributes is an object, not an array or other type
+            const attributesObj = typeof data.attributes === 'object' && data.attributes !== null && !Array.isArray(data.attributes)
+              ? data.attributes
               : {};
               
             setFormData({
@@ -123,16 +127,16 @@ const CharacterCreation = () => {
               class: data.class || '',
               level: data.level || 1,
               background: data.background || '',
-              alignment: attributes.alignment || '',
-              strength: attributes.strength || 10,
-              dexterity: attributes.dexterity || 10,
-              constitution: attributes.constitution || 10,
-              intelligence: attributes.intelligence || 10,
-              wisdom: attributes.wisdom || 10,
-              charisma: attributes.charisma || 10,
-              appearance: attributes.appearance || '',
+              alignment: attributesObj.alignment || '',
+              strength: attributesObj.strength || 10,
+              dexterity: attributesObj.dexterity || 10,
+              constitution: attributesObj.constitution || 10,
+              intelligence: attributesObj.intelligence || 10,
+              wisdom: attributesObj.wisdom || 10,
+              charisma: attributesObj.charisma || 10,
+              appearance: attributesObj.appearance || '',
               backstory: data.notes || '',
-              imageUrl: attributes.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
+              imageUrl: attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
             });
           }
         } catch (error) {

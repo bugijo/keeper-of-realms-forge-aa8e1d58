@@ -34,11 +34,11 @@ const CharacterView = () => {
         if (error) throw error;
         
         if (data) {
-          // Safely access the attributes object by ensuring it's an object first
-          const attributes = typeof data.attributes === 'object' && data.attributes !== null 
-            ? data.attributes 
+          // Make sure attributes is an object, not an array or other type
+          const attributesObj = typeof data.attributes === 'object' && data.attributes !== null && !Array.isArray(data.attributes)
+            ? data.attributes
             : {};
-            
+          
           // Format character data to display in the UI
           const formattedCharacter = {
             id: data.id,
@@ -47,31 +47,31 @@ const CharacterView = () => {
             class: data.class || 'Desconhecido',
             race: data.race || 'Desconhecido',
             background: data.background || 'Desconhecido',
-            alignment: attributes.alignment || 'Neutro',
+            alignment: attributesObj.alignment || 'Neutro',
             stats: {
-              strength: attributes.strength || 10,
-              dexterity: attributes.dexterity || 10,
-              constitution: attributes.constitution || 10,
-              intelligence: attributes.intelligence || 10,
-              wisdom: attributes.wisdom || 10,
-              charisma: attributes.charisma || 10
+              strength: attributesObj.strength || 10,
+              dexterity: attributesObj.dexterity || 10,
+              constitution: attributesObj.constitution || 10,
+              intelligence: attributesObj.intelligence || 10,
+              wisdom: attributesObj.wisdom || 10,
+              charisma: attributesObj.charisma || 10
             },
             abilities: {
               hp: { 
-                current: attributes.hp?.current || 10, 
-                max: attributes.hp?.max || 10 
+                current: attributesObj.hp?.current || 10, 
+                max: attributesObj.hp?.max || 10 
               },
-              ac: attributes.ac || 10,
-              speed: attributes.speed || 30,
-              initiative: attributes.initiative || 0,
+              ac: attributesObj.ac || 10,
+              speed: attributesObj.speed || 30,
+              initiative: attributesObj.initiative || 0,
               proficiencyBonus: Math.ceil(data.level / 4) + 1
             },
-            skills: attributes.skills || [
+            skills: Array.isArray(attributesObj.skills) ? attributesObj.skills : [
               { name: 'Atletismo', proficient: false, value: 0 }
             ],
-            equipment: data.equipment || [],
-            spells: data.spells || [],
-            imageUrl: attributes.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
+            equipment: Array.isArray(data.equipment) ? data.equipment : [],
+            spells: Array.isArray(data.spells) ? data.spells : [],
+            imageUrl: attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
           };
           
           setCharacter(formattedCharacter);
