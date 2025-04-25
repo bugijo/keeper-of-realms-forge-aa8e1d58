@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Sheet, 
@@ -60,7 +59,6 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     ac: '10'
   });
   
-  // Carregar notas do mestre
   useEffect(() => {
     const fetchMasterNotes = async () => {
       try {
@@ -73,7 +71,6 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
           
         if (error) {
           if (error.code === 'PGRST116') {
-            // Não encontrou nota, cria uma nova
             await supabase
               .from('master_notes')
               .insert({
@@ -96,7 +93,6 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     fetchMasterNotes();
   }, [sessionId, userId]);
   
-  // Salvar notas do mestre
   const saveNotes = async () => {
     setIsSavingNotes(true);
     try {
@@ -123,7 +119,6 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     }
   };
   
-  // Adicionar NPC
   const handleAddNPC = () => {
     if (!newNPC.name) {
       toast.error('Nome do NPC é obrigatório');
@@ -140,10 +135,32 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     
     setNPCs([...npcs, npc]);
     
-    // Adicionar token para o NPC no mapa
+    const addNPCToken = async (npc: NPC) => {
+      try {
+        const tokenData = {
+          session_id: sessionId,
+          name: npc.name,
+          token_type: 'npc',
+          x: 5,
+          y: 5,
+          color: '#FF9900',
+          size: 1
+        };
+        
+        const { error } = await supabase
+          .from('session_tokens')
+          .insert(tokenData as any);
+          
+        if (error) {
+          console.error('Erro ao adicionar token para NPC:', error);
+        }
+      } catch (error) {
+        console.error('Erro ao adicionar token para NPC:', error);
+      }
+    };
+    
     addNPCToken(npc);
     
-    // Limpar formulário
     setNewNPC({
       name: '',
       hp: '10',
@@ -153,51 +170,20 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     toast.success(`NPC ${npc.name} adicionado`);
   };
   
-  // Adicionar token para o NPC
-  const addNPCToken = async (npc: NPC) => {
-    try {
-      const tokenData = {
-        session_id: sessionId,
-        name: npc.name,
-        token_type: 'npc',
-        x: 5,
-        y: 5,
-        color: '#FF9900',
-        size: 1
-      };
-      
-      const { error } = await supabase
-        .from('session_tokens')
-        .insert(tokenData);
-        
-      if (error) {
-        console.error('Erro ao adicionar token para NPC:', error);
-      }
-    } catch (error) {
-      console.error('Erro ao adicionar token para NPC:', error);
-    }
-  };
-  
-  // Remover NPC
   const handleRemoveNPC = async (id: string) => {
     const npcToRemove = npcs.find(npc => npc.id === id);
     if (!npcToRemove) return;
     
     setNPCs(npcs.filter(npc => npc.id !== id));
     
-    // Remove token do NPC
-    try {
-      const { error } = await supabase
-        .from('session_tokens')
-        .delete()
-        .eq('session_id', sessionId)
-        .eq('name', npcToRemove.name)
-        .eq('token_type', 'npc');
-        
-      if (error) {
-        console.error('Erro ao remover token do NPC:', error);
-      }
-    } catch (error) {
+    const { error } = await supabase
+      .from('session_tokens')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('name', npcToRemove.name)
+      .eq('token_type', 'npc');
+      
+    if (error) {
       console.error('Erro ao remover token do NPC:', error);
     }
     

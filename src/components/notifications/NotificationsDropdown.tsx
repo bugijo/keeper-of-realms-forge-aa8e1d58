@@ -1,18 +1,30 @@
 
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { 
+  Bell, 
+  Check, 
+  Trash2, 
+  X,
+  MessageCircle,
+  Calendar,
+  AlertCircle
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Bell, Check, Trash2 } from "lucide-react";
-import { useNotifications } from "@/hooks/useNotifications";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from "date-fns";
+} from '@/components/ui/dropdown-menu';
+import { useNotifications, Notification } from '@/hooks/useNotifications';
+import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-export function NotificationsDropdown() {
+const NotificationsDropdown: React.FC = () => {
   const { 
     notifications, 
     unreadCount, 
@@ -23,107 +35,136 @@ export function NotificationsDropdown() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'table_request':
-        return '🎲';
-      case 'session_update':
-        return '📅';
       case 'message':
-        return '💬';
+        return <MessageCircle size={16} className="text-blue-400" />;
+      case 'session_update':
+        return <Calendar size={16} className="text-green-400" />;
+      case 'table_request':
+        return <AlertCircle size={16} className="text-yellow-400" />;
       default:
-        return '📢';
+        return <Bell size={16} className="text-fantasy-stone" />;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd 'de' MMMM, HH:mm", { locale: ptBR });
+    } catch (e) {
+      return dateString;
     }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="relative"
-        >
-          <Bell className="h-5 w-5" />
+        <Button variant="ghost" className="relative p-2">
+          <Bell size={20} className="text-fantasy-stone" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {unreadCount}
+            <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end"
-        className="w-80"
-      >
-        <div className="flex items-center justify-between p-2">
-          <span className="text-sm font-medium">Notificações</span>
+      <DropdownMenuContent className="w-80 bg-fantasy-dark border-fantasy-purple/30">
+        <DropdownMenuLabel className="font-medievalsharp text-fantasy-gold flex justify-between items-center">
+          <span>Notificações</span>
           {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={() => markAllAsRead()}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={markAllAsRead}
+              className="h-7 text-xs hover:text-fantasy-gold"
             >
+              <Check size={14} className="mr-1" />
               Marcar todas como lidas
             </Button>
           )}
-        </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <ScrollArea className="h-[300px]">
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={`flex flex-col items-start p-3 ${
-                  !notification.read ? 'bg-muted/50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between w-full">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">
+        
+        <div className="max-h-80 overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="py-8 text-center text-fantasy-stone text-sm">
+              <Bell size={24} className="mx-auto mb-2 opacity-50" />
+              <p>Nenhuma notificação</p>
+            </div>
+          ) : (
+            <DropdownMenuGroup>
+              {notifications.map(notification => (
+                <DropdownMenuItem 
+                  key={notification.id} 
+                  className={`p-3 flex flex-col items-start gap-1 hover:bg-fantasy-purple/10 ${
+                    !notification.read ? 'bg-fantasy-purple/5' : ''
+                  }`}
+                >
+                  <div className="w-full flex items-start justify-between">
+                    <div className="flex items-center gap-2">
                       {getNotificationIcon(notification.type)}
-                    </span>
-                    <div>
-                      <p className="font-medium text-sm">{notification.title}</p>
-                      {notification.content && (
-                        <p className="text-xs text-muted-foreground">
-                          {notification.content}
-                        </p>
+                      <span className="font-semibold text-sm">
+                        {notification.title}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      {!notification.read && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Check size={14} />
+                        </Button>
                       )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(notification.created_at), 'dd/MM/yyyy HH:mm')}
-                      </p>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                        className="h-6 w-6 p-0 text-red-400 hover:text-red-500"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    {!notification.read && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => markAsRead(notification.id)}
+                  {notification.content && (
+                    <p className="text-xs text-fantasy-stone pl-6">
+                      {notification.content}
+                    </p>
+                  )}
+                  <div className="w-full flex justify-between items-center pl-6">
+                    <span className="text-xs text-fantasy-stone/70">
+                      {formatDate(notification.created_at)}
+                    </span>
+                    {notification.reference_id && notification.reference_type === 'table' && (
+                      <Link 
+                        to={`/tables/${notification.reference_id}`}
+                        className="text-xs text-fantasy-purple hover:text-fantasy-gold"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!notification.read) {
+                            markAsRead(notification.id);
+                          }
+                        }}
                       >
-                        <Check className="h-4 w-4" />
-                      </Button>
+                        Ver detalhes
+                      </Link>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => deleteNotification(notification.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-                </div>
-              </DropdownMenuItem>
-            ))
-          ) : (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              Nenhuma notificação
-            </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
           )}
-        </ScrollArea>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
+
+export default NotificationsDropdown;

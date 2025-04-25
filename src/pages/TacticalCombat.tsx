@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+
+import React, { useState, lazy, Suspense } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import TacticalMapWithFog from '@/components/game/TacticalMapWithFog';
+// Importação com lazy loading para o mapa tático
+const TacticalMapWithFog = lazy(() => import('@/components/game/TacticalMapWithFog'));
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,7 +14,7 @@ interface Point {
 
 const TacticalCombat = () => {
   const [fogPoints, setFogPoints] = useState<Point[]>([]);
-  const [selectedTool, setSelectedTool] = useState('add'); // 'add' or 'remove'
+  const [selectedTool, setSelectedTool] = useState<"select" | "draw" | "rectangle" | "circle">("select");
 
   const handleMapClick = (x: number, y: number) => {
     if (selectedTool === 'add') {
@@ -38,7 +40,13 @@ const TacticalCombat = () => {
           </TabsList>
           <TabsContent value="map">
             <div className="relative">
-              <TacticalMapWithFog fogPoints={fogPoints} onMapClick={handleMapClick} />
+              <Suspense fallback={
+                <div className="w-full h-96 flex items-center justify-center bg-fantasy-dark/30 rounded-lg">
+                  <div className="animate-pulse text-fantasy-purple">Carregando mapa tático...</div>
+                </div>
+              }>
+                <TacticalMapWithFog fogPoints={fogPoints} onMapClick={handleMapClick} />
+              </Suspense>
             </div>
           </TabsContent>
           <TabsContent value="tools">

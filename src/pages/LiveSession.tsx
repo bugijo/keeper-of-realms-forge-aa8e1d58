@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -23,6 +22,7 @@ interface SessionToken {
   color?: string;
   size: number;
   image_url?: string;
+  session_id: string;
 }
 
 // Definindo o tipo para os participantes
@@ -30,15 +30,15 @@ interface Participant {
   id: string;
   user_id: string;
   role: string;
-  profiles?: {
+  profiles: {
     display_name: string;
-  };
+  } | null;
   characters?: {
     id: string;
     name: string;
     race: string;
     class: string;
-  };
+  } | null;
 }
 
 const LiveSession = () => {
@@ -104,12 +104,12 @@ const LiveSession = () => {
           
         if (tokenError) {
           console.error("Erro ao buscar tokens:", tokenError);
-        } else {
-          setTokens(tokenData || []);
+        } else if (tokenData) {
+          setTokens(tokenData as unknown as SessionToken[]);
         }
 
         // Buscar participantes da mesa
-        const { data: participants, error: participantsError } = await supabase
+        const { data: participantsData, error: participantsError } = await supabase
           .from('table_participants')
           .select(`
             id, user_id, role,
@@ -120,8 +120,17 @@ const LiveSession = () => {
           
         if (participantsError) {
           console.error("Erro ao buscar participantes:", participantsError);
-        } else {
-          setParticipants(participants || []);
+        } else if (participantsData) {
+          // Convertemos para o tipo correto
+          const typedParticipants: Participant[] = participantsData.map(p => ({
+            id: p.id,
+            user_id: p.user_id,
+            role: p.role,
+            profiles: p.profiles as any,
+            characters: p.characters
+          }));
+          
+          setParticipants(typedParticipants);
         }
 
         // Configurar assinatura em tempo real para os tokens
@@ -137,10 +146,10 @@ const LiveSession = () => {
             },
             (payload) => {
               if (payload.eventType === 'INSERT') {
-                setTokens(prev => [...prev, payload.new as SessionToken]);
+                setTokens(prev => [...prev, payload.new as unknown as SessionToken]);
               } else if (payload.eventType === 'UPDATE') {
                 setTokens(prev => 
-                  prev.map(token => token.id === payload.new.id ? payload.new as SessionToken : token)
+                  prev.map(token => token.id === payload.new.id ? payload.new as unknown as SessionToken : token)
                 );
               } else if (payload.eventType === 'DELETE') {
                 setTokens(prev => prev.filter(token => token.id !== payload.old.id));

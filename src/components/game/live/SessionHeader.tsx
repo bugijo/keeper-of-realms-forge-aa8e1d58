@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Timer, Play, Pause } from 'lucide-react';
+import { Clock, Timer, Play, Pause, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface SessionHeaderProps {
   sessionName: string;
