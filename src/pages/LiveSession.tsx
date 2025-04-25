@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -33,6 +32,7 @@ export interface MapToken {
   size: number;
   color: string;
   image_url?: string;
+  token_type?: string;
 }
 
 // Definindo o tipo para os participantes
@@ -316,7 +316,6 @@ const LiveSession = () => {
         </div>
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Painel de Dados - Barra Lateral Esquerda */}
           <DicePanel 
             sessionId={id || ''} 
             userId={user?.id || ''} 
@@ -324,7 +323,6 @@ const LiveSession = () => {
             isGameMaster={isGameMaster}
           />
           
-          {/* Área Central - Mapa Tático */}
           <div className="flex-1 h-full overflow-hidden">
             {isPaused && !isGameMaster && (
               <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center">
@@ -339,7 +337,7 @@ const LiveSession = () => {
               </div>
             )}
             <LiveSessionMap
-              tokens={tokens} 
+              tokens={tokens as any}
               isGameMaster={isGameMaster}
               onTokenMove={handleTokenMove}
               onAddToken={addToken}
@@ -348,7 +346,6 @@ const LiveSession = () => {
             />
           </div>
           
-          {/* Painel de Chat - Barra Lateral Direita */}
           <ChatPanel 
             sessionId={id || ''} 
             userId={user?.id || ''}

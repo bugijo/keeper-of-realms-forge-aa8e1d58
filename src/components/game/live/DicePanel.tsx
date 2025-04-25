@@ -64,8 +64,8 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         
         // Converter para o formato esperado
         const formattedRolls: DiceRoll[] = data ? data.map(message => {
-          // Cast metadata to the appropriate type or provide defaults
-          const metadata = message.metadata as DiceMetadata || {};
+          // Cast metadata to the appropriate type with safety checks
+          const metadata = message.metadata as Record<string, any> || {};
           return {
             id: message.id,
             user_id: message.user_id,
@@ -99,7 +99,8 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         },
         (payload) => {
           const message = payload.new;
-          const metadata = message.metadata as DiceMetadata || {};
+          // Cast metadata safely
+          const metadata = message.metadata as Record<string, any> || {};
           
           const newRoll: DiceRoll = {
             id: message.id,

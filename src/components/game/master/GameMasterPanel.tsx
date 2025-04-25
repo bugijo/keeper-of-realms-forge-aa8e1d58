@@ -52,8 +52,8 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
             id,
             user_id,
             character_id,
-            profiles:profiles(display_name),
-            characters:characters(id, name, race, class, level)
+            profiles:user_id (display_name),
+            characters:character_id (id, name, race, class, level)
           `)
           .eq('table_id', sessionId);
         
@@ -64,10 +64,15 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
         if (participants) {
           // Processar os dados e mapear para o formato esperado
           const processedPlayers: GamePlayer[] = participants.map(participant => {
+            // Safely cast the profiles data and handle potential errors
             const profile = participant.profiles as { display_name: string } | null;
+            const displayName = profile && typeof profile === 'object' && 'display_name' in profile
+              ? profile.display_name
+              : 'Jogador';
+              
             return {
               id: participant.id,
-              name: profile?.display_name || 'Jogador',
+              name: displayName,
               characterId: participant.character_id,
               characterName: participant.characters?.name || null,
               characterClass: participant.characters?.class || null,
@@ -182,19 +187,19 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
         </TabsContent>
         
         <TabsContent value="map" className="flex-1 overflow-y-auto p-4">
-          <MapTab />
+          <MapTab sessionId={sessionId} />
         </TabsContent>
         
         <TabsContent value="chat" className="flex-1 overflow-y-auto p-4">
-          <ChatTab />
+          <ChatTab sessionId={sessionId} userId={userId} />
         </TabsContent>
         
         <TabsContent value="notes" className="flex-1 overflow-y-auto p-4">
-          <NotesTab />
+          <NotesTab sessionId={sessionId} userId={userId} />
         </TabsContent>
         
         <TabsContent value="story" className="flex-1 overflow-y-auto p-4">
-          <StoryTab />
+          <StoryTab sessionId={sessionId} />
         </TabsContent>
       </Tabs>
     </div>
