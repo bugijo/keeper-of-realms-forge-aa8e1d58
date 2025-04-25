@@ -1,19 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Rect, Circle, Text, Group } from 'react-konva';
 import { Button } from '@/components/ui/button';
 import { MapPin, Plus, Minus, Grid, User } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Token {
-  id: string;
-  name: string;
-  token_type: string;
-  x: number;
-  y: number;
-  color: string;
-  size: number;
-}
+import { MapToken } from '@/types/game';
 
 interface TokenFormData {
   name: string;
@@ -23,7 +13,7 @@ interface TokenFormData {
 }
 
 interface LiveSessionMapProps {
-  tokens: Token[];
+  tokens: MapToken[];
   isGameMaster: boolean;
   onTokenMove: (tokenId: string, x: number, y: number) => void;
   onAddToken: (token: any) => void;
@@ -397,12 +387,12 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
               >
                 <Circle
                   radius={tokenSize / 2}
-                  fill={token.color || getTokenColor(token.token_type)}
+                  fill={token.color || getTokenColor(token.token_type || '')}
                   stroke="white"
                   strokeWidth={2}
                 />
                 <Text
-                  text={token.name.substring(0, 2)}
+                  text={token.name?.substring(0, 2) || token.label}
                   fill="white"
                   fontSize={tokenSize / 3}
                   fontStyle="bold"

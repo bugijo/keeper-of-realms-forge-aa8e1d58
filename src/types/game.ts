@@ -17,6 +17,8 @@ export interface MapToken {
   color: string;
   label: string;
   size: number;
+  name?: string;
+  token_type?: string;
 }
 
 export interface CombatCharacter {

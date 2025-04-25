@@ -22,7 +22,6 @@ import {
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
 
-// Define the Token type to match the LiveSessionMap component
 export interface MapToken {
   id: string;
   name: string;
@@ -34,7 +33,6 @@ export interface MapToken {
   image_url?: string;
 }
 
-// Definindo o tipo para os participantes
 interface Participant {
   id: string;
   user_id: string;
@@ -72,7 +70,6 @@ const LiveSession = () => {
       try {
         setLoading(true);
 
-        // Verificar se o usuário é participante da mesa
         const { data: participantData, error: participantError } = await supabase
           .from('table_participants')
           .select('role')
@@ -88,7 +85,6 @@ const LiveSession = () => {
 
         setIsGameMaster(participantData.role === 'gm');
 
-        // Buscar dados da mesa
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
           .select('*, session_paused')
@@ -105,7 +101,6 @@ const LiveSession = () => {
         setIsPaused(tableData.session_paused || false);
         setSessionStartTime(new Date());
 
-        // Buscar participantes da mesa
         const { data: participantsData, error: participantsError } = await supabase
           .from('table_participants')
           .select(`
@@ -118,7 +113,6 @@ const LiveSession = () => {
         if (participantsError) {
           console.error("Erro ao buscar participantes:", participantsError);
         } else if (participantsData) {
-          // Convertemos para o tipo correto
           const typedParticipants: Participant[] = participantsData.map(p => ({
             id: p.id,
             user_id: p.user_id,
@@ -130,7 +124,6 @@ const LiveSession = () => {
           setParticipants(typedParticipants);
         }
 
-        // Configurar assinatura para mudanças de estado da sessão (pausada/ativa)
         const tableChannel = supabase
           .channel('table_status_changes')
           .on(
@@ -179,7 +172,6 @@ const LiveSession = () => {
       return;
     }
     
-    // Implementação a ser feita quando tivermos uma tabela para tokens
     console.log("Movendo token:", tokenId, "para posição:", newX, newY);
   };
 
@@ -193,14 +185,12 @@ const LiveSession = () => {
   }) => {
     if (!isGameMaster) return;
     
-    // Implementação a ser feita quando tivermos uma tabela para tokens
     console.log("Adicionando token:", tokenData);
     
-    // Adicionar token temporariamente na UI
     const newToken: MapToken = {
       id: `temp-${Date.now()}`,
       name: tokenData.name,
-      type: tokenData.type,
+      token_type: tokenData.type,
       x: tokenData.x,
       y: tokenData.y,
       color: tokenData.color,
