@@ -113,22 +113,26 @@ const CharacterCreation = () => {
           if (error) throw error;
           
           if (data) {
+            const attributes = typeof data.attributes === 'object' && data.attributes !== null 
+              ? data.attributes 
+              : {};
+              
             setFormData({
               name: data.name || '',
               race: data.race || '',
               class: data.class || '',
               level: data.level || 1,
               background: data.background || '',
-              alignment: data.attributes?.alignment || '',
-              strength: data.attributes?.strength || 10,
-              dexterity: data.attributes?.dexterity || 10,
-              constitution: data.attributes?.constitution || 10,
-              intelligence: data.attributes?.intelligence || 10,
-              wisdom: data.attributes?.wisdom || 10,
-              charisma: data.attributes?.charisma || 10,
-              appearance: data.attributes?.appearance || '',
+              alignment: attributes.alignment || '',
+              strength: attributes.strength || 10,
+              dexterity: attributes.dexterity || 10,
+              constitution: attributes.constitution || 10,
+              intelligence: attributes.intelligence || 10,
+              wisdom: attributes.wisdom || 10,
+              charisma: attributes.charisma || 10,
+              appearance: attributes.appearance || '',
               backstory: data.notes || '',
-              imageUrl: data.attributes?.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
+              imageUrl: attributes.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
             });
           }
         } catch (error) {
@@ -202,7 +206,14 @@ const CharacterCreation = () => {
           charisma: formData.charisma,
           alignment: formData.alignment,
           appearance: formData.appearance,
-          imageUrl: formData.imageUrl
+          imageUrl: formData.imageUrl,
+          hp: { current: 10, max: 10 },
+          ac: 10,
+          speed: 30,
+          initiative: 0,
+          skills: [
+            { name: 'Atletismo', proficient: false, value: 0 }
+          ]
         },
         notes: formData.backstory
       };

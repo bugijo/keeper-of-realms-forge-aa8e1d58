@@ -34,6 +34,11 @@ const CharacterView = () => {
         if (error) throw error;
         
         if (data) {
+          // Safely access the attributes object by ensuring it's an object first
+          const attributes = typeof data.attributes === 'object' && data.attributes !== null 
+            ? data.attributes 
+            : {};
+            
           // Format character data to display in the UI
           const formattedCharacter = {
             id: data.id,
@@ -42,31 +47,31 @@ const CharacterView = () => {
             class: data.class || 'Desconhecido',
             race: data.race || 'Desconhecido',
             background: data.background || 'Desconhecido',
-            alignment: data.attributes?.alignment || 'Neutro',
+            alignment: attributes.alignment || 'Neutro',
             stats: {
-              strength: data.attributes?.strength || 10,
-              dexterity: data.attributes?.dexterity || 10,
-              constitution: data.attributes?.constitution || 10,
-              intelligence: data.attributes?.intelligence || 10,
-              wisdom: data.attributes?.wisdom || 10,
-              charisma: data.attributes?.charisma || 10
+              strength: attributes.strength || 10,
+              dexterity: attributes.dexterity || 10,
+              constitution: attributes.constitution || 10,
+              intelligence: attributes.intelligence || 10,
+              wisdom: attributes.wisdom || 10,
+              charisma: attributes.charisma || 10
             },
             abilities: {
               hp: { 
-                current: data.attributes?.hp?.current || 10, 
-                max: data.attributes?.hp?.max || 10 
+                current: attributes.hp?.current || 10, 
+                max: attributes.hp?.max || 10 
               },
-              ac: data.attributes?.ac || 10,
-              speed: data.attributes?.speed || 30,
-              initiative: data.attributes?.initiative || 0,
+              ac: attributes.ac || 10,
+              speed: attributes.speed || 30,
+              initiative: attributes.initiative || 0,
               proficiencyBonus: Math.ceil(data.level / 4) + 1
             },
-            skills: data.attributes?.skills || [
+            skills: attributes.skills || [
               { name: 'Atletismo', proficient: false, value: 0 }
             ],
             equipment: data.equipment || [],
             spells: data.spells || [],
-            imageUrl: data.attributes?.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
+            imageUrl: attributes.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
           };
           
           setCharacter(formattedCharacter);
@@ -122,6 +127,7 @@ const CharacterView = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Character Info Card */}
           <CharacterHeader 
+            id={character.id}
             name={character.name}
             level={character.level}
             race={character.race}
