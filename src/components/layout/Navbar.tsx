@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -11,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from 'next-themes';
-import { MoonIcon, SunIcon } from '@radix-ui/react-icons';
+import { Moon, Sun } from 'lucide-react';
 import { NotificationsDropdown } from '@/components/notifications/NotificationsDropdown';
 
 const Navbar = () => {
@@ -50,11 +51,11 @@ const Navbar = () => {
                   Usar tema do sistema
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme('light')}>
-                  <SunIcon className="mr-2 h-4 w-4" />
+                  <Sun className="mr-2 h-4 w-4" />
                   Claro
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTheme('dark')}>
-                  <MoonIcon className="mr-2 h-4 w-4" />
+                  <Moon className="mr-2 h-4 w-4" />
                   Escuro
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

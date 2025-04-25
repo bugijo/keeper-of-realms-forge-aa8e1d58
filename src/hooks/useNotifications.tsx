@@ -34,8 +34,14 @@ export function useNotifications() {
 
         if (error) throw error;
 
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        // Ensure that the data is properly typed as Notification[]
+        const typedData = data.map(item => ({
+          ...item,
+          type: item.type as 'table_request' | 'session_update' | 'message' | 'system'
+        }));
+
+        setNotifications(typedData);
+        setUnreadCount(typedData.filter(n => !n.read).length);
       } catch (error) {
         console.error('Error fetching notifications:', error);
         toast.error('Erro ao carregar notificações');
@@ -56,12 +62,17 @@ export function useNotifications() {
         table: 'notifications',
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
-        setNotifications(prev => [payload.new as Notification, ...prev]);
+        const newNotification = {
+          ...payload.new,
+          type: payload.new.type as 'table_request' | 'session_update' | 'message' | 'system'
+        };
+        
+        setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
         
         // Mostrar toast para nova notificação
-        toast.info(payload.new.title, {
-          description: payload.new.content
+        toast.info(newNotification.title, {
+          description: newNotification.content
         });
       })
       .subscribe();
