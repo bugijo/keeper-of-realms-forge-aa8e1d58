@@ -1,5 +1,5 @@
 
-// Since this file is 554 lines long, I'll only update the specific parts that need fixing
+// Since this file is very long, I'll only modify the relevant part with the type errors
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -127,16 +127,16 @@ const CharacterCreation = () => {
               class: data.class || '',
               level: data.level || 1,
               background: data.background || '',
-              alignment: attributesObj.alignment || '',
-              strength: attributesObj.strength || 10,
-              dexterity: attributesObj.dexterity || 10,
-              constitution: attributesObj.constitution || 10,
-              intelligence: attributesObj.intelligence || 10,
-              wisdom: attributesObj.wisdom || 10,
-              charisma: attributesObj.charisma || 10,
-              appearance: attributesObj.appearance || '',
+              alignment: String(attributesObj.alignment || ''),
+              strength: Number(attributesObj.strength || 10),
+              dexterity: Number(attributesObj.dexterity || 10),
+              constitution: Number(attributesObj.constitution || 10),
+              intelligence: Number(attributesObj.intelligence || 10),
+              wisdom: Number(attributesObj.wisdom || 10),
+              charisma: Number(attributesObj.charisma || 10),
+              appearance: String(attributesObj.appearance || ''),
               backstory: data.notes || '',
-              imageUrl: attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png',
+              imageUrl: String(attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'),
             });
           }
         } catch (error) {

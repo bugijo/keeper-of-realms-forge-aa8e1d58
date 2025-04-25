@@ -47,23 +47,27 @@ const CharacterView = () => {
             class: data.class || 'Desconhecido',
             race: data.race || 'Desconhecido',
             background: data.background || 'Desconhecido',
-            alignment: attributesObj.alignment || 'Neutro',
+            alignment: String(attributesObj.alignment || 'Neutro'),
             stats: {
-              strength: attributesObj.strength || 10,
-              dexterity: attributesObj.dexterity || 10,
-              constitution: attributesObj.constitution || 10,
-              intelligence: attributesObj.intelligence || 10,
-              wisdom: attributesObj.wisdom || 10,
-              charisma: attributesObj.charisma || 10
+              strength: Number(attributesObj.strength || 10),
+              dexterity: Number(attributesObj.dexterity || 10),
+              constitution: Number(attributesObj.constitution || 10),
+              intelligence: Number(attributesObj.intelligence || 10),
+              wisdom: Number(attributesObj.wisdom || 10),
+              charisma: Number(attributesObj.charisma || 10)
             },
             abilities: {
               hp: { 
-                current: attributesObj.hp?.current || 10, 
-                max: attributesObj.hp?.max || 10 
+                current: typeof attributesObj.hp === 'object' && attributesObj.hp !== null 
+                  ? Number(attributesObj.hp.current || 10)
+                  : 10, 
+                max: typeof attributesObj.hp === 'object' && attributesObj.hp !== null
+                  ? Number(attributesObj.hp.max || 10)
+                  : 10
               },
-              ac: attributesObj.ac || 10,
-              speed: attributesObj.speed || 30,
-              initiative: attributesObj.initiative || 0,
+              ac: Number(attributesObj.ac || 10),
+              speed: Number(attributesObj.speed || 30),
+              initiative: Number(attributesObj.initiative || 0),
               proficiencyBonus: Math.ceil(data.level / 4) + 1
             },
             skills: Array.isArray(attributesObj.skills) ? attributesObj.skills : [
@@ -71,7 +75,7 @@ const CharacterView = () => {
             ],
             equipment: Array.isArray(data.equipment) ? data.equipment : [],
             spells: Array.isArray(data.spells) ? data.spells : [],
-            imageUrl: attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png'
+            imageUrl: String(attributesObj.imageUrl || '/lovable-uploads/6be414ac-e1d0-4348-8246-9fe914618c47.png')
           };
           
           setCharacter(formattedCharacter);
