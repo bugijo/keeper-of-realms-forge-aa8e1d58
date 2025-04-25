@@ -1,59 +1,85 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
-import { Search, Filter, Map, ArrowBigRight, Plus } from "lucide-react";
+import { Search, Filter, Map, ArrowBigRight, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
-// Mock data for maps
-const mockMaps = [
-  {
-    id: '1',
-    name: 'Cidade de Aetheria',
-    type: 'city',
-    description: 'A capital do reino, uma metrópole vibrante com comércio próspero e intrigas políticas.',
-    imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b'
-  },
-  {
-    id: '2',
-    name: 'Cavernas do Dragão Negro',
-    type: 'dungeon',
-    description: 'Um complexo de cavernas onde um antigo dragão negro guarda seu tesouro.',
-    imageUrl: 'https://images.unsplash.com/photo-1518391846015-55a9cc003b25'
-  },
-  {
-    id: '3',
-    name: 'Floresta Élfica de Silverleaf',
-    type: 'wilderness',
-    description: 'Uma floresta ancestral habitada por elfos e criaturas mágicas.',
-    imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b'
-  },
-  {
-    id: '4',
-    name: 'Reinos do Norte',
-    type: 'world',
-    description: 'Um mapa completo dos reinos do norte, incluindo montanhas, florestas e assentamentos.',
-    imageUrl: 'https://images.unsplash.com/photo-1566041510639-8d95a2490bfb'
-  }
-];
+interface Map {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  created_at: string;
+}
 
 const MapsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  
-  // Filter maps based on search and filter settings
-  const filteredMaps = mockMaps.filter(map => {
-    // Text search filter
+  const [maps, setMaps] = useState<Map[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      fetchMaps();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchMaps = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('maps')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setMaps(data || []);
+    } catch (error: any) {
+      console.error('Error fetching maps:', error);
+      toast.error('Erro ao carregar mapas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este mapa?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('maps')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setMaps(maps.filter(map => map.id !== id));
+      toast.success('Mapa excluído com sucesso!');
+    } catch (error: any) {
+      console.error('Error deleting map:', error);
+      toast.error('Erro ao excluir mapa');
+    }
+  };
+
+  const filteredMaps = maps.filter(map => {
     if (searchTerm && !map.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !map.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+        !map.description?.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
-    
-    // Type filter
-    if (filter !== "all" && map.type !== filter) {
-      return false;
-    }
-    
     return true;
   });
   
@@ -110,49 +136,64 @@ const MapsView = () => {
         
         {/* Maps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMaps.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="fantasy-card p-4 animate-pulse">
+                <div className="h-48 bg-fantasy-purple/30 rounded mb-4"></div>
+                <div className="h-6 bg-fantasy-dark/50 rounded mb-2"></div>
+                <div className="h-4 bg-fantasy-dark/30 rounded mb-4"></div>
+                <div className="h-10 bg-fantasy-dark/20 rounded"></div>
+              </div>
+            ))
+          ) : filteredMaps.length > 0 ? (
             filteredMaps.map((map) => (
-              <Link to={`/maps/${map.id}`} key={map.id}>
-                <motion.div 
-                  whileHover={{ y: -5 }}
-                  className="fantasy-card p-0 overflow-hidden"
-                >
-                  {/* Map Image */}
-                  <div className="h-48 overflow-hidden relative">
-                    <img 
-                      src={map.imageUrl} 
-                      alt={map.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-fantasy-dark to-transparent opacity-80"></div>
-                    <div className="absolute bottom-2 left-3 right-3">
-                      <div className="text-sm inline-block px-2 py-0.5 rounded bg-fantasy-dark/70 text-fantasy-gold capitalize">
-                        {map.type === 'city' ? 'Cidade' : 
-                         map.type === 'dungeon' ? 'Masmorra' : 
-                         map.type === 'wilderness' ? 'Região Selvagem' : 'Mapa de Mundo'}
-                      </div>
+              <div key={map.id} className="fantasy-card p-0 overflow-hidden">
+                <div className="h-48 overflow-hidden relative">
+                  <img 
+                    src={map.image_url || '/placeholder.svg'} 
+                    alt={map.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-fantasy-dark to-transparent opacity-80"></div>
+                </div>
+                
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-lg font-medievalsharp text-white">{map.name}</h3>
+                    <div className="p-1 rounded-full bg-fantasy-purple/20">
+                      <Map size={16} className="text-fantasy-gold" />
                     </div>
                   </div>
                   
-                  {/* Map Details */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-lg font-medievalsharp text-white">{map.name}</h3>
-                      <div className="p-1 rounded-full bg-fantasy-purple/20">
-                        <Map size={16} className="text-fantasy-gold" />
-                      </div>
-                    </div>
+                  <p className="text-fantasy-stone text-sm mt-2 line-clamp-2">{map.description}</p>
+                  
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      onClick={() => navigate(`/maps/view/${map.id}`)}
+                      className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                      title="Ver detalhes"
+                    >
+                      <Eye size={16} className="text-fantasy-purple" />
+                    </button>
                     
-                    <p className="text-fantasy-stone text-sm mt-2 line-clamp-2">{map.description}</p>
+                    <button
+                      onClick={() => navigate(`/creations/maps/${map.id}`)}
+                      className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                      title="Editar"
+                    >
+                      <Edit size={16} className="text-fantasy-purple" />
+                    </button>
                     
-                    <div className="mt-4 flex justify-end">
-                      <span className="text-fantasy-purple flex items-center text-sm">
-                        Ver detalhes <ArrowBigRight size={16} className="ml-1" />
-                      </span>
-                    </div>
+                    <button
+                      onClick={() => handleDelete(map.id)}
+                      className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} className="text-red-400" />
+                    </button>
                   </div>
-                </motion.div>
-              </Link>
+                </div>
+              </div>
             ))
           ) : (
             <div className="col-span-full fantasy-card p-8 text-center">

@@ -1,66 +1,90 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
-import { Search, Filter, BookOpen, ArrowBigRight, Plus } from "lucide-react";
+import { Search, Filter, BookOpen, ArrowBigRight, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from 'sonner';
 
-// Mock data for stories
-const mockStories = [
-  {
-    id: '1',
-    title: 'A Queda do Reino',
-    type: 'campaign',
-    description: 'Uma campanha épica onde os jogadores precisam impedir a queda de um reino antigo às mãos de um usurpador.',
-    createdAt: '2025-03-15',
-    tags: ['Fantasia Medieval', 'Política', 'Guerra']
-  },
-  {
-    id: '2',
-    title: 'O Tesouro do Calabouço Perdido',
-    type: 'oneshot',
-    description: 'Uma aventura curta onde os jogadores exploram um calabouço esquecido em busca de um tesouro lendário.',
-    createdAt: '2025-04-01',
-    tags: ['Dungeons', 'Tesouro', 'Exploração']
-  },
-  {
-    id: '3',
-    title: 'O Misterioso Assassinato em Neverwinter',
-    type: 'sidequest',
-    description: 'Uma missão secundária de mistério onde os jogadores precisam investigar um assassinato na cidade de Neverwinter.',
-    createdAt: '2025-04-08',
-    tags: ['Mistério', 'Cidade', 'Investigação']
-  },
-  {
-    id: '4',
-    title: 'A Torre do Mago Louco',
-    type: 'oneshot',
-    description: 'Os jogadores devem enfrentar os perigos da torre de um mago que perdeu a sanidade após experimentos com magia proibida.',
-    createdAt: '2025-03-25',
-    tags: ['Magia', 'Torre', 'Combate']
-  }
-];
+interface Story {
+  id: string;
+  title: string;
+  content: string | null;
+  type: string | null;
+  tags: string[];
+  created_at: string;
+}
 
 const StoriesView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
-  
-  // Filter stories based on search and filter settings
-  const filteredStories = mockStories.filter(story => {
-    // Text search filter
-    if (searchTerm && !story.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !story.description.toLowerCase().includes(searchTerm.toLowerCase())) {
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      fetchStories();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchStories = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setStories(data || []);
+    } catch (error: any) {
+      console.error('Error fetching stories:', error);
+      toast.error('Erro ao carregar histórias');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta história?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('stories')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setStories(stories.filter(story => story.id !== id));
+      toast.success('História excluída com sucesso!');
+    } catch (error: any) {
+      console.error('Error deleting story:', error);
+      toast.error('Erro ao excluir história');
+    }
+  };
+
+  const filteredStories = stories.filter(story => {
+    if (searchTerm && !story.title.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
-    
-    // Type filter
     if (filter !== "all" && story.type !== filter) {
       return false;
     }
-    
     return true;
   });
-  
+
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
@@ -110,51 +134,69 @@ const StoriesView = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Stories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStories.length > 0 ? (
+          {loading ? (
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="fantasy-card p-4 animate-pulse">
+                <div className="h-6 bg-fantasy-dark/50 rounded mb-2"></div>
+                <div className="h-4 bg-fantasy-dark/30 rounded mb-4"></div>
+                <div className="h-10 bg-fantasy-dark/20 rounded"></div>
+              </div>
+            ))
+          ) : filteredStories.length > 0 ? (
             filteredStories.map((story) => (
-              <Link to={`/stories/${story.id}`} key={story.id}>
-                <motion.div 
-                  whileHover={{ y: -5 }}
-                  className="fantasy-card p-0 overflow-hidden"
-                >
-                  {/* Story Details */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-lg font-medievalsharp text-white">{story.title}</h3>
-                      <div className="p-1 rounded-full bg-fantasy-purple/20">
-                        <BookOpen size={16} className="text-fantasy-gold" />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2 text-xs text-fantasy-stone">
-                      {new Date(story.createdAt).toLocaleDateString('pt-BR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </div>
-                    
-                    <p className="text-fantasy-stone text-sm mt-2 line-clamp-3">{story.description}</p>
-                    
-                    <div className="flex flex-wrap gap-1 mt-3">
-                      {story.tags.map((tag, idx) => (
-                        <span key={idx} className="text-xs bg-fantasy-dark px-2 py-0.5 rounded text-fantasy-stone">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-4 flex justify-end">
-                      <span className="text-fantasy-purple flex items-center text-sm">
-                        Ver detalhes <ArrowBigRight size={16} className="ml-1" />
-                      </span>
-                    </div>
+              <div key={story.id} className="fantasy-card p-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-medievalsharp text-white">{story.title}</h3>
+                  <div className="p-1 rounded-full bg-fantasy-purple/20">
+                    <BookOpen size={16} className="text-fantasy-gold" />
                   </div>
-                </motion.div>
-              </Link>
+                </div>
+                
+                <div className="mt-2 text-xs text-fantasy-stone">
+                  {new Date(story.created_at).toLocaleDateString('pt-BR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </div>
+                
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {story.tags?.map((tag, idx) => (
+                    <span key={idx} className="text-xs bg-fantasy-dark px-2 py-0.5 rounded text-fantasy-stone">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    onClick={() => navigate(`/stories/view/${story.id}`)}
+                    className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                    title="Ver detalhes"
+                  >
+                    <Eye size={16} className="text-fantasy-purple" />
+                  </button>
+                  
+                  <button
+                    onClick={() => navigate(`/creations/stories/${story.id}`)}
+                    className="p-2 bg-fantasy-purple/20 rounded-lg hover:bg-fantasy-purple/30 transition-colors"
+                    title="Editar"
+                  >
+                    <Edit size={16} className="text-fantasy-purple" />
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDelete(story.id)}
+                    className="p-2 bg-red-500/20 rounded-lg hover:bg-red-500/30 transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 size={16} className="text-red-400" />
+                  </button>
+                </div>
+              </div>
             ))
           ) : (
             <div className="col-span-full fantasy-card p-8 text-center">

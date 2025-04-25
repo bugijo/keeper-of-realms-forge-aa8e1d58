@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter as Router,
   Routes,
@@ -14,11 +13,11 @@ import Shop from "@/pages/Shop";
 import Tables from "@/pages/Tables";
 import Creations from "@/pages/Creations";
 import CreationRouter from "@/pages/CreationRouter";
-import ItemsView from "@/pages/ItemsView";
-import MapsView from "@/pages/MapsView";
-import MonstersView from "@/pages/MonstersView";
+import ItemsView from "@/pages/items/ItemsView";
+import MapsView from "@/pages/maps/MapsView";
+import MonstersView from "@/pages/monsters/MonstersView";
 import NpcsView from "@/pages/npcs/NpcsView";
-import StoriesView from "@/pages/StoriesView";
+import StoriesView from "@/pages/stories/StoriesView";
 import GameMasterView from "@/pages/GameMasterView";
 import PlayerView from "@/pages/PlayerView";
 import NotFound from "@/pages/NotFound";
@@ -55,10 +54,10 @@ function App() {
           <Route path="/creations/*" element={<CreationRouter />} />
           
           {/* Collections routes */}
-          <Route path="/maps" element={<CreationsCollection />} />
-          <Route path="/stories" element={<CreationsCollection />} />
-          <Route path="/items" element={<CreationsCollection />} />
-          <Route path="/monsters" element={<CreationsCollection />} />
+          <Route path="/maps" element={<MapsView />} />
+          <Route path="/stories" element={<StoriesView />} />
+          <Route path="/items" element={<ItemsView />} />
+          <Route path="/monsters" element={<MonstersView />} />
           <Route path="/npcs" element={<NpcsView />} />
           
           {/* View routes */}
