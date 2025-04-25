@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Maximize2, Minimize2, Eye, EyeOff, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,7 +89,6 @@ const TacticalMapWithFog = ({
     const x = Math.floor((event.clientX - rect.left - dragOffset.x) / gridSize);
     const y = Math.floor((event.clientY - rect.top - dragOffset.y) / gridSize);
     
-    // Ensure within map bounds
     const boundedX = Math.max(0, Math.min(Math.floor(mapWidth / gridSize) - 1, x));
     const boundedY = Math.max(0, Math.min(Math.floor(mapHeight / gridSize) - 1, y));
     
@@ -101,7 +99,6 @@ const TacticalMapWithFog = ({
     setIsDraggingToken(null);
   };
 
-  // Add event listener for fullscreenchange event
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -113,10 +110,8 @@ const TacticalMapWithFog = ({
     };
   }, []);
 
-  // Add event listeners for drag operations
   useEffect(() => {
     if (isDraggingToken) {
-      // Add window-level event listeners to handle drag outside component
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('mouseleave', handleMouseUp);
       
@@ -127,7 +122,6 @@ const TacticalMapWithFog = ({
     }
   }, [isDraggingToken]);
 
-  // Calculate grid dimensions
   const cols = Math.floor(mapWidth / gridSize);
   const rows = Math.floor(mapHeight / gridSize);
 
@@ -174,7 +168,6 @@ const TacticalMapWithFog = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
       >
-        {/* Grid lines */}
         <div 
           className="absolute inset-0 pointer-events-none opacity-30"
           style={{ 
@@ -186,7 +179,6 @@ const TacticalMapWithFog = ({
           }}
         />
 
-        {/* Fog of war */}
         {showFog && fogPoints.map((point, index) => (
           <div
             key={index}
@@ -201,7 +193,6 @@ const TacticalMapWithFog = ({
           />
         ))}
 
-        {/* Tokens */}
         {tokens.map((token) => (
           <div
             key={token.id}

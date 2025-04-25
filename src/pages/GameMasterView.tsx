@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
 import { ArrowLeft, Play, Share2, Users, Sword, BookOpen, Map, MessageSquare, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DiceRoller from "@/components/dice/DiceRoller";
+import EnhancedDiceRoller from "@/components/dice/EnhancedDiceRoller";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
@@ -25,7 +24,6 @@ const GameMasterView = () => {
       try {
         setLoading(true);
         
-        // Fetch table data
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
           .select('*')
@@ -34,7 +32,6 @@ const GameMasterView = () => {
           
         if (tableError) throw tableError;
         
-        // Check if user is the game master
         if (tableData.user_id !== user.id) {
           toast.error('Você não tem permissão para acessar esta página');
           navigate('/tables');
@@ -43,7 +40,6 @@ const GameMasterView = () => {
         
         setTableData(tableData);
         
-        // Fetch participants
         const { data: participantsData, error: participantsError } = await supabase
           .from('table_participants')
           .select(`
@@ -251,7 +247,7 @@ const GameMasterView = () => {
                 
                 <div className="fantasy-card p-4 mt-4">
                   <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Ferramenta de Dados</h2>
-                  <DiceRoller />
+                  <EnhancedDiceRoller compact />
                 </div>
               </TabsContent>
               
@@ -293,7 +289,7 @@ const GameMasterView = () => {
             
             <div className="fantasy-card p-4">
               <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">Dados Rápidos</h2>
-              <DiceRoller compact />
+              <EnhancedDiceRoller compact />
             </div>
           </div>
         </div>

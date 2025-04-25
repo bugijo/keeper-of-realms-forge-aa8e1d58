@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -64,6 +63,12 @@ interface CombatCharacter {
   temporary?: number;
   conditions: string[];
   type: 'player' | 'monster' | 'npc';
+}
+
+interface ProfileData {
+  display_name?: string;
+  id?: string;
+  email?: string;
 }
 
 const GameMasterView = () => {
@@ -150,6 +155,23 @@ const GameMasterView = () => {
         
         setTableData(tableData);
         
+        // First get user profiles to ensure we have the display names
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name');
+          
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+        }
+        
+        // Create a map of profile data by id
+        const profilesMap: Record<string, ProfileData> = {};
+        if (profilesData) {
+          profilesData.forEach(profile => {
+            profilesMap[profile.id] = profile;
+          });
+        }
+        
         // Fetch participants with their characters
         const { data: participantsData, error: participantsError } = await supabase
           .from('table_participants')
@@ -158,26 +180,30 @@ const GameMasterView = () => {
             user_id,
             role,
             character_id,
-            profiles:user_id (display_name),
             characters:character_id (id, name, class, race, level)
           `)
           .eq('table_id', id);
           
         if (participantsError) throw participantsError;
         
-        // Format players data
+        // Format players data with profile names from our map
         const playersData = (participantsData || [])
           .filter(p => p.role !== 'gm')
-          .map(p => ({
-            id: p.id,
-            name: p.profiles?.display_name || "Jogador sem nome",
-            characterId: p.characters?.id || null,
-            characterName: p.characters?.name || null,
-            characterClass: p.characters?.class || null,
-            characterRace: p.characters?.race || null,
-            characterLevel: p.characters?.level || null,
-            online: Math.random() > 0.5 // Mock online status
-          }));
+          .map(p => {
+            // Get profile data from our map
+            const profileData = profilesMap[p.user_id] || {};
+            
+            return {
+              id: p.id,
+              name: profileData.display_name || "Jogador sem nome",
+              characterId: p.characters?.id || null,
+              characterName: p.characters?.name || null,
+              characterClass: p.characters?.class || null,
+              characterRace: p.characters?.race || null,
+              characterLevel: p.characters?.level || null,
+              online: Math.random() > 0.5 // Mock online status
+            };
+          });
         
         setPlayers(playersData);
         

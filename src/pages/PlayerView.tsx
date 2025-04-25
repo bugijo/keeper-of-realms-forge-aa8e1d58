@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from "@/components/layout/MainLayout";
 import { ArrowLeft, User, Users, MessageSquare, MapPin, Shield, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DiceRoller from "@/components/dice/DiceRoller";
+import EnhancedDiceRoller from "@/components/dice/EnhancedDiceRoller";
 import CharacterStats from "@/components/character/CharacterStats";
 import CharacterHeader from "@/components/character/CharacterHeader";
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +28,6 @@ const PlayerView = () => {
       try {
         setLoading(true);
         
-        // Fetch table data
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
           .select('*')
@@ -40,7 +38,6 @@ const PlayerView = () => {
         
         setTableData(tableData);
         
-        // Fetch user's participation in this table
         const { data: participationData, error: participationError } = await supabase
           .from('table_participants')
           .select('*, characters:character_id(*)')
@@ -62,7 +59,6 @@ const PlayerView = () => {
           setCharacter(participationData.characters);
         }
         
-        // Fetch other participants
         const { data: allParticipantsData, error: allParticipantsError } = await supabase
           .from('table_participants')
           .select(`
@@ -295,7 +291,7 @@ const PlayerView = () => {
                 <Dices size={20} className="mr-2" />
                 Dados
               </h2>
-              <DiceRoller compact />
+              <EnhancedDiceRoller compact />
             </div>
           </div>
         </div>
