@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +7,9 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Calendar, Users, Sword, MapPin, Clock, Book } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { v4 as uuidv4 } from 'uuid'; // Used to validate UUID format
+import { v4 as uuidv4 } from 'uuid';
+import { Link } from 'react-router-dom';
+import { Eye } from 'lucide-react';
 
 const TableDetailsView = () => {
   const { id } = useParams();
@@ -19,11 +20,11 @@ const TableDetailsView = () => {
   const [joinRequestStatus, setJoinRequestStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isParticipant, setIsParticipant] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Function to check if string is a valid UUID
   const isValidUUID = (uuid: string) => {
     try {
-      // Try parsing the UUID - will throw if invalid
       const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       return regex.test(uuid);
     } catch(e) {
@@ -48,7 +49,6 @@ const TableDetailsView = () => {
       try {
         setLoading(true);
         
-        // Fetch table details
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
           .select('*')
@@ -70,7 +70,6 @@ const TableDetailsView = () => {
 
         setTableDetails(tableData);
 
-        // Fetch participants
         const { data: participantsData, error: participantsError } = await supabase
           .from('table_participants')
           .select('*, profiles(display_name)')
@@ -83,7 +82,6 @@ const TableDetailsView = () => {
           setParticipants(participantsData || []);
         }
 
-        // Check existing join request if user is logged in
         if (session?.user) {
           const { data: requestData, error: requestError } = await supabase
             .from('table_join_requests')
@@ -108,6 +106,30 @@ const TableDetailsView = () => {
     };
 
     fetchTableDetails();
+  }, [id, session]);
+
+  const checkParticipation = async () => {
+    if (!session?.user || !id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('table_participants')
+        .select('role')
+        .eq('table_id', id)
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      setIsParticipant(!!data);
+      setUserRole(data?.role || null);
+    } catch (err) {
+      console.error("Error checking participation:", err);
+    }
+  };
+
+  useEffect(() => {
+    checkParticipation();
   }, [id, session]);
 
   const handleJoinRequest = async () => {
@@ -275,6 +297,18 @@ const TableDetailsView = () => {
                   {joinRequestStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Participação'}
                 </Button>
               )}
+            </div>
+          )}
+
+          {(isParticipant || tableDetails?.user_id === user?.id) && (
+            <div className="flex justify-center mt-6">
+              <Link 
+                to={userRole === 'dm' ? `/gm/${id}` : `/table/player/${id}`}
+                className="fantasy-button primary flex items-center gap-2"
+              >
+                <Eye size={16} />
+                {userRole === 'dm' ? 'Ver Painel do Mestre' : 'Ver Mesa de Jogo'}
+              </Link>
             </div>
           )}
         </div>

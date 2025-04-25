@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Plus, Book, Users, Calendar, Sword, Search, Filter, Dices } from "lucide-react";
+import { Plus, Book, Users, Calendar, Sword, Search, Filter, Eye, Bell } from "lucide-react";
 import { motion } from "framer-motion";
-import DiceRoller from "@/components/dice/DiceRoller";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 
 const Tables = () => {
   const { session } = useAuth();
@@ -16,9 +15,11 @@ const Tables = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [tables, setTables] = useState<any[]>([]);
+  const [myTables, setMyTables] = useState<any[]>([]);
+  const [participatingTables, setParticipatingTables] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Form state for creating a new table
   const [formData, setFormData] = useState({
     name: "",
     campaign: "",
@@ -30,41 +31,53 @@ const Tables = () => {
     synopsis: ""
   });
 
-  // Fetch tables from the database
   useEffect(() => {
     const fetchTables = async () => {
+      if (!session?.user) return;
+      
       setLoading(true);
       try {
-        let query = supabase.from('tables').select('*');
-        
-        if (filter === "dm" && session?.user) {
-          query = query.eq('user_id', session.user.id);
-        } else if (filter === "player" && session?.user) {
-          // Get tables where the user is a participant
-          const { data: participations } = await supabase
-            .from('table_participants')
-            .select('table_id')
-            .eq('user_id', session.user.id);
+        const { data: createdTables, error: createdError } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('user_id', session.user.id);
           
-          if (participations && participations.length > 0) {
-            const tableIds = participations.map(p => p.table_id);
-            query = query.in('id', tableIds);
-          } else {
-            // If no participations, return empty result
-            setTables([]);
-            setLoading(false);
-            return;
-          }
-        }
+        if (createdError) throw createdError;
+        setMyTables(createdTables || []);
         
-        const { data, error } = await query;
+        const { data: participations, error: participationsError } = await supabase
+          .from('table_participants')
+          .select(`
+            *,
+            tables:table_id (*)
+          `)
+          .eq('user_id', session.user.id)
+          .eq('role', 'player');
+          
+        if (participationsError) throw participationsError;
+        setParticipatingTables(participations?.map(p => p.tables) || []);
         
-        if (error) {
-          console.error('Error fetching tables:', error);
-          toast.error('Erro ao carregar mesas');
-        } else {
-          setTables(data || []);
-        }
+        const { data: requests, error: requestsError } = await supabase
+          .from('table_join_requests')
+          .select(`
+            *,
+            profiles:user_id (display_name),
+            tables:table_id (name)
+          `)
+          .eq('status', 'pending')
+          .in('table_id', createdTables?.map(t => t.id) || []);
+          
+        if (requestsError) throw requestsError;
+        setJoinRequests(requests || []);
+        
+        const { data: allTables, error: tablesError } = await supabase
+          .from('tables')
+          .select('*')
+          .neq('user_id', session.user.id);
+          
+        if (tablesError) throw tablesError;
+        setTables(allTables || []);
+        
       } catch (err) {
         console.error('Error:', err);
         toast.error('Erro ao carregar dados');
@@ -73,7 +86,37 @@ const Tables = () => {
     };
 
     fetchTables();
-  }, [filter, session]);
+  }, [session]);
+
+  const handleJoinRequest = async (tableId: string, accepted: boolean, requestId: string) => {
+    try {
+      if (accepted) {
+        const { error: participantError } = await supabase
+          .from('table_participants')
+          .insert({
+            table_id: tableId,
+            user_id: joinRequests.find(r => r.id === requestId)?.user_id,
+            role: 'player'
+          });
+          
+        if (participantError) throw participantError;
+      }
+      
+      const { error: updateError } = await supabase
+        .from('table_join_requests')
+        .update({ status: accepted ? 'accepted' : 'rejected' })
+        .eq('id', requestId);
+        
+      if (updateError) throw updateError;
+      
+      setJoinRequests(prev => prev.filter(r => r.id !== requestId));
+      toast.success(accepted ? 'Solicitação aceita!' : 'Solicitação rejeitada');
+      
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro ao processar solicitação');
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -92,7 +135,6 @@ const Tables = () => {
     }
 
     try {
-      // Insert the new table into the database
       const { data, error } = await supabase
         .from('tables')
         .insert({
@@ -115,7 +157,6 @@ const Tables = () => {
         return;
       }
 
-      // Also add the creator as the first participant (game master)
       if (data && data.length > 0) {
         const { error: partError } = await supabase
           .from('table_participants')
@@ -140,7 +181,6 @@ const Tables = () => {
         } : undefined
       });
 
-      // Reset form and close modal
       setFormData({
         name: "",
         campaign: "",
@@ -153,7 +193,6 @@ const Tables = () => {
       });
       setShowNewTableModal(false);
       
-      // Refresh tables list
       const { data: newTables } = await supabase.from('tables').select('*');
       if (newTables) setTables(newTables);
       
@@ -162,7 +201,7 @@ const Tables = () => {
       toast.error('Erro ao criar mesa: ' + (err.message || ''));
     }
   };
-  
+
   const filteredTables = tables.filter(table => {
     if (searchTerm && !table.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !(table.campaign && table.campaign.toLowerCase().includes(searchTerm.toLowerCase()))) {
@@ -171,54 +210,138 @@ const Tables = () => {
     
     return true;
   });
-  
+
   return (
     <MainLayout>
       <div className="container mx-auto pb-16">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-medievalsharp text-white">Suas Mesas</h1>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="fantasy-button primary flex items-center gap-2"
-            onClick={() => setShowNewTableModal(true)}
-          >
-            <Plus size={18} />
-            Nova Mesa
-          </motion.button>
-        </div>
-        
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="text-muted-foreground" size={16} />
-            </div>
-            <input 
-              type="text" 
-              className="bg-fantasy-dark border border-fantasy-purple/30 text-white text-sm rounded-lg block w-full pl-10 p-2.5 focus:ring-fantasy-purple focus:border-fantasy-purple"
-              placeholder="Buscar mesas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            <div className="flex items-center gap-2 bg-fantasy-dark border border-fantasy-purple/30 rounded-lg p-2">
-              <Filter className="text-muted-foreground" size={16} />
-              <select 
-                className="bg-transparent border-none text-sm focus:ring-0 text-white"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">Todas as Mesas</option>
-                <option value="dm">Minhas Mestradas</option>
-                <option value="player">Minhas Jogadas</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
+        {session?.user && (
+          <>
+            {joinRequests.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-medievalsharp text-white mb-4 flex items-center gap-2">
+                  <Bell className="text-fantasy-gold" />
+                  Solicitações Pendentes
+                </h2>
+                <div className="space-y-4">
+                  {joinRequests.map(request => (
+                    <div key={request.id} className="fantasy-card p-4">
+                      <p className="text-fantasy-stone mb-2">
+                        {request.profiles?.display_name || 'Usuário'} quer participar da mesa "{request.tables?.name}"
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleJoinRequest(request.table_id, true, request.id)}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          Aceitar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleJoinRequest(request.table_id, false, request.id)}
+                        >
+                          Recusar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {myTables.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-medievalsharp text-white mb-4">Minhas Mesas Criadas</h2>
+                <div className="space-y-4">
+                  {myTables.map(table => (
+                    <div key={table.id} className="fantasy-card p-6">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex-1">
+                          <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-1">{table.name}</h2>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users size={16} className="text-fantasy-gold" />
+                            <span className="text-fantasy-stone text-sm">
+                              {table.user_id === session?.user?.id ? 'Você (Mestre)' : 'Mestre da Mesa'}
+                            </span>
+                            <span className="text-xs bg-fantasy-purple/30 px-2 py-0.5 rounded-full text-fantasy-gold">
+                              {table.max_players} jogadores max
+                            </span>
+                          </div>
+                          
+                          {table.system && (
+                            <span className="text-xs bg-fantasy-dark px-2 py-1 rounded text-fantasy-stone mr-2">
+                              {table.system}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-col items-end">
+                          <Link to={`/tables/details/${table.id}`}>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="bg-fantasy-gold text-fantasy-dark py-2 px-4 rounded-lg mt-2 font-medievalsharp text-sm flex items-center gap-2"
+                            >
+                              <Sword size={14} />
+                              Detalhes da Mesa
+                            </motion.button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {participatingTables.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-xl font-medievalsharp text-white mb-4">Mesas que Participo</h2>
+                <div className="space-y-4">
+                  {participatingTables.map(table => (
+                    <div key={table.id} className="fantasy-card p-6">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex-1">
+                          <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-1">{table.name}</h2>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users size={16} className="text-fantasy-gold" />
+                            <span className="text-fantasy-stone text-sm">
+                              {table.user_id === session?.user?.id ? 'Você (Mestre)' : 'Mestre da Mesa'}
+                            </span>
+                            <span className="text-xs bg-fantasy-purple/30 px-2 py-0.5 rounded-full text-fantasy-gold">
+                              {table.max_players} jogadores max
+                            </span>
+                          </div>
+                          
+                          {table.system && (
+                            <span className="text-xs bg-fantasy-dark px-2 py-1 rounded text-fantasy-stone mr-2">
+                              {table.system}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-col items-end">
+                          <Link to={`/tables/details/${table.id}`}>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="bg-fantasy-gold text-fantasy-dark py-2 px-4 rounded-lg mt-2 font-medievalsharp text-sm flex items-center gap-2"
+                            >
+                              <Sword size={14} />
+                              Detalhes da Mesa
+                            </motion.button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         {loading ? (
           <div className="fantasy-card p-8 text-center">
             <Spinner size="lg" className="mx-auto mb-4" />
