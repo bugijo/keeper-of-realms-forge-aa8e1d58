@@ -27,12 +27,27 @@ export const ProtectedRoute = ({
       
       try {
         // Extract table ID from URL params
-        const tableId = location.pathname.split('/').find(
-          (part, index, arr) => arr[index - 1] === tableIdParam
-        );
+        const paths = location.pathname.split('/');
+        let tableId = "";
+        
+        // Find the table ID based on the parameter position
+        for (let i = 0; i < paths.length - 1; i++) {
+          if (paths[i] === tableIdParam) {
+            tableId = paths[i + 1];
+            break;
+          }
+        }
+        
+        // If no tableId found in URL path segments, try to get it from URL params
+        if (!tableId) {
+          const urlParams = new URLSearchParams(location.search);
+          tableId = urlParams.get(tableIdParam) || "";
+        }
         
         if (!tableId) {
+          console.log("No table ID found in URL");
           setIsGM(false);
+          setIsChecking(false);
           return;
         }
         
@@ -44,7 +59,12 @@ export const ProtectedRoute = ({
           .eq('role', 'gm')
           .single();
           
-        setIsGM(!!data && !error);
+        if (error) {
+          console.error("Error checking GM status:", error);
+          setIsGM(false);
+        } else {
+          setIsGM(!!data);
+        }
       } catch (error) {
         console.error("Error checking GM status:", error);
         setIsGM(false);
@@ -54,7 +74,7 @@ export const ProtectedRoute = ({
     };
     
     checkGMStatus();
-  }, [user, requireGM, location.pathname, tableIdParam]);
+  }, [user, requireGM, location.pathname, location.search, tableIdParam]);
 
   if (loading || isChecking) {
     return (
@@ -76,7 +96,7 @@ export const ProtectedRoute = ({
       },
     });
     
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
   
   if (requireGM && isGM === false) {

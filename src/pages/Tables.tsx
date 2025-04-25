@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Tables = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const Tables = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("discover");
+  const queryClient = useQueryClient();
   
   const fetchMyTables = async () => {
     if (!user) return;
@@ -224,6 +226,10 @@ const Tables = () => {
       );
       
       fetchJoinRequests();
+      
+      if (queryClient) {
+        queryClient.invalidateQueries({queryKey: ['pending-requests']});
+      }
     } catch (err) {
       console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, err);
       toast.error(`Erro ao ${action === 'approve' ? 'aprovar' : 'rejeitar'} solicitação`);

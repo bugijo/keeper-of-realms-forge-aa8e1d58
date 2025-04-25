@@ -14,7 +14,7 @@ interface Point {
 
 const TacticalCombat = () => {
   const [fogPoints, setFogPoints] = useState<Point[]>([]);
-  const [selectedTool, setSelectedTool] = useState<"select" | "draw" | "rectangle" | "circle">("select");
+  const [selectedTool, setSelectedTool] = useState<"select" | "draw" | "rectangle" | "circle" | "add" | "remove">("select");
 
   const handleMapClick = (x: number, y: number) => {
     if (selectedTool === 'add') {

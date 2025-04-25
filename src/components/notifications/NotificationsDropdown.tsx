@@ -1,169 +1,230 @@
 
-import React from 'react';
-import { 
-  Bell, 
-  Check, 
-  Trash2, 
-  X,
-  MessageCircle,
-  Calendar,
-  AlertCircle
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useNotifications, Notification } from '@/hooks/useNotifications';
-import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const NotificationsDropdown: React.FC = () => {
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    deleteNotification 
-  } = useNotifications();
+interface Notification {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  read: boolean;
+  type: string;
+  reference_type?: string;
+  reference_id?: string;
+}
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'message':
-        return <MessageCircle size={16} className="text-blue-400" />;
-      case 'session_update':
-        return <Calendar size={16} className="text-green-400" />;
-      case 'table_request':
-        return <AlertCircle size={16} className="text-yellow-400" />;
-      default:
-        return <Bell size={16} className="text-fantasy-stone" />;
+const NotificationsDropdown = () => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    fetchNotifications();
+
+    if (user) {
+      // Assinar para receber novas notificações em tempo real
+      const channel = supabase
+        .channel('notifications-channel')
+        .on('postgres_changes', 
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            const newNotification = payload.new as Notification;
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(count => count + 1);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      setNotifications(data as Notification[]);
+      const unread = data.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const markAsRead = async (id: string) => {
     try {
-      const date = new Date(dateString);
-      return format(date, "dd 'de' MMMM, HH:mm", { locale: ptBR });
-    } catch (e) {
-      return dateString;
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+
+      setNotifications(prev => 
+        prev.map(n => n.id === id ? { ...n, read: true } : n)
+      );
+      setUnreadCount(count => Math.max(0, count - 1));
+    } catch (error) {
+      console.error('Erro ao marcar notificação como lida:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user || notifications.length === 0) return;
+
+    try {
+      const unreadIds = notifications
+        .filter(n => !n.read)
+        .map(n => n.id);
+
+      if (unreadIds.length === 0) return;
+
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', unreadIds);
+
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, read: true }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Erro ao marcar todas como lidas:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    await markAsRead(notification.id);
+    
+    // Navegar para o destino relevante com base no tipo de referência
+    if (notification.reference_type === 'table' && notification.reference_id) {
+      window.location.href = `/table/${notification.reference_id}`;
+    }
+    
+    setIsOpen(false);
+  };
+
+  const getTimeAgo = (dateStr: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateStr), {
+        addSuffix: true,
+        locale: ptBR
+      });
+    } catch (error) {
+      return 'data desconhecida';
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'session':
+        return <div className="w-2 h-2 rounded-full bg-green-400"></div>;
+      case 'attention':
+        return <div className="w-2 h-2 rounded-full bg-red-400"></div>;
+      default:
+        return <div className="w-2 h-2 rounded-full bg-blue-400"></div>;
     }
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative p-2">
-          <Bell size={20} className="text-fantasy-stone" />
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="relative"
+        >
+          <Bell size={20} />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-              {unreadCount > 9 ? '9+' : unreadCount}
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {unreadCount}
             </span>
           )}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 bg-fantasy-dark border-fantasy-purple/30">
-        <DropdownMenuLabel className="font-medievalsharp text-fantasy-gold flex justify-between items-center">
-          <span>Notificações</span>
+      </PopoverTrigger>
+      <PopoverContent 
+        className="w-80 bg-fantasy-dark border-fantasy-purple/30" 
+        align="end"
+      >
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-medievalsharp text-fantasy-gold">Notificações</h3>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={markAllAsRead}
-              className="h-7 text-xs hover:text-fantasy-gold"
+              className="text-xs text-fantasy-stone hover:text-white"
             >
-              <Check size={14} className="mr-1" />
               Marcar todas como lidas
             </Button>
           )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        </div>
         
-        <div className="max-h-80 overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="py-8 text-center text-fantasy-stone text-sm">
-              <Bell size={24} className="mx-auto mb-2 opacity-50" />
-              <p>Nenhuma notificação</p>
-            </div>
-          ) : (
-            <DropdownMenuGroup>
+        <ScrollArea className="h-80">
+          {notifications.length > 0 ? (
+            <div className="space-y-2">
               {notifications.map(notification => (
-                <DropdownMenuItem 
-                  key={notification.id} 
-                  className={`p-3 flex flex-col items-start gap-1 hover:bg-fantasy-purple/10 ${
-                    !notification.read ? 'bg-fantasy-purple/5' : ''
-                  }`}
+                <div 
+                  key={notification.id}
+                  className={`p-2 rounded-md cursor-pointer hover:bg-fantasy-purple/10 transition-colors ${!notification.read ? 'bg-fantasy-purple/5' : ''}`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="w-full flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      {getNotificationIcon(notification.type)}
-                      <span className="font-semibold text-sm">
+                  <div className="flex items-start gap-2">
+                    <div className="mt-1.5">
+                      {getTypeIcon(notification.type)}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm ${!notification.read ? 'font-semibold text-white' : 'text-fantasy-stone'}`}>
                         {notification.title}
-                      </span>
+                      </p>
+                      <p className="text-xs text-fantasy-stone/80 mt-0.5">
+                        {notification.content}
+                      </p>
+                      <p className="text-xxs text-fantasy-stone/60 mt-1">
+                        {getTimeAgo(notification.created_at)}
+                      </p>
                     </div>
-                    <div className="flex items-center">
-                      {!notification.read && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification.id);
-                          }}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Check size={14} />
-                        </Button>
-                      )}
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.id);
-                        }}
-                        className="h-6 w-6 p-0 text-red-400 hover:text-red-500"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                  {notification.content && (
-                    <p className="text-xs text-fantasy-stone pl-6">
-                      {notification.content}
-                    </p>
-                  )}
-                  <div className="w-full flex justify-between items-center pl-6">
-                    <span className="text-xs text-fantasy-stone/70">
-                      {formatDate(notification.created_at)}
-                    </span>
-                    {notification.reference_id && notification.reference_type === 'table' && (
-                      <Link 
-                        to={`/tables/${notification.reference_id}`}
-                        className="text-xs text-fantasy-purple hover:text-fantasy-gold"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!notification.read) {
-                            markAsRead(notification.id);
-                          }
-                        }}
-                      >
-                        Ver detalhes
-                      </Link>
+                    {!notification.read && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5" />
                     )}
                   </div>
-                </DropdownMenuItem>
+                </div>
               ))}
-            </DropdownMenuGroup>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-fantasy-stone/60">
+              <p>Nenhuma notificação</p>
+            </div>
           )}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 };
 

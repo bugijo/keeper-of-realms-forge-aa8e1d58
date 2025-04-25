@@ -1,73 +1,90 @@
-# Welcome to your Lovable project
 
-## Project info
+# Dungeon Master Assistant
 
-**URL**: https://lovable.dev/projects/c7d2851d-b45f-4218-bdf6-9f51ca732bb1
+Uma aplicação web para gerenciamento de campanhas e sessões de RPG de mesa.
 
-## How can I edit this code?
+## Configuração do Ambiente
 
-There are several ways of editing your application.
+### Requisitos
+- Node.js v16+ e npm
+- Conta no Supabase (para banco de dados e autenticação)
 
-**Use Lovable**
+### Configuração das Variáveis de Ambiente
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c7d2851d-b45f-4218-bdf6-9f51ca732bb1) and start prompting.
+1. Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon-do-supabase
 ```
 
-**Edit a file directly in GitHub**
+2. Substitua os valores pelas suas credenciais do Supabase:
+   - `VITE_SUPABASE_URL`: URL do seu projeto Supabase
+   - `VITE_SUPABASE_ANON_KEY`: Chave anônima de API do seu projeto Supabase
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Você pode encontrar essas informações no painel do Supabase em Configurações do Projeto > API.
 
-**Use GitHub Codespaces**
+### Instalação de Dependências
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+# Instalar dependências
+npm install
 
-## What technologies are used for this project?
+# Iniciar o servidor de desenvolvimento
+npm run dev
 
-This project is built with:
+# Construir para produção
+npm run build
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Executar testes
+npm run test
+```
 
-## How can I deploy this project?
+### Banco de Dados Supabase
 
-Simply open [Lovable](https://lovable.dev/projects/c7d2851d-b45f-4218-bdf6-9f51ca732bb1) and click on Share -> Publish.
+O projeto utiliza Supabase como banco de dados principal. Certifique-se de configurar as seguintes tabelas:
 
-## Can I connect a custom domain to my Lovable project?
+- characters
+- character_inventory
+- chat_messages
+- tables
+- table_participants
+- table_join_requests
+- profiles
+- notifications
 
-Yes it is!
+As políticas de segurança (RLS) devem ser configuradas para garantir que usuários só acessem seus próprios dados ou dados compartilhados.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Design e Documentação
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Design no Figma
+
+[Link para o Design no Figma](https://www.figma.com/file/seu-projeto-de-design)
+
+### Documentação da API
+
+A documentação detalhada dos endpoints e estruturas de dados pode ser encontrada na pasta `/docs`.
+
+## Testes
+
+Para executar os testes, use os comandos:
+
+```bash
+# Testes unitários
+npm run test
+
+# Testes E2E com Cypress
+npm run cypress:open
+```
+
+## Features Principais
+
+- Gerenciamento de mesas e campanhas de RPG
+- Sistema de inventário com drag-and-drop
+- Chat em tempo real durante as sessões
+- Mapa tático com névoa de guerra
+- Notificações de sessões e eventos
+
+## Licença
+
+MIT
