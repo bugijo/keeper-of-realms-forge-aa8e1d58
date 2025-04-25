@@ -65,7 +65,7 @@ export function useNotifications() {
         const newNotification = {
           ...payload.new,
           type: payload.new.type as 'table_request' | 'session_update' | 'message' | 'system'
-        };
+        } as Notification;
         
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
