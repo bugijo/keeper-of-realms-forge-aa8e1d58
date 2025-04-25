@@ -9,6 +9,8 @@ interface TableHeaderProps {
     system?: string;
     weekday?: string;
     time?: string;
+    meeting_url?: string;
+    status?: string;
   };
 }
 

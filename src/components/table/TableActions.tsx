@@ -50,11 +50,23 @@ export const TableActions: React.FC<TableActionsProps> = ({
       {(isParticipant || tableOwnerId === userId) && (
         <div className="flex justify-center mt-6">
           <Link 
-            to={userRole === 'dm' ? `/gm/${tableId}` : `/table/player/${tableId}`}
+            to={userRole === 'gm' ? `/gm/${tableId}` : `/table/player/${tableId}`}
             className="fantasy-button primary flex items-center gap-2"
           >
             <Eye size={16} />
-            {userRole === 'dm' ? 'Ver Painel do Mestre' : 'Ver Mesa de Jogo'}
+            {userRole === 'gm' ? 'Ver Painel do Mestre' : 'Ver Mesa de Jogo'}
+          </Link>
+        </div>
+      )}
+      
+      {(isParticipant || tableOwnerId === userId) && tableStatus === 'active' && (
+        <div className="flex justify-center mt-3">
+          <Link 
+            to={`/session/${tableId}`}
+            className="fantasy-button secondary flex items-center gap-2"
+          >
+            <Eye size={16} />
+            Entrar na Sessão ao Vivo
           </Link>
         </div>
       )}

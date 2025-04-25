@@ -29,7 +29,8 @@ import CreationsCollection from '@/pages/CreationsCollection';
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import Missions from "@/pages/Missions";
 import TableDetailsView from "@/pages/table/TableDetailsView";
-import NpcDetailsView from "@/pages/NpcsView"; // Import for NPC details view
+import NpcDetailsView from "@/pages/NpcsView";
+import LiveSession from "@/pages/LiveSession";
 
 function App() {
   return (
@@ -72,6 +73,8 @@ function App() {
           <Route path="/table/player/:id" element={<PlayerView />} />
           <Route path="/tables/details/:id" element={<TableDetailsView />} />
         </Route>
+        
+        <Route path="/session/:id" element={<LiveSession />} />
         
         <Route path="*" element={<NotFound />} />
       </Routes>
