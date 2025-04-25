@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserBalance } from '@/hooks/useUserBalance';
 
 export type ItemCategory = 'theme' | 'asset' | 'premium' | 'gem';
 
@@ -43,7 +43,9 @@ export const ShopItem = ({
   new: isNew = false,
 }: ShopItemProps) => {
   const { user } = useAuth();
+  const { gems, coins, refetch } = useUserBalance();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const finalPrice = discountPrice || price;
 
   const handlePurchase = async () => {
@@ -52,21 +54,17 @@ export const ShopItem = ({
       return;
     }
 
-    try {
-      if (currency === 'gems') {
-        // Verificar saldo de gemas
-        const { data: balance } = await supabase
-          .from('user_balance')
-          .select('gems')
-          .eq('user_id', user.id)
-          .single();
+    if (purchasing) return;
 
-        if (!balance || balance.gems < finalPrice) {
+    try {
+      setPurchasing(true);
+
+      if (currency === 'gems') {
+        if (gems < finalPrice) {
           toast.error("Saldo de gemas insuficiente!");
           return;
         }
 
-        // Criar transação
         const { error: transactionError } = await supabase
           .from('transactions')
           .insert({
@@ -80,18 +78,17 @@ export const ShopItem = ({
 
         if (transactionError) throw transactionError;
 
-        // Atualizar saldo
         const { error: updateError } = await supabase
           .from('user_balance')
-          .update({ gems: balance.gems - finalPrice })
+          .update({ gems: gems - finalPrice })
           .eq('user_id', user.id);
 
         if (updateError) throw updateError;
 
+        await refetch();
         toast.success(`Item "${name}" comprado com sucesso!`);
         setIsDialogOpen(false);
       } else {
-        // Criar transação pendente para pagamento real
         const { error: transactionError } = await supabase
           .from('transactions')
           .insert({
@@ -105,13 +102,14 @@ export const ShopItem = ({
 
         if (transactionError) throw transactionError;
 
-        // TODO: Implement Stripe checkout
         toast.info("Redirecionando para o pagamento...");
         setIsDialogOpen(false);
       }
     } catch (error) {
       console.error('Erro na compra:', error);
       toast.error("Erro ao processar a compra. Tente novamente.");
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -222,6 +220,7 @@ export const ShopItem = ({
             <DialogTrigger asChild>
               <Button 
                 className="fantasy-button primary h-8 px-3 py-1 text-xs"
+                disabled={purchasing}
               >
                 <ShoppingCart size={14} className="mr-1" />
                 Comprar
@@ -232,14 +231,34 @@ export const ShopItem = ({
                 <DialogTitle className="text-fantasy-gold font-medievalsharp">Confirmar Compra</DialogTitle>
                 <DialogDescription>
                   Você deseja comprar "{name}" por {formatPrice(finalPrice)}?
+                  
+                  {currency === 'gems' && (
+                    <div className="mt-2">
+                      <p className="text-sm">Seu saldo: <span className="text-fantasy-gold">{gems} gemas</span></p>
+                      <p className="text-sm">Após a compra: <span className="text-fantasy-gold">{gems - finalPrice} gemas</span></p>
+                    </div>
+                  )}
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4 flex justify-end gap-3">
                 <Button 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="bg-transparent border-fantasy-purple/50 text-fantasy-stone hover:bg-fantasy-purple/10"
+                >
+                  Cancelar
+                </Button>
+                <Button 
                   onClick={handlePurchase}
                   className="fantasy-button primary"
+                  disabled={currency === 'gems' && gems < finalPrice || purchasing}
                 >
-                  Confirmar
+                  {purchasing ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin h-4 w-4 border-2 border-fantasy-gold border-t-transparent rounded-full"></span>
+                      Processando...
+                    </span>
+                  ) : "Confirmar"}
                 </Button>
               </div>
             </DialogContent>

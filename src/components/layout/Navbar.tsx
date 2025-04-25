@@ -1,17 +1,16 @@
-
 import { Bell, MessageSquare, Settings, Gem, Coins } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserBalance } from '@/hooks/useUserBalance';
 
 const Navbar = () => {
   const { user } = useAuth();
+  const { gems, coins, loading } = useUserBalance();
   const [xp, setXp] = useState(0);
   const [maxXp, setMaxXp] = useState(500);
   const [level, setLevel] = useState(1);
-  const [gems, setGems] = useState(0);
-  const [coins, setCoins] = useState(0);
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -28,17 +27,6 @@ const Navbar = () => {
         setLevel(metadata.character_level || 1);
         setXp(metadata.xp || 0);
         setMaxXp(500 * (metadata.character_level || 1));
-      }
-
-      const { data: balance } = await supabase
-        .from('user_balance')
-        .select('gems, coins')
-        .eq('user_id', user.id)
-        .single();
-
-      if (balance) {
-        setGems(balance.gems || 0);
-        setCoins(balance.coins || 0);
       }
     };
 
@@ -68,11 +56,11 @@ const Navbar = () => {
           <div className="flex items-center gap-4 bg-fantasy-dark/30 px-4 py-2 rounded-lg border border-fantasy-purple/20">
             <div className="flex items-center gap-2">
               <Gem className="text-emerald-400" size={16} />
-              <span className="text-sm font-medium text-white">{gems}</span>
+              <span className="text-sm font-medium text-white">{loading ? '...' : gems}</span>
             </div>
             <div className="flex items-center gap-2">
               <Coins className="text-yellow-400" size={16} />
-              <span className="text-sm font-medium text-white">{coins}</span>
+              <span className="text-sm font-medium text-white">{loading ? '...' : coins}</span>
             </div>
           </div>
           
