@@ -156,6 +156,41 @@ export type Database = {
         }
         Relationships: []
       }
+      table_join_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string
+          table_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string
+          table_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string
+          table_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_join_requests_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_participants: {
         Row: {
           character_id: string | null
@@ -205,7 +240,10 @@ export type Database = {
           description: string | null
           id: string
           max_players: number | null
+          meeting_url: string | null
           name: string
+          status: string | null
+          synopsis: string | null
           system: string | null
           time: string | null
           updated_at: string
@@ -218,7 +256,10 @@ export type Database = {
           description?: string | null
           id?: string
           max_players?: number | null
+          meeting_url?: string | null
           name: string
+          status?: string | null
+          synopsis?: string | null
           system?: string | null
           time?: string | null
           updated_at?: string
@@ -231,7 +272,10 @@ export type Database = {
           description?: string | null
           id?: string
           max_players?: number | null
+          meeting_url?: string | null
           name?: string
+          status?: string | null
+          synopsis?: string | null
           system?: string | null
           time?: string | null
           updated_at?: string

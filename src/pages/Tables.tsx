@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Plus, Book, Users, Calendar, Sword, Search, Filter, Dices } from "lucide-react";
@@ -7,7 +6,6 @@ import DiceRoller from "@/components/dice/DiceRoller";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-// Dados de exemplo para as mesas
 const tableMockData = [
   {
     id: 1,
@@ -46,16 +44,13 @@ const Tables = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   
-  // Filtrar mesas de acordo com a pesquisa e filtro
   const filteredTables = tableMockData.filter(table => {
-    // Filtro de texto
     if (searchTerm && !table.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !table.dm.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !table.campaign.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
-    // Filtro de categoria
     if (filter === "dm" && !table.isMaster) {
       return false;
     } else if (filter === "player" && table.isMaster) {
@@ -82,7 +77,6 @@ const Tables = () => {
           </motion.button>
         </div>
         
-        {/* Controles de busca e filtro */}
         <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -113,7 +107,6 @@ const Tables = () => {
           </div>
         </div>
         
-        {/* Lista de mesas */}
         <div className="space-y-6">
           {filteredTables.length > 0 ? (
             filteredTables.map((table) => (
@@ -149,14 +142,14 @@ const Tables = () => {
                       <span className="text-sm">{table.campaign}</span>
                     </div>
                     
-                    <Link to={table.isMaster ? `/tables/master/${table.id}` : `/tables/player/${table.id}`}>
+                    <Link to={`/tables/details/${table.id}`}>
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="bg-fantasy-gold text-fantasy-dark py-2 px-4 rounded-lg mt-2 font-medievalsharp text-sm flex items-center gap-2"
                       >
                         <Sword size={14} />
-                        Entrar na Mesa
+                        Detalhes da Mesa
                       </motion.button>
                     </Link>
                   </div>
@@ -183,7 +176,6 @@ const Tables = () => {
           )}
         </div>
         
-        {/* Modal de Nova Mesa */}
         {showNewTableModal && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <motion.div 
@@ -297,7 +289,6 @@ const Tables = () => {
           </div>
         )}
         
-        {/* Componente de rolagem de dados */}
         <DiceRoller />
       </div>
     </MainLayout>

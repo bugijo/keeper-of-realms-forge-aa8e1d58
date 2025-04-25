@@ -28,6 +28,7 @@ import CharactersCollection from '@/pages/CharactersCollection';
 import CreationsCollection from '@/pages/CreationsCollection';
 import { MobileNavigation } from "@/components/mobile/MobileNavigation";
 import Missions from "@/pages/Missions";
+import TableDetailsView from "@/pages/table/TableDetailsView";
 
 function App() {
   return (
@@ -68,6 +69,7 @@ function App() {
           {/* Table routes */}
           <Route path="/table/gm/:id" element={<GameMasterView />} />
           <Route path="/table/player/:id" element={<PlayerView />} />
+          <Route path="/tables/details/:id" element={<TableDetailsView />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />
