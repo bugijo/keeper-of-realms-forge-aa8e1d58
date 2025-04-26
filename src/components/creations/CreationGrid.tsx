@@ -35,78 +35,76 @@ const CreationGrid = ({ creations, type, onDelete }: CreationGridProps) => {
 
   const getViewPath = (type: CreationType, id: string) => {
     switch (type) {
-      case 'map': return `/maps/view/${id}`;
-      case 'story': return `/stories/view/${id}`;
-      case 'character': return `/character/view/${id}`;
+      case 'map': return `/maps/${id}`;
+      case 'story': return `/stories/${id}`;
+      case 'character': return `/character/${id}`;
       case 'item': return `/items/view/${id}`;
-      case 'monster': return `/monsters/view/${id}`;
-      case 'npc': return `/npcs/view/${id}`;
+      case 'monster': return `/monsters/${id}`;
+      case 'npc': return `/npcs/${id}`;
       default: return `/`;
     }
   };
 
-  const getCreatePath = (type: CreationType, id?: string) => {
-    const basePath = `/creations/${type}s`;
-    return id ? `${basePath}/${id}` : basePath;
+  const getEditPath = (type: CreationType, id: string) => {
+    return `/creations/${type}s/${id}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
   };
 
   if (creations.length === 0) {
     return (
-      <div className="text-center py-12 fantasy-card">
-        <div className="flex justify-center mb-4">{getIcon(type)}</div>
-        <h3 className="text-xl font-medievalsharp text-fantasy-gold">Nenhuma criação encontrada</h3>
-        <p className="text-fantasy-stone mt-2">Crie sua primeira {getCreationTypeInPortuguese(type)} para começar!</p>
-        <Link to={getCreatePath(type)} className="fantasy-button primary mt-4 inline-block">
-          Criar {getCreationTypeInPortuguese(type)}
+      <div className="fantasy-card p-8 text-center">
+        <p className="text-fantasy-stone mb-4">Nenhuma criação encontrada.</p>
+        <Link to={`/creations/${type}s`} className="text-fantasy-purple hover:text-fantasy-accent">
+          Clique aqui para criar um novo {type === 'npc' ? 'NPC' : type}
         </Link>
       </div>
     );
   }
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {creations.map((creation) => (
-        <div key={creation.id} className="fantasy-card p-4 relative group">
-          <div className="h-40 rounded-lg overflow-hidden border-2 border-fantasy-purple/30 mb-3">
-            {creation.imageUrl ? (
-              <img 
-                src={creation.imageUrl} 
-                alt={creation.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-fantasy-dark/50 flex items-center justify-center">
-                <div className="text-4xl text-fantasy-purple/50">
-                  {getIcon(creation.type)}
-                </div>
-              </div>
-            )}
+        <div key={creation.id} className="fantasy-card p-4 flex flex-col">
+          <div className="flex items-center mb-3">
+            <div className="p-2 rounded-lg bg-fantasy-dark/50 mr-3">
+              {getIcon(creation.type)}
+            </div>
+            <div>
+              <h3 className="font-medievalsharp text-white">{creation.title}</h3>
+              <p className="text-xs text-fantasy-stone">Criado em {formatDate(creation.createdAt)}</p>
+            </div>
           </div>
           
-          <h3 className="text-lg font-medievalsharp text-white mb-1">{creation.title}</h3>
           {creation.description && (
-            <p className="text-fantasy-stone text-sm line-clamp-2">
-              {creation.description}
-            </p>
+            <p className="text-fantasy-stone text-sm mb-4 line-clamp-2">{creation.description}</p>
           )}
           
-          <div className="mt-3 text-xs text-fantasy-stone">
-            Criado em {new Date(creation.createdAt).toLocaleDateString('pt-BR')}
-          </div>
-          
-          <div className="absolute inset-0 bg-fantasy-dark/80 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-opacity duration-200 rounded-lg">
-            <Link to={getViewPath(creation.type, creation.id)} className="fantasy-button primary p-2">
-              <Eye size={20} />
+          <div className="flex justify-end gap-2 mt-auto">
+            <Link 
+              to={getViewPath(creation.type, creation.id)}
+              className="p-2 bg-fantasy-dark/50 hover:bg-fantasy-dark rounded-lg text-fantasy-stone hover:text-white"
+              title="Ver"
+            >
+              <Eye size={16} />
             </Link>
-            <Link to={getCreatePath(creation.type, creation.id)} className="fantasy-button secondary p-2">
-              <Edit size={20} />
+            <Link 
+              to={getEditPath(creation.type, creation.id)}
+              className="p-2 bg-fantasy-dark/50 hover:bg-fantasy-dark rounded-lg text-fantasy-stone hover:text-white"
+              title="Editar"
+            >
+              <Edit size={16} />
             </Link>
             {onDelete && (
               <button 
-                onClick={() => onDelete(creation.id)} 
-                className="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg transition-colors"
+                onClick={() => onDelete(creation.id)}
+                className="p-2 bg-fantasy-dark/50 hover:bg-red-900/50 rounded-lg text-fantasy-stone hover:text-red-300"
+                title="Excluir"
               >
-                <Trash size={20} />
+                <Trash size={16} />
               </button>
             )}
           </div>
@@ -114,19 +112,6 @@ const CreationGrid = ({ creations, type, onDelete }: CreationGridProps) => {
       ))}
     </div>
   );
-};
-
-// Helper function to get creation type in Portuguese
-const getCreationTypeInPortuguese = (type: CreationType) => {
-  switch (type) {
-    case 'map': return 'mapa';
-    case 'story': return 'história';
-    case 'character': return 'personagem';
-    case 'item': return 'item';
-    case 'monster': return 'monstro';
-    case 'npc': return 'NPC';
-    default: return 'criação';
-  }
 };
 
 export default CreationGrid;

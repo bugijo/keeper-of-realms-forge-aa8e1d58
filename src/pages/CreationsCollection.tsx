@@ -34,6 +34,11 @@ const CreationsCollection = () => {
   const location = useLocation();
   const type = getCreationType(location.pathname);
   
+  // Determine correct path for the "New" button
+  const getCreationPath = (type: CreationType) => {
+    return `/creations/${type}s`;
+  };
+  
   // Mock data - replace with API call
   const mockCreations = [
     {
@@ -66,7 +71,7 @@ const CreationsCollection = () => {
               />
             </div>
             
-            <Link to={`/creations/${type}s`} className="fantasy-button primary sm:w-auto w-full">
+            <Link to={getCreationPath(type)} className="fantasy-button primary sm:w-auto w-full">
               <Plus size={18} className="mr-2" />
               Novo {type === 'npc' ? 'NPC' : getPageTitle(type).slice(0, -1)}
             </Link>

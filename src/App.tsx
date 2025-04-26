@@ -23,6 +23,11 @@ import Creations from './pages/Creations';
 import Missions from './pages/Missions';
 import Inventory from './pages/Inventory';
 import Shop from './pages/Shop';
+import CharacterCreation from './pages/creations/CharacterCreation';
+import MapCreation from './pages/creations/MapCreation';
+import StoryCreation from './pages/creations/StoryCreation';
+import MonsterCreation from './pages/creations/MonsterCreation';
+import NpcCreation from './pages/creations/NpcCreation';
 
 function App() {
   return (
@@ -57,10 +62,22 @@ function App() {
         <Route path="/items/view" element={<ItemsView />} />
         <Route path="/items/view/:id" element={<ItemView />} />
         
-        {/* Creations routes */}
+        {/* Creations main page */}
         <Route path="/creations" element={<Creations />} />
+        
+        {/* Individual creation routes */}
+        <Route path="/creations/characters" element={<CharacterCreation />} />
+        <Route path="/creations/characters/:id" element={<CharacterCreation />} />
+        <Route path="/creations/maps" element={<MapCreation />} />
+        <Route path="/creations/maps/:id" element={<MapCreation />} />
+        <Route path="/creations/stories" element={<StoryCreation />} />
+        <Route path="/creations/stories/:id" element={<StoryCreation />} />
         <Route path="/creations/items" element={<ItemCreation />} />
         <Route path="/creations/items/:id" element={<ItemCreation />} />
+        <Route path="/creations/monsters" element={<MonsterCreation />} />
+        <Route path="/creations/monsters/:id" element={<MonsterCreation />} />
+        <Route path="/creations/npcs" element={<NpcCreation />} />
+        <Route path="/creations/npcs/:id" element={<NpcCreation />} />
       </Routes>
     </Router>
   );
