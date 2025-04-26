@@ -40,6 +40,96 @@ npm run build
 npm run test
 ```
 
+## Sistema de Inventário
+
+### Recursos Implementados
+
+1. **Arrastar e Soltar**:
+   - Implementado com `react-dnd` para mover itens entre inventários
+   - Sincronização em tempo real via Supabase Realtime
+   - Validação de permissões (apenas donos podem modificar seus itens)
+   - Debounce de 500ms para evitar sobrecarga de requisições
+
+2. **Otimização de Imagens**:
+   - Conversão automática para WebP antes do upload
+   - Lazy loading com placeholders via componente `ImageLoader`
+   - Compressão de imagens para reduzir uso de armazenamento
+
+3. **Paginação Infinita**:
+   - Lista de mesas com carregamento infinito (10 itens por página)
+   - Skeletons animados durante carregamento via TailwindCSS
+   - Detecção de interseção para carregar mais itens automaticamente
+
+### Configuração do Cron Job de Notificações
+
+Para configurar o cron job que envia notificações de sessões agendadas:
+
+1. **Acesse o Painel do Supabase**: Navegue até o SQL Editor.
+
+2. **Execute o SQL para criar o cron job**:
+
+```sql
+-- Habilitar as extensões necessárias (se ainda não estiverem habilitadas)
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+-- Criar o job para notificar sobre sessões próximas
+select cron.schedule(
+  'notify-upcoming-sessions',
+  '*/30 * * * *', -- a cada 30 minutos
+  $$
+  insert into public.notifications (user_id, title, type, reference_id, reference_type, content)
+  select 
+    tp.user_id,
+    'Sessão se aproximando',
+    'session_reminder',
+    t.id,
+    'table',
+    'Sua sessão de ' || t.name || ' começará em breve'
+  from 
+    public.tables t
+    join public.table_participants tp on tp.table_id = t.id
+  where 
+    -- Lógica para determinar se a sessão está próxima
+    t.weekday = to_char(now(), 'Day') 
+    and t.time::time - current_time < interval '1 hour'
+    and t.time::time - current_time > interval '0 minutes'
+    and not exists (
+      select 1 from public.notifications n 
+      where n.reference_id = t.id 
+      and n.type = 'session_reminder'
+      and n.created_at > now() - interval '1 day'
+    );
+  $$
+);
+```
+
+3. **Verificar o status do job**:
+```sql
+select * from cron.job;
+```
+
+### Schema do Banco de Dados
+
+O sistema de inventário utiliza as seguintes tabelas:
+
+#### character_inventory
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | Identificador único do item |
+| character_id | uuid | Referência ao personagem proprietário |
+| name | text | Nome do item |
+| description | text | Descrição do item |
+| quantity | integer | Quantidade do item |
+| weight | numeric | Peso de uma unidade do item |
+| value | integer | Valor monetário (opcional) |
+| type | text | Tipo do item (arma, armadura, etc) |
+| rarity | text | Raridade (common, uncommon, rare, epic, legendary) |
+| equipped | boolean | Se o item está equipado |
+| image_url | text | URL da imagem do item |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data da última atualização |
+
 ## Diagrama de Fluxo de Sessões
 
 ```mermaid
@@ -71,27 +161,6 @@ sequenceDiagram
     API-->>Player: Notifica fim de sessão
 ```
 
-## Estrutura de Tabelas no Supabase
-
-### Principais Tabelas e Endpoints
-
-| Tabela | Descrição | Endpoint |
-|--------|-----------|----------|
-| `tables` | Mesas de jogo | `/tables` |
-| `table_participants` | Participantes das mesas | `/table_participants` |
-| `characters` | Personagens dos jogadores | `/characters` |
-| `character_inventory` | Inventário dos personagens | `/character_inventory` |
-| `session_tokens` | Tokens no mapa durante sessões | `/session_tokens` |
-| `fog_of_war` | Controle de névoa de guerra | `/fog_of_war` |
-| `chat_messages` | Mensagens no chat | `/chat_messages` |
-| `notifications` | Sistema de notificações | `/notifications` |
-| `maps` | Mapas das sessões | `/maps` |
-| `stories` | Narrativas e histórias | `/stories` |
-| `npcs` | NPCs do mundo | `/npcs` |
-| `monsters` | Monstros para combate | `/monsters` |
-| `items` | Itens do jogo | `/items` |
-| `profiles` | Perfis de usuários | `/profiles` |
-
 ## Screenshots das Telas Principais
 
 ### Painel do Mestre
@@ -108,15 +177,6 @@ sequenceDiagram
 
 ### Inventário
 ![Inventário](public/lovable-uploads/c0ce5755-bcb5-423a-baec-11074d96c6cd.png)
-
-## Funcionalidades Principais
-
-- Gerenciamento de mesas e campanhas de RPG
-- Sistema de inventário com drag-and-drop
-- Chat em tempo real durante as sessões
-- Mapa tático com névoa de guerra
-- Notificações de sessões e eventos
-- Sistema de combate em turnos
 
 ## Licença
 

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
@@ -14,11 +13,11 @@ import {
 import NotificationBell from './NotificationBell';
 
 const MainHeader = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await logout();
     } catch (error) {
       console.error('Erro ao sair:', error);
     }
