@@ -102,50 +102,41 @@ const Session = () => {
           // Convert token data to TokenPosition format and add is_visible_to_players if missing
           const formattedTokens: TokenPosition[] = (tokenData || []).map((token: any) => ({
             ...token,
-            is_visible_to_players: token.is_visible_to_players !== undefined ? token.is_visible_to_players : true
+            is_visible_to_players: true // Default to visible since it's not in the database yet
           }));
           setTokens(formattedTokens);
         }
 
-        // For now, we'll use the tables table to store turn data temporarily
-        // This will be replaced with the session_turns table once the types are updated
-        const { data: tableCustomData, error: tableCustomError } = await supabase
-          .from('tables')
-          .select('id, custom_data')
-          .eq('id', id)
-          .single();
+        // Create a default turn data object
+        const defaultTurn: SessionTurn = {
+          id: id || '',
+          session_id: id || '',
+          current_turn_user_id: null,
+          turn_started_at: null,
+          turn_ends_at: null,
+          turn_duration: 60,
+          is_paused: false,
+          round_number: 1,
+          turn_order: []
+        };
 
-        if (!tableCustomError && tableCustomData?.custom_data) {
-          // Create a mock session turn object using the custom_data
-          const customData = tableCustomData.custom_data;
-          const mockTurn: SessionTurn = {
-            id: id,
-            session_id: id,
-            current_turn_user_id: customData.current_turn_user_id || null,
-            turn_started_at: customData.turn_started_at || null,
-            turn_ends_at: customData.turn_ends_at || null,
-            turn_duration: customData.turn_duration || 60,
-            is_paused: customData.is_paused || false,
-            round_number: customData.round_number || 1,
-            turn_order: customData.turn_order || []
-          };
-          setSessionTurn(mockTurn);
-        } else {
-          if (isGameMaster) {
-            // Create default turn data
-            const defaultTurn: SessionTurn = {
-              id: id,
-              session_id: id,
-              current_turn_user_id: null,
-              turn_started_at: null,
-              turn_ends_at: null,
-              turn_duration: 60,
-              is_paused: false,
-              round_number: 1,
-              turn_order: []
-            };
+        // For this implementation, we'll store turn data in a localStorage fallback
+        // since the database doesn't yet have a dedicated field for turn data
+        const storedTurnData = localStorage.getItem(`session_turn_${id}`);
+        
+        if (storedTurnData) {
+          try {
+            const parsedTurnData = JSON.parse(storedTurnData);
+            setSessionTurn({
+              ...defaultTurn,
+              ...parsedTurnData
+            });
+          } catch (e) {
+            console.error('Error parsing stored turn data:', e);
             setSessionTurn(defaultTurn);
           }
+        } else {
+          setSessionTurn(defaultTurn);
         }
       } catch (err: any) {
         console.error('Session loading error:', err);
@@ -158,7 +149,7 @@ const Session = () => {
     };
 
     verifyParticipation();
-  }, [id, user, navigate, isGameMaster]);
+  }, [id, user, navigate]);
 
   // Set up realtime subscriptions
   useEffect(() => {
@@ -179,18 +170,14 @@ const Session = () => {
           if (payload.eventType === 'INSERT') {
             const newToken = {
               ...payload.new,
-              is_visible_to_players: payload.new.is_visible_to_players !== undefined 
-                ? payload.new.is_visible_to_players 
-                : true
+              is_visible_to_players: true // Default to visible for now
             } as TokenPosition;
             
             setTokens(prev => [...prev, newToken]);
           } else if (payload.eventType === 'UPDATE') {
             const updatedToken = {
               ...payload.new,
-              is_visible_to_players: payload.new.is_visible_to_players !== undefined 
-                ? payload.new.is_visible_to_players 
-                : true
+              is_visible_to_players: true // Default to visible for now
             } as TokenPosition;
             
             setTokens(prev => 
@@ -203,7 +190,7 @@ const Session = () => {
       )
       .subscribe();
 
-    // Subscribe to table changes for turn data (temporary solution)
+    // Subscribe to table changes for pause status
     const tableChannel = supabase
       .channel('table_custom_data_changes')
       .on(
@@ -215,25 +202,6 @@ const Session = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          const customData = payload.new.custom_data;
-          
-          if (customData && typeof customData === 'object') {
-            setSessionTurn(prevTurn => {
-              if (!prevTurn) return null;
-              
-              return {
-                ...prevTurn,
-                current_turn_user_id: customData.current_turn_user_id || prevTurn.current_turn_user_id,
-                turn_started_at: customData.turn_started_at || prevTurn.turn_started_at,
-                turn_ends_at: customData.turn_ends_at || prevTurn.turn_ends_at,
-                turn_duration: customData.turn_duration || prevTurn.turn_duration,
-                is_paused: customData.is_paused !== undefined ? customData.is_paused : prevTurn.is_paused,
-                round_number: customData.round_number || prevTurn.round_number,
-                turn_order: customData.turn_order || prevTurn.turn_order
-              };
-            });
-          }
-          
           // Update session pause state
           if ('session_paused' in payload.new) {
             setIsPaused(payload.new.session_paused);
@@ -252,6 +220,21 @@ const Session = () => {
       supabase.removeChannel(tableChannel);
     };
   }, [id]);
+
+  // Function to update and save turn data to localStorage
+  const updateSessionTurn = (turnData: Partial<SessionTurn>) => {
+    if (!sessionTurn || !id) return;
+    
+    const updatedTurn = {
+      ...sessionTurn,
+      ...turnData
+    };
+    
+    setSessionTurn(updatedTurn);
+    
+    // Store in localStorage as fallback until database support is added
+    localStorage.setItem(`session_turn_${id}`, JSON.stringify(updatedTurn));
+  };
 
   const handleTokenMove = async (tokenId: string, x: number, y: number) => {
     // Only GMs or token owners can move tokens
@@ -288,6 +271,11 @@ const Session = () => {
       
       setIsPaused(newPausedState);
       toast.success(newPausedState ? 'Session paused' : 'Session resumed');
+
+      // Also update the turn pause state
+      if (sessionTurn) {
+        updateSessionTurn({ is_paused: newPausedState });
+      }
     } catch (error) {
       console.error('Error toggling session pause:', error);
       toast.error('Failed to update session state');
@@ -298,12 +286,15 @@ const Session = () => {
     if (!isGameMaster) return;
 
     try {
-      const { error } = await supabase
-        .from('session_tokens')
-        .update({ is_visible_to_players: isVisible })
-        .eq('id', tokenId);
-
-      if (error) throw error;
+      // Since we don't have is_visible_to_players column in the database yet,
+      // we'll just update it locally for now
+      setTokens(prev =>
+        prev.map(token => 
+          token.id === tokenId ? { ...token, is_visible_to_players: isVisible } : token
+        )
+      );
+      
+      toast.success(`Token ${isVisible ? 'shown to' : 'hidden from'} players`);
     } catch (error) {
       console.error('Error updating token visibility:', error);
       toast.error('Failed to update token visibility');
@@ -314,16 +305,30 @@ const Session = () => {
     if (!isGameMaster || !id) return;
 
     try {
-      const { error } = await supabase
+      // For now, we'll omit is_visible_to_players as it doesn't exist in the database
+      const { is_visible_to_players, ...dbSafeTokenData } = tokenData;
+      
+      const { data, error } = await supabase
         .from('session_tokens')
         .insert([{
-          ...tokenData,
+          ...dbSafeTokenData,
           session_id: id,
-          user_id: user?.id,
-          is_visible_to_players: tokenData.is_visible_to_players !== undefined ? tokenData.is_visible_to_players : true
-        }]);
+          user_id: user?.id
+        }])
+        .select();
 
       if (error) throw error;
+      
+      if (data && data[0]) {
+        // After successful insert, update our local state with the is_visible_to_players field
+        const newToken: TokenPosition = {
+          ...data[0],
+          is_visible_to_players: tokenData.is_visible_to_players || true
+        };
+        
+        setTokens(prev => [...prev, newToken]);
+      }
+      
       toast.success('Token added');
     } catch (error) {
       console.error('Error adding token:', error);
@@ -346,6 +351,12 @@ const Session = () => {
       console.error('Error deleting token:', error);
       toast.error('Failed to delete token');
     }
+  };
+
+  // Handle turn updates from the GM panel
+  const handleTurnUpdate = (turnData: Partial<SessionTurn>) => {
+    if (!isGameMaster) return;
+    updateSessionTurn(turnData);
   };
 
   if (loading) {
@@ -403,6 +414,7 @@ const Session = () => {
             onTogglePause={handleTogglePause}
             sessionTurn={sessionTurn}
             onAddToken={handleAddToken}
+            onTurnUpdate={handleTurnUpdate}
           />
         )}
 

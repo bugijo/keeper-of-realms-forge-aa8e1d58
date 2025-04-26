@@ -18,6 +18,7 @@ interface GameMasterPanelProps {
   onTogglePause: () => void;
   sessionTurn: SessionTurn | null;
   onAddToken: (token: Omit<TokenPosition, 'id' | 'session_id'>) => void;
+  onTurnUpdate?: (turnData: Partial<SessionTurn>) => void;
 }
 
 const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
@@ -26,7 +27,8 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   isPaused,
   onTogglePause,
   sessionTurn,
-  onAddToken
+  onAddToken,
+  onTurnUpdate
 }) => {
   const [activeTab, setActiveTab] = useState('participants');
   const [turnDuration, setTurnDuration] = useState(sessionTurn?.turn_duration || 60);
@@ -35,22 +37,15 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Update turn order
   const updateTurnOrder = async (participantIds: string[]) => {
-    if (!sessionId) return;
+    if (!sessionId || !onTurnUpdate) return;
     
     try {
-      // Store turn order in custom_data while we wait for the session_turns table to be ready
-      const { error } = await supabase
-        .from('tables')
-        .update({ 
-          // Using custom_data as a temporary solution
-          custom_data: { 
-            turn_order: participantIds,
-            turn_duration: turnDuration
-          }
-        })
-        .eq('id', sessionId);
-        
-      if (error) throw error;
+      onTurnUpdate({ 
+        turn_order: participantIds,
+        turn_duration: turnDuration
+      });
+      
+      toast.success('Turn order updated');
     } catch (error) {
       console.error('Error updating turn order:', error);
       toast.error('Failed to update turn order');
@@ -59,7 +54,7 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Start turn tracking
   const startTurn = async () => {
-    if (!sessionTurn?.turn_order.length) {
+    if (!sessionTurn?.turn_order.length || !onTurnUpdate) {
       toast.error('You need to set a turn order first');
       return;
     }
@@ -69,23 +64,15 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
       const now = new Date();
       const turnEnds = new Date(now.getTime() + turnDuration * 1000);
       
-      // Using custom_data as a temporary solution
-      const { error } = await supabase
-        .from('tables')
-        .update({ 
-          custom_data: { 
-            current_turn_user_id: firstParticipantId,
-            turn_started_at: now.toISOString(),
-            turn_ends_at: turnEnds.toISOString(),
-            turn_duration: turnDuration,
-            is_paused: false,
-            round_number: 1,
-            turn_order: sessionTurn.turn_order
-          }
-        })
-        .eq('id', sessionId);
-        
-      if (error) throw error;
+      onTurnUpdate({ 
+        current_turn_user_id: firstParticipantId,
+        turn_started_at: now.toISOString(),
+        turn_ends_at: turnEnds.toISOString(),
+        turn_duration: turnDuration,
+        is_paused: false,
+        round_number: 1,
+        turn_order: sessionTurn.turn_order
+      });
       
       toast.success(`${getParticipantName(firstParticipantId)}'s turn has started`);
     } catch (error) {
@@ -96,28 +83,19 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Advance to the next turn
   const nextTurn = async () => {
-    if (!sessionTurn?.turn_order.length) return;
+    if (!sessionTurn?.turn_order.length || !onTurnUpdate) return;
     
     try {
       const currentIndex = sessionTurn.turn_order.indexOf(sessionTurn.current_turn_user_id || '');
       const nextIndex = (currentIndex + 1) % sessionTurn.turn_order.length;
       const nextParticipantId = sessionTurn.turn_order[nextIndex];
       
-      // Using custom_data as a temporary solution
-      const { error } = await supabase
-        .from('tables')
-        .update({ 
-          custom_data: { 
-            ...sessionTurn,
-            current_turn_user_id: nextParticipantId,
-            turn_started_at: new Date().toISOString(),
-            turn_ends_at: new Date(Date.now() + sessionTurn.turn_duration * 1000).toISOString(),
-            round_number: nextIndex === 0 ? sessionTurn.round_number + 1 : sessionTurn.round_number
-          }
-        })
-        .eq('id', sessionId);
-        
-      if (error) throw error;
+      onTurnUpdate({ 
+        current_turn_user_id: nextParticipantId,
+        turn_started_at: new Date().toISOString(),
+        turn_ends_at: new Date(Date.now() + sessionTurn.turn_duration * 1000).toISOString(),
+        round_number: nextIndex === 0 ? sessionTurn.round_number + 1 : sessionTurn.round_number
+      });
       
       toast.success(`${getParticipantName(nextParticipantId)}'s turn has started`);
     } catch (error) {
@@ -128,21 +106,12 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Pause/resume turn timer
   const toggleTurnTimer = async () => {
-    if (!sessionTurn) return;
+    if (!sessionTurn || !onTurnUpdate) return;
     
     try {
-      // Using custom_data as a temporary solution
-      const { error } = await supabase
-        .from('tables')
-        .update({ 
-          custom_data: { 
-            ...sessionTurn,
-            is_paused: !sessionTurn.is_paused
-          }
-        })
-        .eq('id', sessionId);
-        
-      if (error) throw error;
+      onTurnUpdate({ 
+        is_paused: !sessionTurn.is_paused
+      });
       
       toast.success(sessionTurn.is_paused ? 'Timer resumed' : 'Timer paused');
     } catch (error) {
@@ -172,21 +141,12 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Update turn duration
   const updateTurnSettings = async () => {
-    if (!sessionTurn) return;
+    if (!sessionTurn || !onTurnUpdate) return;
     
     try {
-      // Using custom_data as a temporary solution
-      const { error } = await supabase
-        .from('tables')
-        .update({ 
-          custom_data: { 
-            ...sessionTurn,
-            turn_duration: turnDuration
-          }
-        })
-        .eq('id', sessionId);
-        
-      if (error) throw error;
+      onTurnUpdate({ 
+        turn_duration: turnDuration
+      });
       
       setIsEditingTurn(false);
       toast.success('Turn settings updated');
