@@ -11,7 +11,7 @@ const Index = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Redirecionar para a home se acessar /index diretamente
+    // Redirect to home if accessing /index directly
     navigate('/');
   }, [navigate]);
   

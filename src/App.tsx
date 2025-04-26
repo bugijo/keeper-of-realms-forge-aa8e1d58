@@ -28,6 +28,7 @@ import MapCreation from './pages/creations/MapCreation';
 import StoryCreation from './pages/creations/StoryCreation';
 import MonsterCreation from './pages/creations/MonsterCreation';
 import NpcCreation from './pages/creations/NpcCreation';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -78,6 +79,9 @@ function App() {
         <Route path="/creations/monsters/:id" element={<MonsterCreation />} />
         <Route path="/creations/npcs" element={<NpcCreation />} />
         <Route path="/creations/npcs/:id" element={<NpcCreation />} />
+        
+        {/* 404 route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

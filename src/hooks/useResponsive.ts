@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 
 export function useResponsive() {
   const [windowDimensions, setWindowDimensions] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
   });
 
   useEffect(() => {
@@ -14,6 +14,9 @@ export function useResponsive() {
         height: window.innerHeight,
       });
     }
+
+    // Initial dimensions
+    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
