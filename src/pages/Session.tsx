@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,7 +24,6 @@ const Session = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [sessionData, setSessionData] = useState<any>(null);
 
-  // Verify user participation and load session data
   useEffect(() => {
     const verifyParticipation = async () => {
       if (!id || !user) {
@@ -37,7 +35,6 @@ const Session = () => {
         setLoading(true);
         setError(null);
 
-        // Check if user is a participant in this session
         const { data: participantData, error: participantError } = await supabase
           .from('table_participants')
           .select('id, user_id, role, character_id')
@@ -52,7 +49,6 @@ const Session = () => {
 
         setIsGameMaster(participantData.role === 'gm');
 
-        // Fetch table data
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
           .select('*')
@@ -66,7 +62,6 @@ const Session = () => {
         setSessionData(tableData);
         setIsPaused(tableData.session_paused || false);
 
-        // Load all participants with their profile info
         const { data: allParticipants, error: allParticipantsError } = await supabase
           .from('table_participants')
           .select(`
@@ -90,7 +85,6 @@ const Session = () => {
           setParticipants(formattedParticipants);
         }
 
-        // Load session tokens
         const { data: tokenData, error: tokenError } = await supabase
           .from('session_tokens')
           .select('*')
@@ -99,15 +93,16 @@ const Session = () => {
         if (tokenError) {
           console.error('Error loading tokens:', tokenError);
         } else {
-          // Convert token data to TokenPosition format and add is_visible_to_players if missing
           const formattedTokens: TokenPosition[] = (tokenData || []).map((token: any) => ({
             ...token,
-            is_visible_to_players: true // Default to visible since it's not in the database yet
+            token_type: ['character', 'monster', 'npc', 'object'].includes(token.token_type) 
+              ? token.token_type 
+              : 'character',
+            is_visible_to_players: true
           }));
           setTokens(formattedTokens);
         }
 
-        // Create a default turn data object
         const defaultTurn: SessionTurn = {
           id: id || '',
           session_id: id || '',
@@ -120,8 +115,6 @@ const Session = () => {
           turn_order: []
         };
 
-        // For this implementation, we'll store turn data in a localStorage fallback
-        // since the database doesn't yet have a dedicated field for turn data
         const storedTurnData = localStorage.getItem(`session_turn_${id}`);
         
         if (storedTurnData) {
@@ -151,11 +144,9 @@ const Session = () => {
     verifyParticipation();
   }, [id, user, navigate]);
 
-  // Set up realtime subscriptions
   useEffect(() => {
     if (!id) return;
 
-    // Subscribe to token changes
     const tokenChannel = supabase
       .channel('session_tokens_changes')
       .on(
@@ -170,14 +161,14 @@ const Session = () => {
           if (payload.eventType === 'INSERT') {
             const newToken = {
               ...payload.new,
-              is_visible_to_players: true // Default to visible for now
+              is_visible_to_players: true
             } as TokenPosition;
             
             setTokens(prev => [...prev, newToken]);
           } else if (payload.eventType === 'UPDATE') {
             const updatedToken = {
               ...payload.new,
-              is_visible_to_players: true // Default to visible for now
+              is_visible_to_players: true
             } as TokenPosition;
             
             setTokens(prev => 
@@ -190,7 +181,6 @@ const Session = () => {
       )
       .subscribe();
 
-    // Subscribe to table changes for pause status
     const tableChannel = supabase
       .channel('table_custom_data_changes')
       .on(
@@ -202,7 +192,6 @@ const Session = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          // Update session pause state
           if ('session_paused' in payload.new) {
             setIsPaused(payload.new.session_paused);
             if (payload.new.session_paused) {
@@ -221,7 +210,6 @@ const Session = () => {
     };
   }, [id]);
 
-  // Function to update and save turn data to localStorage
   const updateSessionTurn = (turnData: Partial<SessionTurn>) => {
     if (!sessionTurn || !id) return;
     
@@ -232,12 +220,10 @@ const Session = () => {
     
     setSessionTurn(updatedTurn);
     
-    // Store in localStorage as fallback until database support is added
     localStorage.setItem(`session_turn_${id}`, JSON.stringify(updatedTurn));
   };
 
   const handleTokenMove = async (tokenId: string, x: number, y: number) => {
-    // Only GMs or token owners can move tokens
     const token = tokens.find(t => t.id === tokenId);
     if (!token) return;
     
@@ -272,7 +258,6 @@ const Session = () => {
       setIsPaused(newPausedState);
       toast.success(newPausedState ? 'Session paused' : 'Session resumed');
 
-      // Also update the turn pause state
       if (sessionTurn) {
         updateSessionTurn({ is_paused: newPausedState });
       }
@@ -286,8 +271,6 @@ const Session = () => {
     if (!isGameMaster) return;
 
     try {
-      // Since we don't have is_visible_to_players column in the database yet,
-      // we'll just update it locally for now
       setTokens(prev =>
         prev.map(token => 
           token.id === tokenId ? { ...token, is_visible_to_players: isVisible } : token
@@ -305,13 +288,19 @@ const Session = () => {
     if (!isGameMaster || !id) return;
 
     try {
-      // For now, we'll omit is_visible_to_players as it doesn't exist in the database
       const { is_visible_to_players, ...dbSafeTokenData } = tokenData;
+      
+      const validatedTokenData = {
+        ...dbSafeTokenData,
+        token_type: ['character', 'monster', 'npc', 'object'].includes(dbSafeTokenData.token_type)
+          ? dbSafeTokenData.token_type
+          : 'character'
+      };
       
       const { data, error } = await supabase
         .from('session_tokens')
         .insert([{
-          ...dbSafeTokenData,
+          ...validatedTokenData,
           session_id: id,
           user_id: user?.id
         }])
@@ -320,9 +309,11 @@ const Session = () => {
       if (error) throw error;
       
       if (data && data[0]) {
-        // After successful insert, update our local state with the is_visible_to_players field
         const newToken: TokenPosition = {
           ...data[0],
+          token_type: ['character', 'monster', 'npc', 'object'].includes(data[0].token_type)
+            ? data[0].token_type as 'character' | 'monster' | 'npc' | 'object'
+            : 'character',
           is_visible_to_players: tokenData.is_visible_to_players || true
         };
         
@@ -353,7 +344,6 @@ const Session = () => {
     }
   };
 
-  // Handle turn updates from the GM panel
   const handleTurnUpdate = (turnData: Partial<SessionTurn>) => {
     if (!isGameMaster) return;
     updateSessionTurn(turnData);
@@ -387,7 +377,6 @@ const Session = () => {
 
   return (
     <div className="flex h-screen flex-col bg-fantasy-dark">
-      {/* Header with session info */}
       <header className="bg-fantasy-dark border-b border-fantasy-purple/30 p-3 flex justify-between items-center">
         <h1 className="text-xl font-medievalsharp text-fantasy-gold">{sessionData?.name || 'RPG Session'}</h1>
         
@@ -403,9 +392,7 @@ const Session = () => {
         )}
       </header>
 
-      {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Game Master Panel - only visible to GM */}
         {isGameMaster && (
           <GameMasterPanel 
             sessionId={id || ''} 
@@ -418,7 +405,6 @@ const Session = () => {
           />
         )}
 
-        {/* Main tactical map area */}
         <div className="flex-1 relative">
           {isPaused && !isGameMaster && (
             <div className="absolute inset-0 bg-black/70 z-10 flex items-center justify-center">
@@ -429,7 +415,6 @@ const Session = () => {
             </div>
           )}
 
-          {/* Turn tracker overlay for all participants */}
           <TurnTracker
             sessionTurn={sessionTurn}
             participants={participants}
@@ -449,7 +434,6 @@ const Session = () => {
           />
         </div>
 
-        {/* Chat panel */}
         <ChatPanel
           sessionId={id || ''}
           userId={user?.id || ''}

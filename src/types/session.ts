@@ -7,7 +7,7 @@ export type TokenPosition = {
   y: number;
   name: string;
   color: string;
-  token_type: 'character' | 'monster' | 'npc' | 'object';
+  token_type: 'character' | 'monster' | 'npc' | 'object' | string;
   size: number;
   is_visible_to_players: boolean;
   user_id?: string;

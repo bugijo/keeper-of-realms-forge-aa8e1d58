@@ -46,7 +46,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
   const [newToken, setNewToken] = useState({
     name: '',
-    token_type: 'character' as const,
+    token_type: 'character' as 'character' | 'monster' | 'npc' | 'object',
     color: '#3b82f6',
     size: 1,
     x: 5,
@@ -57,7 +57,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
   const gridSize = 50;
   const stageRef = useRef<any>(null);
   
-  // Handle container resize
   useEffect(() => {
     if (!containerRef) return;
     
@@ -76,7 +75,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     };
   }, [containerRef]);
 
-  // Zoom functionality
   const handleZoomIn = () => {
     setScale(prev => Math.min(prev + 0.1, 3));
   };
@@ -85,7 +83,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     setScale(prev => Math.max(prev - 0.1, 0.5));
   };
 
-  // Wheel zoom event handler
   const handleWheel = (e: any) => {
     e.evt.preventDefault();
     
@@ -112,9 +109,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     setScale(limitedScale);
   };
 
-  // Token drag handling
   const handleDragEnd = (e: any, tokenId: string) => {
-    // Check if user can move this token (GM or token owner)
     const token = tokens.find(t => t.id === tokenId);
     const canMove = isGameMaster || (token?.user_id === userId);
     
@@ -127,7 +122,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     }
     
     const pos = e.target.position();
-    // Snap to grid
     const gridX = Math.round(pos.x / gridSize);
     const gridY = Math.round(pos.y / gridSize);
     
@@ -139,7 +133,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     onTokenMove(tokenId, gridX, gridY);
   };
 
-  // Create new token
   const handleCreateToken = () => {
     if (!newToken.name.trim()) {
       toast.error('Token name is required');
@@ -148,7 +141,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     
     onAddToken(newToken);
     
-    // Reset form but keep the color
     const currentColor = newToken.color;
     setNewToken({
       name: '',
@@ -161,12 +153,26 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     });
   };
 
-  // Token selection
+  const handleTokenInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'token_type') {
+      setNewToken(prev => ({
+        ...prev,
+        [name]: value as 'character' | 'monster' | 'npc' | 'object'
+      }));
+    } else {
+      setNewToken(prev => ({
+        ...prev,
+        [name]: name === 'size' ? parseFloat(value) : value
+      }));
+    }
+  };
+
   const handleTokenClick = (tokenId: string) => {
     setSelectedTokenId(tokenId === selectedTokenId ? null : tokenId);
   };
 
-  // Get token icon based on type
   const getTokenIcon = (type: string) => {
     switch (type) {
       case 'character': return <UserCircle className="mr-2" size={18} />;
@@ -178,7 +184,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
 
   return (
     <div className="w-full h-full relative" ref={(ref) => setContainerRef(ref)}>
-      {/* Control buttons */}
       <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
         <Button
           variant="secondary"
@@ -236,14 +241,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                   <label className="text-sm text-fantasy-stone">Type</label>
                   <select
                     value={newToken.token_type}
-                    onChange={(e) => setNewToken(prev => ({ 
-                      ...prev, 
-                      token_type: e.target.value as any,
-                      // Set default colors based on type
-                      color: e.target.value === 'character' ? '#3b82f6' : 
-                             e.target.value === 'monster' ? '#ef4444' :
-                             e.target.value === 'npc' ? '#f59e0b' : '#8b5cf6'
-                    }))}
+                    onChange={handleTokenInputChange}
                     className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
                   >
                     <option value="character">Character</option>
@@ -328,7 +326,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
       </div>
 
-      {/* Selected token panel */}
       {selectedTokenId && isGameMaster && (
         <div className="absolute bottom-3 left-3 z-10 bg-fantasy-dark/90 border border-fantasy-purple/30 p-3 rounded-md max-w-xs">
           {(() => {
@@ -404,7 +401,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
         </div>
       )}
 
-      {/* The Konva Stage */}
       <Stage
         width={stageSize.width}
         height={stageSize.height}
@@ -414,7 +410,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
         scale={{ x: scale, y: scale }}
       >
         <Layer>
-          {/* Background */}
           <Rect
             x={-10000}
             y={-10000}
@@ -423,7 +418,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
             fill="#1a1625"
           />
           
-          {/* Grid */}
           {showGrid && Array.from({ length: 400 }).map((_, i) => (
             <React.Fragment key={`grid-v-${i}`}>
               <Rect
@@ -443,9 +437,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
             </React.Fragment>
           ))}
           
-          {/* Tokens - only show to players if visible or if user is GM */}
           {tokens.map(token => {
-            // Skip tokens that aren't visible to players unless user is GM
             if (!token.is_visible_to_players && !isGameMaster) return null;
             
             const isOwner = token.user_id === userId;
@@ -483,7 +475,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                   offsetY={size / 2}
                 />
                 
-                {/* Visibility indicator for GM */}
                 {isGameMaster && !token.is_visible_to_players && (
                   <Circle
                     radius={size / 8}
