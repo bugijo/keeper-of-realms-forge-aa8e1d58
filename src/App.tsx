@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Character from './pages/Character';
 import CharacterView from './pages/CharacterView';
+import CharacterInventory from './pages/character/CharacterInventory';
 import ItemsView from './pages/items/ItemsView';
 import ItemCreation from './pages/creations/ItemCreation';
 import ItemsViewOld from './pages/ItemsView';
@@ -61,8 +62,8 @@ function App() {
         <Route path="/shop" element={<Shop />} />
 
         {/* Character routes */}
-        <Route path="/character" element={<Character />} />
-        <Route path="/character/:id" element={<CharacterView />} />
+        <Route path="/character" element={<CharacterInventory />} />
+        <Route path="/character/view/:id" element={<CharacterView />} />
 
         {/* Items routes */}
         <Route path="/items" element={<ItemsView />} />
