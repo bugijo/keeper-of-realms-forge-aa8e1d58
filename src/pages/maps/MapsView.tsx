@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MainLayout from "@/components/layout/MainLayout";
-import { Search, Filter, Map, ArrowBigRight, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Filter, Map, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";

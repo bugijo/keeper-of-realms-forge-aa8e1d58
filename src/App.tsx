@@ -15,10 +15,10 @@ import PlayerView from './pages/PlayerView';
 import GMView from './pages/GameMasterView';
 import LiveSession from './pages/LiveSession';
 import PreSessionScreen from './components/game/PreSessionScreen';
-import MapsView from './pages/MapsView';
-import MonstersView from './pages/MonstersView';
-import NpcsView from './pages/NpcsView';
-import StoriesView from './pages/StoriesView';
+import MapsView from './pages/maps/MapsView';
+import MonstersView from './pages/monsters/MonstersView';
+import NpcsView from './pages/npcs/NpcsView';
+import StoriesView from './pages/stories/StoriesView';
 import ItemView from './pages/items/ItemView';
 import Creations from './pages/Creations';
 import Missions from './pages/Missions';
@@ -54,9 +54,13 @@ function App() {
 
         {/* Game entities routes */}
         <Route path="/maps" element={<MapsView />} />
+        <Route path="/maps/:id" element={<MapsView />} />
         <Route path="/monsters" element={<MonstersView />} />
+        <Route path="/monsters/:id" element={<MonstersView />} />
         <Route path="/npcs" element={<NpcsView />} />
+        <Route path="/npcs/:id" element={<NpcsView />} />
         <Route path="/stories" element={<StoriesView />} />
+        <Route path="/stories/:id" element={<StoriesView />} />
         <Route path="/missions" element={<Missions />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/shop" element={<Shop />} />
