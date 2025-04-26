@@ -22,6 +22,7 @@ const GameMasterView = () => {
       
       try {
         setLoading(true);
+        console.log("Buscando dados da mesa com ID:", id);
         
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
@@ -29,9 +30,18 @@ const GameMasterView = () => {
           .eq('id', id)
           .single();
           
-        if (tableError) throw tableError;
+        if (tableError) {
+          throw tableError;
+        }
         
+        console.log("Dados da mesa:", tableData);
+        console.log("User ID atual:", user.id);
+        console.log("Table user_id:", tableData.user_id);
+        
+        // Esta verificação agora é redundante porque já está no ProtectedRoute
+        // Mas mantemos como segunda camada de segurança
         if (tableData.user_id !== user.id) {
+          console.warn("Usuário não é o criador da mesa");
           toast.error('Você não tem permissão para acessar esta página');
           navigate('/tables');
           return;

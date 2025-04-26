@@ -18,6 +18,7 @@ import TacticalCombat from './pages/TacticalCombat';
 import Inventory from './pages/Inventory';
 import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import Home from './pages/Home';
 
 function App() {
   const { session } = useAuth();
@@ -26,13 +27,21 @@ function App() {
     <Router>
       <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<MainLayout><h1>RPG Companion</h1></MainLayout>} />
+        <Route path="/" element={<Home />} />
         <Route path="/signup" element={<MainLayout><h1>Cadastro</h1></MainLayout>} />
         <Route path="/signin" element={<MainLayout><h1>Login</h1></MainLayout>} />
+        
+        {/* Rota protegida por autenticação usando o componente de proteção */}
         <Route
           path="/tables"
-          element={session ? <Tables /> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute>
+              <Tables />
+            </ProtectedRoute>
+          }
         />
+        
+        {/* Rotas de GM específicas usando o componente de proteção com verificação de GM */}
         <Route
           path="/gm/:id"
           element={
@@ -41,10 +50,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
           path="/table/:id"
-          element={session ? <TablePlayerView /> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute>
+              <TablePlayerView />
+            </ProtectedRoute>
+          }
         />
+        
         <Route
           path="/gm/table/:id"
           element={
@@ -53,20 +68,43 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
           path="/session/:id"
-          element={session ? <LiveSession /> : <Navigate to="/signin" />}
-        />
-        <Route
-          path="/combat"
-          element={session ? <TacticalCombat /> : <Navigate to="/signin" />}
-        />
-        <Route
-          path="/character/:id"
-          element={session ? <MainLayout><h1>Ficha de Personagem</h1></MainLayout> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute>
+              <LiveSession />
+            </ProtectedRoute>
+          }
         />
         
-        <Route path="/inventory" element={<Inventory />} />
+        <Route
+          path="/combat"
+          element={
+            <ProtectedRoute>
+              <TacticalCombat />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/character/:id"
+          element={
+            <ProtectedRoute>
+              <MainLayout><h1>Ficha de Personagem</h1></MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route 
+          path="/inventory" 
+          element={
+            <ProtectedRoute>
+              <Inventory />
+            </ProtectedRoute>
+          } 
+        />
+        
         <Route path="/404" element={<NotFound />} />
         <Route path="*" element={<Navigate to="/404" />} />
       </Routes>

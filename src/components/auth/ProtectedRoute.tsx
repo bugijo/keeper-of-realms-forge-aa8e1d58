@@ -1,5 +1,5 @@
 
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -18,6 +18,7 @@ export const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const params = useParams();
   const [isGM, setIsGM] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(requireGM);
 
@@ -26,30 +27,19 @@ export const ProtectedRoute = ({
       if (!user || !requireGM) return;
       
       try {
-        // Extract table ID from URL params
-        const paths = location.pathname.split('/');
-        let tableId = "";
+        setIsChecking(true);
         
-        // Find the table ID based on the parameter position
-        for (let i = 0; i < paths.length - 1; i++) {
-          if (paths[i] === tableIdParam) {
-            tableId = paths[i + 1];
-            break;
-          }
-        }
-        
-        // If no tableId found in URL path segments, try to get it from URL params
-        if (!tableId) {
-          const urlParams = new URLSearchParams(location.search);
-          tableId = urlParams.get(tableIdParam) || "";
-        }
+        // Obter o ID da tabela diretamente dos parâmetros da URL
+        const tableId = params[tableIdParam];
         
         if (!tableId) {
-          console.log("No table ID found in URL");
+          console.error("Não foi possível encontrar o ID da mesa nos parâmetros da URL", params);
           setIsGM(false);
           setIsChecking(false);
           return;
         }
+        
+        console.log("Verificando permissões de GM para a mesa:", tableId);
         
         const { data, error } = await supabase
           .from('tables')
@@ -58,13 +48,15 @@ export const ProtectedRoute = ({
           .single();
           
         if (error) {
-          console.error("Error checking GM status:", error);
+          console.error("Erro ao verificar status de GM:", error);
           setIsGM(false);
         } else {
-          setIsGM(data.user_id === user.id);
+          const isGameMaster = data.user_id === user.id;
+          console.log("Usuário é GM?", isGameMaster, "User ID:", user.id, "Mesa user_id:", data.user_id);
+          setIsGM(isGameMaster);
         }
       } catch (error) {
-        console.error("Error checking GM status:", error);
+        console.error("Erro ao verificar status de GM:", error);
         setIsGM(false);
       } finally {
         setIsChecking(false);
@@ -72,7 +64,7 @@ export const ProtectedRoute = ({
     };
     
     checkGMStatus();
-  }, [user, requireGM, location.pathname, location.search, tableIdParam]);
+  }, [user, requireGM, params, tableIdParam]);
 
   if (loading || isChecking) {
     return (

@@ -44,30 +44,38 @@ const Tables = () => {
       const start = pageParam * 10;
       const end = start + 9;
 
-      let query = supabase
+      // Consulta modificada para evitar o uso de relações que estão causando problemas
+      const { data, error, count } = await supabase
         .from('tables')
-        .select(`
-          id,
-          name,
-          description,
-          user_id,
-          system,
-          meeting_url,
-          profile:user_id (display_name),
-          participants:table_participants (count)
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
         .range(start, end);
-
-      if (filter) {
-        query = query.ilike('name', `%${filter}%`);
-      }
-
-      const { data, error, count } = await query;
       
       if (error) throw error;
+
+      // Para cada mesa, buscar informações adicionais separadamente
+      const tablesWithDetails = await Promise.all(data.map(async (table) => {
+        // Buscar nome do dono da mesa
+        const { data: ownerData } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', table.user_id)
+          .single();
+        
+        // Contar participantes
+        const { count: participantsCount } = await supabase
+          .from('table_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('table_id', table.id);
+        
+        return {
+          ...table,
+          profile: ownerData || { display_name: "Desconhecido" },
+          participants: [{ count: participantsCount || 0 }]
+        };
+      }));
       
       return { 
-        tables: data, 
+        tables: tablesWithDetails, 
         count,
         nextPage: data.length === 10 ? pageParam + 1 : undefined 
       };
