@@ -99,38 +99,53 @@ const Session = () => {
         if (tokenError) {
           console.error('Error loading tokens:', tokenError);
         } else {
-          setTokens(tokenData as TokenPosition[]);
+          // Convert token data to TokenPosition format and add is_visible_to_players if missing
+          const formattedTokens: TokenPosition[] = (tokenData || []).map((token: any) => ({
+            ...token,
+            is_visible_to_players: token.is_visible_to_players !== undefined ? token.is_visible_to_players : true
+          }));
+          setTokens(formattedTokens);
         }
 
-        // Load or create session turn data
-        const { data: turnData, error: turnError } = await supabase
-          .from('session_turns')
-          .select('*')
-          .eq('session_id', id)
-          .order('created_at', { ascending: false })
-          .limit(1)
+        // For now, we'll use the tables table to store turn data temporarily
+        // This will be replaced with the session_turns table once the types are updated
+        const { data: tableCustomData, error: tableCustomError } = await supabase
+          .from('tables')
+          .select('id, custom_data')
+          .eq('id', id)
           .single();
 
-        if (turnError) {
-          if (isGameMaster) {
-            // Create session turn data if GM and none exists
-            const { data: newTurnData, error: newTurnError } = await supabase
-              .from('session_turns')
-              .insert([{ 
-                session_id: id,
-                turn_order: []
-              }])
-              .select()
-              .single();
-              
-            if (newTurnError) {
-              console.error('Error creating turn data:', newTurnError);
-            } else {
-              setSessionTurn(newTurnData);
-            }
-          }
+        if (!tableCustomError && tableCustomData?.custom_data) {
+          // Create a mock session turn object using the custom_data
+          const customData = tableCustomData.custom_data;
+          const mockTurn: SessionTurn = {
+            id: id,
+            session_id: id,
+            current_turn_user_id: customData.current_turn_user_id || null,
+            turn_started_at: customData.turn_started_at || null,
+            turn_ends_at: customData.turn_ends_at || null,
+            turn_duration: customData.turn_duration || 60,
+            is_paused: customData.is_paused || false,
+            round_number: customData.round_number || 1,
+            turn_order: customData.turn_order || []
+          };
+          setSessionTurn(mockTurn);
         } else {
-          setSessionTurn(turnData);
+          if (isGameMaster) {
+            // Create default turn data
+            const defaultTurn: SessionTurn = {
+              id: id,
+              session_id: id,
+              current_turn_user_id: null,
+              turn_started_at: null,
+              turn_ends_at: null,
+              turn_duration: 60,
+              is_paused: false,
+              round_number: 1,
+              turn_order: []
+            };
+            setSessionTurn(defaultTurn);
+          }
         }
       } catch (err: any) {
         console.error('Session loading error:', err);
@@ -162,10 +177,24 @@ const Session = () => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTokens(prev => [...prev, payload.new as TokenPosition]);
+            const newToken = {
+              ...payload.new,
+              is_visible_to_players: payload.new.is_visible_to_players !== undefined 
+                ? payload.new.is_visible_to_players 
+                : true
+            } as TokenPosition;
+            
+            setTokens(prev => [...prev, newToken]);
           } else if (payload.eventType === 'UPDATE') {
+            const updatedToken = {
+              ...payload.new,
+              is_visible_to_players: payload.new.is_visible_to_players !== undefined 
+                ? payload.new.is_visible_to_players 
+                : true
+            } as TokenPosition;
+            
             setTokens(prev => 
-              prev.map(token => token.id === payload.new.id ? { ...payload.new as TokenPosition } : token)
+              prev.map(token => token.id === updatedToken.id ? updatedToken : token)
             );
           } else if (payload.eventType === 'DELETE') {
             setTokens(prev => prev.filter(token => token.id !== payload.old.id));
@@ -174,26 +203,9 @@ const Session = () => {
       )
       .subscribe();
 
-    // Subscribe to turn changes
-    const turnChannel = supabase
-      .channel('session_turns_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'session_turns',
-          filter: `session_id=eq.${id}`
-        },
-        (payload) => {
-          setSessionTurn(payload.new as SessionTurn);
-        }
-      )
-      .subscribe();
-
-    // Subscribe to session pause state
+    // Subscribe to table changes for turn data (temporary solution)
     const tableChannel = supabase
-      .channel('session_paused_changes')
+      .channel('table_custom_data_changes')
       .on(
         'postgres_changes',
         {
@@ -203,6 +215,26 @@ const Session = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
+          const customData = payload.new.custom_data;
+          
+          if (customData && typeof customData === 'object') {
+            setSessionTurn(prevTurn => {
+              if (!prevTurn) return null;
+              
+              return {
+                ...prevTurn,
+                current_turn_user_id: customData.current_turn_user_id || prevTurn.current_turn_user_id,
+                turn_started_at: customData.turn_started_at || prevTurn.turn_started_at,
+                turn_ends_at: customData.turn_ends_at || prevTurn.turn_ends_at,
+                turn_duration: customData.turn_duration || prevTurn.turn_duration,
+                is_paused: customData.is_paused !== undefined ? customData.is_paused : prevTurn.is_paused,
+                round_number: customData.round_number || prevTurn.round_number,
+                turn_order: customData.turn_order || prevTurn.turn_order
+              };
+            });
+          }
+          
+          // Update session pause state
           if ('session_paused' in payload.new) {
             setIsPaused(payload.new.session_paused);
             if (payload.new.session_paused) {
@@ -217,7 +249,6 @@ const Session = () => {
 
     return () => {
       supabase.removeChannel(tokenChannel);
-      supabase.removeChannel(turnChannel);
       supabase.removeChannel(tableChannel);
     };
   }, [id]);
@@ -288,7 +319,8 @@ const Session = () => {
         .insert([{
           ...tokenData,
           session_id: id,
-          user_id: user?.id
+          user_id: user?.id,
+          is_visible_to_players: tokenData.is_visible_to_players !== undefined ? tokenData.is_visible_to_players : true
         }]);
 
       if (error) throw error;

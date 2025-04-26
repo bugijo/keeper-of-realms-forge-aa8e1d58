@@ -97,12 +97,8 @@ const TurnTracker: React.FC<TurnTrackerProps> = ({
         </div>
       </div>
       
-      {!sessionTurn.is_paused && (
-        <Progress 
-          value={progress} 
-          className="h-1.5 bg-fantasy-dark" 
-          indicatorClassName={progress <= 25 ? "bg-red-500" : progress <= 50 ? "bg-yellow-500" : "bg-fantasy-purple"} 
-        />
+      {!sessionTurn.is_paused && remainingTime !== null && (
+        <Progress value={progress} className="h-1 bg-fantasy-dark" />
       )}
     </div>
   );

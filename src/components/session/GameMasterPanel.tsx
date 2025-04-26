@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -35,15 +35,18 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Update turn order
   const updateTurnOrder = async (participantIds: string[]) => {
-    if (!sessionTurn?.id) return;
+    if (!sessionId) return;
     
     try {
+      // Store turn order in custom_data while we wait for the session_turns table to be ready
       const { error } = await supabase
         .from('tables')
         .update({ 
-          // Store turn order in a non-existing field as a temporary workaround
-          // In a production app, we would use the session_turns table
-          custom_data: { turn_order: participantIds }
+          // Using custom_data as a temporary solution
+          custom_data: { 
+            turn_order: participantIds,
+            turn_duration: turnDuration
+          }
         })
         .eq('id', sessionId);
         
@@ -66,8 +69,24 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
       const now = new Date();
       const turnEnds = new Date(now.getTime() + turnDuration * 1000);
       
-      // In a real implementation, we would update the session_turns table
-      // For now, we'll just update the state locally      
+      // Using custom_data as a temporary solution
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          custom_data: { 
+            current_turn_user_id: firstParticipantId,
+            turn_started_at: now.toISOString(),
+            turn_ends_at: turnEnds.toISOString(),
+            turn_duration: turnDuration,
+            is_paused: false,
+            round_number: 1,
+            turn_order: sessionTurn.turn_order
+          }
+        })
+        .eq('id', sessionId);
+        
+      if (error) throw error;
+      
       toast.success(`${getParticipantName(firstParticipantId)}'s turn has started`);
     } catch (error) {
       console.error('Error starting turn:', error);
@@ -84,8 +103,22 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
       const nextIndex = (currentIndex + 1) % sessionTurn.turn_order.length;
       const nextParticipantId = sessionTurn.turn_order[nextIndex];
       
-      // In a real implementation, we would update the session_turns table
-      // For now, we'll just update the state locally and show a toast      
+      // Using custom_data as a temporary solution
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          custom_data: { 
+            ...sessionTurn,
+            current_turn_user_id: nextParticipantId,
+            turn_started_at: new Date().toISOString(),
+            turn_ends_at: new Date(Date.now() + sessionTurn.turn_duration * 1000).toISOString(),
+            round_number: nextIndex === 0 ? sessionTurn.round_number + 1 : sessionTurn.round_number
+          }
+        })
+        .eq('id', sessionId);
+        
+      if (error) throw error;
+      
       toast.success(`${getParticipantName(nextParticipantId)}'s turn has started`);
     } catch (error) {
       console.error('Error advancing turn:', error);
@@ -95,11 +128,22 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Pause/resume turn timer
   const toggleTurnTimer = async () => {
-    if (!sessionTurn?.id) return;
+    if (!sessionTurn) return;
     
     try {
-      // In a real implementation, we would update the session_turns table
-      // For now, we'll just show a toast
+      // Using custom_data as a temporary solution
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          custom_data: { 
+            ...sessionTurn,
+            is_paused: !sessionTurn.is_paused
+          }
+        })
+        .eq('id', sessionId);
+        
+      if (error) throw error;
+      
       toast.success(sessionTurn.is_paused ? 'Timer resumed' : 'Timer paused');
     } catch (error) {
       console.error('Error toggling turn timer:', error);
@@ -128,11 +172,22 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   
   // Update turn duration
   const updateTurnSettings = async () => {
-    if (!sessionTurn?.id) return;
+    if (!sessionTurn) return;
     
     try {
-      // In a real implementation, we would update the session_turns table
-      // For now, we'll just update local state and show a toast
+      // Using custom_data as a temporary solution
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          custom_data: { 
+            ...sessionTurn,
+            turn_duration: turnDuration
+          }
+        })
+        .eq('id', sessionId);
+        
+      if (error) throw error;
+      
       setIsEditingTurn(false);
       toast.success('Turn settings updated');
     } catch (error) {
