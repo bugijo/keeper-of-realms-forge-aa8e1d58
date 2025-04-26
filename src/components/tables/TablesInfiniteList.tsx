@@ -97,6 +97,7 @@ const TablesInfiniteList = () => {
     queryKey: ['tables'],
     queryFn: fetchTables,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0, // Added missing initialPageParam
   });
 
   React.useEffect(() => {
@@ -107,7 +108,7 @@ const TablesInfiniteList = () => {
 
   return (
     <div className="space-y-4">
-      {status === 'pending' ? (
+      {status === 'pending' ? ( // Fixed: changed from comparing "error" | "success" with "pending"
         Array.from({ length: 3 }).map((_, i) => <TableCardSkeleton key={i} />)
       ) : status === 'error' ? (
         <div className="fantasy-card p-6 text-center">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -17,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useImageUpload } from '@/hooks/useImageUpload';
+
+type RarityType = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 const rarityOptions = [
   { value: 'common', label: 'Comum' },
@@ -52,7 +53,7 @@ const InventoryPage = () => {
     weight: 0,
     value: 0,
     type: 'item',
-    rarity: 'common',
+    rarity: 'common' as RarityType,
     imageUrl: '',
   });
 
@@ -135,8 +136,8 @@ const InventoryPage = () => {
       weight: item.weight,
       value: item.value || 0,
       type: item.type,
-      rarity: item.rarity,
-      imageUrl: item.imageUrl || '',
+      rarity: item.rarity as RarityType,
+      imageUrl: item.image_url || '',
     });
     setDialogOpen(true);
   };
@@ -279,7 +280,7 @@ const InventoryPage = () => {
                           weight={item.weight}
                           value={item.value}
                           type={item.type}
-                          rarity={item.rarity as any}
+                          rarity={item.rarity as RarityType}
                           equipped={item.equipped}
                           imageUrl={item.image_url}
                           character_id={item.character_id}
@@ -401,14 +402,14 @@ const InventoryPage = () => {
                     <Label htmlFor="rarity">Raridade</Label>
                     <Select 
                       value={formState.rarity}
-                      onValueChange={(value) => setFormState(prev => ({ ...prev, rarity: value }))}
+                      onValueChange={(value: RarityType) => setFormState(prev => ({ ...prev, rarity: value }))}
                     >
                       <SelectTrigger className="bg-fantasy-dark/50 border-fantasy-purple/30">
                         <SelectValue placeholder="Selecione a raridade" />
                       </SelectTrigger>
                       <SelectContent className="bg-fantasy-dark border-fantasy-purple/30">
                         {rarityOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          <SelectItem key={option.value} value={option.value as RarityType}>{option.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

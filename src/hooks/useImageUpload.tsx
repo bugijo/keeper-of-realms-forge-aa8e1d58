@@ -110,15 +110,14 @@ export const useImageUpload = ({
         .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false,
-          contentType: 'image/webp',
-          onUploadProgress: (progress) => {
-            if (progress.totalBytes > 0) {
-              setProgress(Math.round((progress.bytesUploaded / progress.totalBytes) * 100));
-            }
-          }
+          contentType: 'image/webp'
+          // Removed onUploadProgress as it's not supported in FileOptions
         });
       
       if (error) throw error;
+      
+      // Manual progress tracking for UI feedback
+      setProgress(100);
       
       // Gerar URL pública
       const { data: publicUrlData } = supabase.storage
