@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,127 +8,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { Notification, useNotifications } from '@/hooks/useNotifications';
+import { Spinner } from '@/components/ui/spinner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  read: boolean;
-  type: string;
-  reference_type?: string;
-  reference_id?: string;
-}
+import { Skeleton } from '@/components/ui/skeleton';
 
 const NotificationsDropdown = () => {
-  const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    fetchNotifications();
-
-    if (user) {
-      // Assinar para receber novas notificações em tempo real
-      const channel = supabase
-        .channel('notifications-channel')
-        .on('postgres_changes', 
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification;
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(count => count + 1);
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-
-      setNotifications(data as Notification[]);
-      const unread = data.filter(n => !n.read).length;
-      setUnreadCount(unread);
-    } catch (error) {
-      console.error('Erro ao buscar notificações:', error);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
-    try {
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
-
-      setNotifications(prev => 
-        prev.map(n => n.id === id ? { ...n, read: true } : n)
-      );
-      setUnreadCount(count => Math.max(0, count - 1));
-    } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user || notifications.length === 0) return;
-
-    try {
-      const unreadIds = notifications
-        .filter(n => !n.read)
-        .map(n => n.id);
-
-      if (unreadIds.length === 0) return;
-
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .in('id', unreadIds);
-
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Erro ao marcar todas como lidas:', error);
-    }
-  };
-
-  const handleNotificationClick = async (notification: Notification) => {
-    await markAsRead(notification.id);
-    
-    // Navegar para o destino relevante com base no tipo de referência
-    if (notification.reference_type === 'table' && notification.reference_id) {
-      window.location.href = `/table/${notification.reference_id}`;
-    }
-    
-    setIsOpen(false);
-  };
 
   const getTimeAgo = (dateStr: string) => {
     try {
@@ -143,13 +32,28 @@ const NotificationsDropdown = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'session':
-        return <div className="w-2 h-2 rounded-full bg-green-400"></div>;
-      case 'attention':
-        return <div className="w-2 h-2 rounded-full bg-red-400"></div>;
+      case 'table_request':
+        return <div className="w-2 h-2 rounded-full bg-blue-500"></div>;
+      case 'session_update':
+        return <div className="w-2 h-2 rounded-full bg-green-500"></div>;
+      case 'message':
+        return <div className="w-2 h-2 rounded-full bg-amber-500"></div>;
       default:
-        return <div className="w-2 h-2 rounded-full bg-blue-400"></div>;
+        return <div className="w-2 h-2 rounded-full bg-purple-500"></div>;
     }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    await markAsRead(notification.id);
+    
+    // Navegar para o destino relevante com base no tipo de referência
+    if (notification.reference_type === 'table' && notification.reference_id) {
+      window.location.href = `/table/${notification.reference_id}`;
+    } else if (notification.reference_type === 'session' && notification.reference_id) {
+      window.location.href = `/session/${notification.reference_id}`;
+    }
+    
+    setIsOpen(false);
   };
 
   return (
@@ -162,9 +66,12 @@ const NotificationsDropdown = () => {
         >
           <Bell size={20} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center"
+            >
               {unreadCount}
-            </span>
+            </Badge>
           )}
         </Button>
       </PopoverTrigger>
@@ -187,7 +94,17 @@ const NotificationsDropdown = () => {
         </div>
         
         <ScrollArea className="h-80">
-          {notifications.length > 0 ? (
+          {loading ? (
+            <div className="space-y-2 p-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="p-2 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-2 w-1/3" />
+                </div>
+              ))}
+            </div>
+          ) : notifications.length > 0 ? (
             <div className="space-y-2">
               {notifications.map(notification => (
                 <div 

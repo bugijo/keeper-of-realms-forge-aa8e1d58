@@ -70,6 +70,10 @@ export function useNotifications() {
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
         
+        // Tocar som de notificação
+        const audio = new Audio('/notification-sound.mp3');
+        audio.play().catch(e => console.error('Error playing notification sound:', e));
+        
         // Mostrar toast para nova notificação
         toast.info(newNotification.title, {
           description: newNotification.content

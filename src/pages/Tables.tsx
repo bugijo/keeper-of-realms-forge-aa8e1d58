@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +19,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 const Tables = () => {
   const navigate = useNavigate();
@@ -31,7 +31,57 @@ const Tables = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("discover");
+  
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const pageSize = 6;
+  
   const queryClient = useQueryClient();
+  
+  const fetchTablesPage = async (pageNumber: number) => {
+    if (!hasMore && pageNumber > 1) return [];
+    
+    try {
+      const from = (pageNumber - 1) * pageSize;
+      const to = from + pageSize - 1;
+      
+      const { data, error, count } = await supabase
+        .from('tables')
+        .select('*', { count: 'exact' })
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .range(from, to);
+        
+      if (error) throw error;
+      
+      if (count) {
+        setHasMore(from + data.length < count);
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.error('Error fetching tables page:', err);
+      toast.error('Erro ao carregar mesas disponíveis');
+      return [];
+    }
+  };
+  
+  const { data: tablesData, isLoading: tablesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = 
+    useInfiniteQuery({
+      queryKey: ['tables'],
+      queryFn: ({ pageParam = 1 }) => fetchTablesPage(pageParam),
+      getNextPageParam: (lastPage, allPages) => {
+        return hasMore ? allPages.length + 1 : undefined;
+      },
+      staleTime: 300000, // 5 minutos de cache
+    });
+  
+  useEffect(() => {
+    if (tablesData) {
+      const allTables = tablesData.pages.flat();
+      setTables(allTables);
+    }
+  }, [tablesData]);
   
   const fetchMyTables = async () => {
     if (!user) return;
@@ -88,7 +138,6 @@ const Tables = () => {
       if (userTables && userTables.length > 0) {
         const tableIds = userTables.map(table => table.id);
         
-        // Modified join request query to avoid the profiles relationship error
         const { data: requests, error: requestsError } = await supabase
           .from('table_join_requests')
           .select('*, tables(name)')
@@ -98,7 +147,6 @@ const Tables = () => {
           
         if (requestsError) throw requestsError;
         
-        // Fetch user display names separately to avoid the relationship error
         if (requests && requests.length > 0) {
           const userIds = requests.map(request => request.user_id);
           
@@ -109,7 +157,6 @@ const Tables = () => {
             
           if (profilesError) throw profilesError;
           
-          // Merge profile data with requests
           const requestsWithProfiles = requests.map(request => {
             const profile = profiles?.find(p => p.id === request.user_id);
             return {
@@ -154,7 +201,6 @@ const Tables = () => {
         fetchMyTables(),
         fetchParticipatingTables(),
         fetchJoinRequests(),
-        fetchAllTables()
       ]).finally(() => setLoading(false));
     } else {
       fetchAllTables();
@@ -268,7 +314,13 @@ const Tables = () => {
     setActiveTab("discover");
   };
 
-  if (loading) {
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  if (loading && !tablesData) {
     return (
       <MainLayout>
         <div className="container mx-auto py-16 flex flex-col items-center justify-center">
@@ -316,7 +368,26 @@ const Tables = () => {
           
           <TabsContent value="discover">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tables.length > 0 ? (
+              {tablesLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="fantasy-card p-6 animate-pulse">
+                    <div className="h-6 bg-fantasy-purple/20 rounded w-3/4 mb-4"></div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
+                      <div className="h-4 bg-fantasy-stone/20 rounded w-1/2"></div>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
+                      <div className="h-4 bg-fantasy-stone/20 rounded w-2/3"></div>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
+                      <div className="h-4 bg-fantasy-stone/20 rounded w-1/3"></div>
+                    </div>
+                    <div className="h-10 bg-fantasy-purple/20 rounded w-full"></div>
+                  </div>
+                ))
+              ) : tables.length > 0 ? (
                 tables.map(table => (
                   <Link 
                     to={`/table/${table.id}`} 
@@ -384,6 +455,18 @@ const Tables = () => {
                 </div>
               )}
             </div>
+            
+            {hasNextPage && (
+              <div className="flex justify-center mt-8">
+                <Button 
+                  onClick={handleLoadMore} 
+                  disabled={isFetchingNextPage}
+                  className="fantasy-button secondary"
+                >
+                  {isFetchingNextPage ? <Spinner size="sm" /> : 'Carregar mais mesas'}
+                </Button>
+              </div>
+            )}
           </TabsContent>
           
           {user && (

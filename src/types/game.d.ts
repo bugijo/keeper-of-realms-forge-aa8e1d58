@@ -1,3 +1,4 @@
+
 export interface GamePlayer {
   id: string;
   name: string;
@@ -34,4 +35,5 @@ export interface MapToken {
   name: string;
   color: string;
   size: number;
+  label?: string; // Tornando label opcional
 }

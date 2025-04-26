@@ -229,7 +229,7 @@ const MapTab: React.FC<MapTabProps> = ({
           fogPoints={fogPoints}
           onMapClick={handleMapClick}
           isGameMaster={true}
-          tokens={mapTokens}
+          tokens={mapTokens} // O tipo MapToken já está corrigido
           onTokenMove={handleTokenMove}
         />
       </div>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   BrowserRouter as Router,
@@ -6,18 +7,14 @@ import {
   Navigate
 } from 'react-router-dom';
 import { useAuth } from './contexts/SupabaseAuthContext';
-import LandingPage from './pages/LandingPage';
-import SignUp from './pages/SignUp';
-import SignIn from './pages/SignIn';
+import MainLayout from '@/components/layout/MainLayout';
+import { Toaster } from '@/components/ui/sonner';
 import Tables from './pages/Tables';
 import GameMasterView from './pages/GameMasterView';
 import TablePlayerView from './pages/table/PlayerView';
 import GameMasterTable from './pages/table/GameMasterView';
 import LiveSession from './pages/LiveSession';
 import TacticalCombat from './pages/TacticalCombat';
-import CharacterSheetPage from './pages/CharacterSheetPage';
-
-// Importar a página de inventário
 import Inventory from './pages/Inventory';
 
 function App() {
@@ -25,10 +22,11 @@ function App() {
 
   return (
     <Router>
+      <Toaster position="top-right" />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/signin" element={<SignIn />} />
+        <Route path="/" element={<MainLayout><h1>RPG Companion</h1></MainLayout>} />
+        <Route path="/signup" element={<MainLayout><h1>Cadastro</h1></MainLayout>} />
+        <Route path="/signin" element={<MainLayout><h1>Login</h1></MainLayout>} />
         <Route
           path="/tables"
           element={session ? <Tables /> : <Navigate to="/signin" />}
@@ -55,7 +53,7 @@ function App() {
         />
         <Route
           path="/character/:id"
-          element={session ? <CharacterSheetPage /> : <Navigate to="/signin" />}
+          element={session ? <MainLayout><h1>Ficha de Personagem</h1></MainLayout> : <Navigate to="/signin" />}
         />
         
         <Route path="/inventory" element={<Inventory />} />
