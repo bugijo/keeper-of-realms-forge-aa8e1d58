@@ -39,7 +39,13 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
           
         if (error) throw error;
         
-        setInventory(data as InventoryItemData[]);
+        // Transform data to match the TypeScript interface
+        const transformedData = data.map(item => ({
+          ...item,
+          imageUrl: item.image_url,
+        })) as InventoryItemData[];
+        
+        setInventory(transformedData);
         
         // Calcula o peso total
         const total = data.reduce((sum, item) => {
@@ -72,14 +78,24 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
           },
           (payload) => {
             if (payload.eventType === 'INSERT') {
-              setInventory((current) => [...current, payload.new as InventoryItemData]);
+              const newItem = {
+                ...payload.new,
+                imageUrl: payload.new.image_url,
+              } as InventoryItemData;
+              
+              setInventory((current) => [...current, newItem]);
               setTotalWeight((current) => current + Number(payload.new.weight) * payload.new.quantity);
               toast.success(`Item adicionado: ${payload.new.name}`);
             } 
             else if (payload.eventType === 'UPDATE') {
+              const updatedItem = {
+                ...payload.new,
+                imageUrl: payload.new.image_url,
+              } as InventoryItemData;
+              
               setInventory((current) => 
                 current.map((item) => 
-                  item.id === payload.new.id ? payload.new as InventoryItemData : item
+                  item.id === payload.new.id ? updatedItem : item
                 )
               );
               
@@ -113,15 +129,26 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
   // Adiciona um item ao inventário
   const addItem = async (item: Omit<InventoryItemData, 'id'>) => {
     try {
+      // Convert the item to match the database schema
+      const dbItem = {
+        ...item,
+        image_url: item.imageUrl
+      };
+      
       const { data, error } = await supabase
         .from('character_inventory')
-        .insert({ ...item })
+        .insert({ ...dbItem })
         .select()
         .single();
         
       if (error) throw error;
       
-      return data as InventoryItemData;
+      // Return the item transformed to match our UI format
+      return {
+        ...data,
+        imageUrl: data.image_url
+      } as InventoryItemData;
+      
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao adicionar item: ${err.message}`);
@@ -163,7 +190,12 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
         
       if (error) throw error;
       
-      return data as InventoryItemData;
+      // Transform to match our UI format
+      return {
+        ...data,
+        imageUrl: data.image_url
+      } as InventoryItemData;
+      
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao atualizar quantidade: ${err.message}`);
@@ -186,7 +218,12 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
         
       if (error) throw error;
       
-      return data as InventoryItemData;
+      // Transform to match our UI format
+      return {
+        ...data,
+        imageUrl: data.image_url
+      } as InventoryItemData;
+      
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao atualizar status de equipamento: ${err.message}`);
@@ -212,7 +249,13 @@ export function useInventorySync({ characterId, isMaster = false }: UseInventory
       if (error) throw error;
       
       toast.success(`Item transferido com sucesso!`);
-      return data as InventoryItemData[];
+      
+      // Transform to match our UI format
+      return data.map(item => ({
+        ...item,
+        imageUrl: item.image_url
+      })) as InventoryItemData[];
+      
     } catch (err: any) {
       setError(err.message);
       toast.error(`Erro ao transferir item: ${err.message}`);

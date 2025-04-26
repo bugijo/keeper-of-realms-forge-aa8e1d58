@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -137,7 +138,7 @@ const InventoryPage = () => {
       value: item.value || 0,
       type: item.type,
       rarity: item.rarity as RarityType,
-      imageUrl: item.image_url || '',
+      imageUrl: item.imageUrl || '',
     });
     setDialogOpen(true);
   };
@@ -182,7 +183,7 @@ const InventoryPage = () => {
           value: formState.value,
           type: formState.type,
           rarity: formState.rarity,
-          image_url: formState.imageUrl,
+          imageUrl: formState.imageUrl,
         });
         toast.success('Item adicionado com sucesso!');
       }
@@ -282,7 +283,7 @@ const InventoryPage = () => {
                           type={item.type}
                           rarity={item.rarity as RarityType}
                           equipped={item.equipped}
-                          imageUrl={item.image_url}
+                          imageUrl={item.imageUrl}
                           character_id={item.character_id}
                           onToggleEquipped={() => toggleEquipped(item.id)}
                           onRemove={() => {
