@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Circle, Text, Group } from 'react-konva';
 import { Button } from '@/components/ui/button';
-import { MapPin, Plus, Minus, Grid, User } from 'lucide-react';
+import { MapPin, Plus, Minus, Grid, User, X, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { MapToken } from '@/types/game';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TokenFormData {
   name: string;
@@ -17,8 +19,10 @@ interface LiveSessionMapProps {
   isGameMaster: boolean;
   onTokenMove: (tokenId: string, x: number, y: number) => void;
   onAddToken: (token: any) => void;
+  onDeleteToken: (tokenId: string) => void;
   participants: any[];
   isPaused?: boolean;
+  userId: string;
 }
 
 const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
@@ -26,8 +30,10 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
   isGameMaster,
   onTokenMove,
   onAddToken,
+  onDeleteToken,
   participants,
-  isPaused = false
+  isPaused = false,
+  userId
 }) => {
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [scale, setScale] = useState(1);
@@ -40,6 +46,11 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
     color: '#3b82f6',
     size: 1
   });
+  const [fogOfWar, setFogOfWar] = useState<{x: number, y: number}[]>([]);
+  const [showFogTool, setShowFogTool] = useState(false);
+  const [drawMode, setDrawMode] = useState<'add' | 'remove'>('add');
+  const [showFog, setShowFog] = useState(true);
+  
   const gridSize = 50;
   
   useEffect(() => {
@@ -67,6 +78,8 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
     const oldScale = stage.scaleX();
     const pointerPosition = stage.getPointerPosition();
     
+    if (!pointerPosition) return;
+    
     const mousePointTo = {
       x: (pointerPosition.x - stage.x()) / oldScale,
       y: (pointerPosition.y - stage.y()) / oldScale,
@@ -89,7 +102,11 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
   };
   
   const handleDragEnd = (e: any, tokenId: string) => {
-    if (!isGameMaster) return;
+    const canMoveToken = isGameMaster || 
+                          (tokens.find(t => t.id === tokenId)?.user_id === userId &&
+                          tokens.find(t => t.id === tokenId)?.token_type === 'character');
+    
+    if (!canMoveToken || isPaused) return;
     
     const pos = e.target.position();
     const gridAlignedX = Math.round(pos.x / gridSize) * gridSize;
@@ -158,7 +175,9 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
       color: getRandomColor(),
       size: 1,
       x: centerX,
-      y: centerY
+      y: centerY,
+      user_id: participant.user_id,
+      character_id: participant.characters?.id
     });
   };
   
@@ -180,6 +199,33 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
     }
   };
   
+  const handleGridClick = (e: any) => {
+    if (!isGameMaster || !showFogTool) return;
+    
+    const stage = e.target.getStage();
+    const pointerPosition = stage.getPointerPosition();
+    if (!pointerPosition) return;
+    
+    const scale = stage.scaleX();
+    const stagePos = stage.position();
+    
+    // Adjust for stage position and scale
+    const x = Math.floor((pointerPosition.x - stagePos.x) / (gridSize * scale));
+    const y = Math.floor((pointerPosition.y - stagePos.y) / (gridSize * scale));
+    
+    if (drawMode === 'add') {
+      if (!fogOfWar.some(point => point.x === x && point.y === y)) {
+        setFogOfWar(prev => [...prev, { x, y }]);
+      }
+    } else {
+      setFogOfWar(prev => prev.filter(point => !(point.x === x && point.y === y)));
+    }
+  };
+  
+  const clearFog = () => {
+    setFogOfWar([]);
+  };
+  
   return (
     <div className="relative h-full" ref={(ref) => setContainerRef(ref)}>
       <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
@@ -188,6 +234,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
           size="sm"
           className="w-9 h-9 p-0"
           onClick={zoomIn}
+          title="Aumentar zoom"
         >
           <Plus size={18} />
         </Button>
@@ -197,6 +244,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
           size="sm"
           className="w-9 h-9 p-0"
           onClick={zoomOut}
+          title="Diminuir zoom"
         >
           <Minus size={18} />
         </Button>
@@ -206,6 +254,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
           size="sm"
           className={`w-9 h-9 p-0 ${showGrid ? 'bg-fantasy-purple/20' : ''}`}
           onClick={() => setShowGrid(!showGrid)}
+          title="Mostrar/esconder grade"
         >
           <Grid size={18} />
         </Button>
@@ -216,15 +265,38 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
             size="sm"
             className="w-9 h-9 p-0"
             onClick={() => setShowTokenForm(!showTokenForm)}
+            title="Adicionar token"
           >
             <MapPin size={18} />
+          </Button>
+        )}
+        
+        {isGameMaster && (
+          <Button
+            variant="outline"
+            size="sm"
+            className={`w-9 h-9 p-0 ${showFogTool ? 'bg-fantasy-purple/20' : ''}`}
+            onClick={() => setShowFogTool(!showFogTool)}
+            title="Ferramentas de névoa"
+          >
+            {showFog ? <Eye size={18} /> : <EyeOff size={18} />}
           </Button>
         )}
       </div>
 
       {isGameMaster && showTokenForm && (
         <div className="absolute top-2 left-2 p-4 bg-fantasy-dark border border-fantasy-purple/30 rounded-md z-10 w-64">
-          <h3 className="text-white font-medievalsharp mb-3">Adicionar Token</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-white font-medievalsharp">Adicionar Token</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowTokenForm(false)}
+            >
+              <X size={14} />
+            </Button>
+          </div>
           
           <div className="space-y-3">
             <div>
@@ -288,14 +360,62 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
               >
                 Adicionar
               </Button>
-              <Button 
-                variant="ghost"
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {isGameMaster && showFogTool && (
+        <div className="absolute top-2 left-2 p-4 bg-fantasy-dark border border-fantasy-purple/30 rounded-md z-10 w-64">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-white font-medievalsharp">Névoa de Guerra</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowFogTool(false)}
+            >
+              <X size={14} />
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Button
+                variant={drawMode === 'add' ? 'default' : 'outline'}
                 className="flex-1"
-                onClick={() => setShowTokenForm(false)}
+                onClick={() => setDrawMode('add')}
               >
-                Cancelar
+                Adicionar
+              </Button>
+              <Button
+                variant={drawMode === 'remove' ? 'default' : 'outline'}
+                className="flex-1"
+                onClick={() => setDrawMode('remove')}
+              >
+                Remover
               </Button>
             </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-fantasy-stone">Mostrar Névoa</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFog(!showFog)}
+              >
+                {showFog ? <Eye size={14} /> : <EyeOff size={14} />}
+              </Button>
+            </div>
+            
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={clearFog}
+              className="w-full"
+            >
+              Limpar Névoa
+            </Button>
           </div>
         </div>
       )}
@@ -337,6 +457,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
         scaleX={scale}
         scaleY={scale}
         draggable
+        onClick={handleGridClick}
       >
         <Layer>
           {/* Background */}
@@ -371,28 +492,41 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
             />
           ))}
           
+          {/* Fog of War */}
+          {showFog && fogOfWar.map((tile, index) => (
+            <Rect
+              key={`fog-${index}`}
+              x={tile.x * gridSize}
+              y={tile.y * gridSize}
+              width={gridSize}
+              height={gridSize}
+              fill="rgba(0, 0, 0, 0.7)"
+            />
+          ))}
+          
           {/* Tokens */}
           {tokens.map(token => {
             const tokenSize = token.size * gridSize;
             const x = token.x * gridSize;
             const y = token.y * gridSize;
+            const canDrag = isGameMaster || (token.user_id === userId && token.token_type === 'character');
             
             return (
               <Group
                 key={token.id}
                 x={x}
                 y={y}
-                draggable={isGameMaster}
+                draggable={canDrag && !isPaused}
                 onDragEnd={(e) => handleDragEnd(e, token.id)}
               >
                 <Circle
                   radius={tokenSize / 2}
-                  fill={token.color || getTokenColor(token.token_type || '')}
+                  fill={token.color || getTokenColor(token.token_type)}
                   stroke="white"
                   strokeWidth={2}
                 />
                 <Text
-                  text={token.name?.substring(0, 2) || token.label}
+                  text={token.name?.substring(0, 2) || "??"}
                   fill="white"
                   fontSize={tokenSize / 3}
                   fontStyle="bold"
@@ -403,6 +537,16 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
                   offsetX={tokenSize / 2}
                   offsetY={tokenSize / 2}
                 />
+                {isGameMaster && (
+                  <Circle
+                    radius={tokenSize / 5}
+                    fill="red"
+                    x={tokenSize / 2}
+                    y={-tokenSize / 5}
+                    opacity={0.7}
+                    onClick={() => onDeleteToken(token.id)}
+                  />
+                )}
               </Group>
             );
           })}

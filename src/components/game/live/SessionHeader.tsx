@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Timer, Play, Pause, Bell } from 'lucide-react';
+import { Clock, Play, Pause } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
 
 interface SessionHeaderProps {
   sessionName: string;
@@ -42,40 +41,27 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
   }, [startTime, isPaused]);
   
   return (
-    <div className="px-4 py-3 bg-fantasy-dark border-b border-fantasy-purple/30 flex justify-between items-center">
-      <div className="flex items-center">
-        <Link to="/tables" className="text-fantasy-stone hover:text-white mr-4">
-          &larr; Voltar
-        </Link>
-        <h1 className="text-xl font-medievalsharp text-fantasy-gold">
-          {sessionName || "Sessão de RPG"}
-        </h1>
-      </div>
+    <div className="flex items-center">
+      <Link to="/tables" className="text-fantasy-stone hover:text-white mr-4">
+        &larr; Voltar
+      </Link>
+      <h1 className="text-xl font-medievalsharp text-fantasy-gold">
+        {sessionName || "Sessão de RPG"}
+      </h1>
       
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Clock size={20} className="text-fantasy-gold" />
-          <span className="font-mono text-lg text-white">{elapsedTime}</span>
-          
-          {onTogglePause && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onTogglePause}
-              className="ml-1"
-            >
-              {isPaused ? <Play size={18} /> : <Pause size={18} />}
-            </Button>
-          )}
-        </div>
+      <div className="ml-4 flex items-center">
+        <Clock size={20} className="text-fantasy-gold mr-2" />
+        <span className="font-mono text-lg text-white">{elapsedTime}</span>
         
-        {isGameMaster && (
-          <Button 
-            variant="destructive" 
-            onClick={onEndSession}
-            className="fantasy-button destructive"
+        {onTogglePause && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onTogglePause}
+            className="ml-2"
+            title={isPaused ? "Retomar sessão" : "Pausar sessão"}
           >
-            Encerrar Sessão
+            {isPaused ? <Play size={18} /> : <Pause size={18} />}
           </Button>
         )}
       </div>

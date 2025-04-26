@@ -2,53 +2,43 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from 'lucide-react';
+import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Dices } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DiceRoll } from '@/types/game';
 
 interface DicePanelProps {
   sessionId: string;
   userId: string;
   isPaused?: boolean;
   isGameMaster?: boolean;
+  participants?: any[];
 }
 
-interface DiceRoll {
-  id: string;
-  user_id: string;
-  session_id: string;
-  dice_type: string;
-  result: number;
-  created_at: string;
-  user_name?: string;
-  character_name?: string;
-}
-
-// Type for the metadata in chat_messages
-interface DiceMetadata {
-  dice_type: string;
-  result: number;
-  user_name: string;
-  character_name?: string;
-}
-
-const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = false, isGameMaster = false }) => {
+const DicePanel: React.FC<DicePanelProps> = ({ 
+  sessionId, 
+  userId, 
+  isPaused = false, 
+  isGameMaster = false,
+  participants = []
+}) => {
   const [diceRolls, setDiceRolls] = useState<DiceRoll[]>([]);
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState('Jogador');
+  const [characterName, setCharacterName] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const fetchRolls = async () => {
       try {
-        // Buscar o nome do usuário
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', userId)
-          .single();
-          
-        if (profileData?.display_name) {
-          setUserName(profileData.display_name);
+        // Find user information from participants
+        const participant = participants.find(p => p.user_id === userId);
+        if (participant) {
+          if (participant.profiles?.display_name) {
+            setUserName(participant.profiles.display_name);
+          }
+          if (participant.characters?.name) {
+            setCharacterName(participant.characters.name);
+          }
         }
         
         // Buscar rolagens de dados da sessão
@@ -121,9 +111,34 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [sessionId, userId]);
+  }, [sessionId, userId, participants]);
 
-  const rollDice = async (diceType: string) => {
+  const rollCustomDice = async () => {
+    const input = prompt("Insira a fórmula do dado (ex: 2d6, 3d8+2)");
+    if (!input) return;
+    
+    // Regex para verificar fórmula de dados válida: NdS+M
+    const diceRegex = /^(\d+)d(\d+)(?:([+-])(\d+))?$/;
+    const match = input.match(diceRegex);
+    
+    if (!match) {
+      toast.error("Formato inválido. Use NdS ou NdS+M (ex: 2d6, 3d8+2)");
+      return;
+    }
+    
+    const diceCount = parseInt(match[1]);
+    const diceSides = parseInt(match[2]);
+    const modifier = match[3] && match[4] ? (match[3] === '+' ? parseInt(match[4]) : -parseInt(match[4])) : 0;
+    
+    if (diceCount > 100 || diceSides > 1000) {
+      toast.error("Número excessivo de dados ou faces");
+      return;
+    }
+    
+    await rollDice(`${diceCount}d${diceSides}${modifier !== 0 ? match[3] + match[4] : ''}`, diceCount, diceSides, modifier);
+  };
+
+  const rollDice = async (diceType: string, count: number = 1, sides: number = 20, modifier: number = 0) => {
     if (isPaused && !isGameMaster) {
       toast.error("A sessão está pausada. Aguarde o mestre retomá-la.");
       return;
@@ -132,8 +147,14 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
     setLoading(true);
     
     try {
-      const sides = parseInt(diceType.replace('d', ''));
-      const result = Math.floor(Math.random() * sides) + 1;
+      // Rolar os dados
+      let results: number[] = [];
+      for (let i = 0; i < count; i++) {
+        results.push(Math.floor(Math.random() * sides) + 1);
+      }
+      
+      const totalResult = results.reduce((a, b) => a + b, 0) + modifier;
+      const resultText = `${results.join(' + ')}${modifier !== 0 ? (modifier > 0 ? ' + ' + modifier : ' - ' + Math.abs(modifier)) : ''} = ${totalResult}`;
       
       const { error } = await supabase
         .from('chat_messages')
@@ -141,15 +162,21 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
           table_id: sessionId,
           user_id: userId,
           type: 'dice',
-          content: `Rolou ${diceType} e obteve ${result}`,
+          content: `Rolou ${diceType} e obteve ${totalResult}`,
           metadata: {
             dice_type: diceType,
-            result: result,
-            user_name: userName
+            result: totalResult,
+            individual_results: results,
+            modifier: modifier,
+            user_name: userName,
+            character_name: characterName
           }
         });
         
       if (error) throw error;
+      
+      toast.success(`Resultado: ${totalResult}`);
+      
     } catch (err) {
       console.error("Erro ao rolar dados:", err);
       toast.error("Erro ao rolar os dados");
@@ -158,8 +185,8 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
     }
   };
 
-  const getDiceIcon = (diceType: string, result: number) => {
-    if (diceType === 'd6') {
+  const getDiceIcon = (result: number) => {
+    if (result >= 1 && result <= 6) {
       switch (result) {
         case 1: return <Dice1 className="text-fantasy-gold" size={20} />;
         case 2: return <Dice2 className="text-fantasy-gold" size={20} />;
@@ -170,7 +197,7 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         default: return null;
       }
     }
-    return null;
+    return <Dices className="text-fantasy-gold" size={20} />;
   };
 
   const formatTime = (dateStr: string) => {
@@ -195,7 +222,7 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
         {['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'].map(diceType => (
           <Button 
             key={diceType}
-            onClick={() => rollDice(diceType)}
+            onClick={() => rollDice(diceType, 1, parseInt(diceType.replace('d', '')))}
             disabled={loading || (isPaused && !isGameMaster)}
             className="h-10 w-12 bg-fantasy-purple/20 hover:bg-fantasy-purple/40 text-white"
             title={`Rolar ${diceType}`}
@@ -203,6 +230,15 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
             {diceType}
           </Button>
         ))}
+        
+        <Button 
+          onClick={rollCustomDice}
+          disabled={loading || (isPaused && !isGameMaster)}
+          className="h-10 w-36 bg-fantasy-gold/20 hover:bg-fantasy-gold/40 text-white"
+          title="Rolar dados personalizados"
+        >
+          Personalizado
+        </Button>
       </div>
       
       <ScrollArea className="h-[calc(100%-112px)]">
@@ -213,13 +249,9 @@ const DicePanel: React.FC<DicePanelProps> = ({ sessionId, userId, isPaused = fal
             {diceRolls.map(roll => (
               <div 
                 key={roll.id}
-                className={`p-2 rounded-md bg-fantasy-dark/40 border border-fantasy-purple/10 flex items-center gap-2`}
+                className="p-2 rounded-md bg-fantasy-dark/40 border border-fantasy-purple/10 flex items-center gap-2"
               >
-                {getDiceIcon(roll.dice_type, roll.result) || (
-                  <div className="w-6 h-6 rounded-full bg-fantasy-purple/20 flex items-center justify-center text-xs">
-                    {roll.dice_type}
-                  </div>
-                )}
+                {getDiceIcon(roll.result)}
                 <div className="flex-1">
                   <p className="text-xs text-fantasy-stone">
                     <span className="font-semibold">{roll.user_name}</span>

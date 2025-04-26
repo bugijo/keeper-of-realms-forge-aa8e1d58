@@ -1,4 +1,3 @@
-
 export interface GamePlayer {
   id: string;
   name: string;
@@ -12,13 +11,16 @@ export interface GamePlayer {
 
 export interface MapToken {
   id: string;
+  name: string;
+  token_type: string;
   x: number;
   y: number;
-  color: string;
-  label: string;
   size: number;
-  name?: string;
-  token_type?: string;
+  color: string;
+  image_url?: string;
+  label?: string;
+  character_id?: string;
+  user_id?: string;
 }
 
 export interface CombatCharacter {
@@ -35,4 +37,25 @@ export interface CombatCharacter {
 export interface ProfileData {
   id: string;
   display_name: string;
+}
+
+export interface DiceRoll {
+  id: string;
+  user_id: string;
+  session_id: string;
+  dice_type: string;
+  result: number;
+  created_at: string;
+  user_name?: string;
+  character_name?: string;
+}
+
+export interface TurnTimer {
+  id: string;
+  session_id: string;
+  current_turn_user_id: string | null;
+  turn_started_at: string | null;
+  turn_ends_at: string | null;
+  is_active: boolean;
+  round_number: number;
 }

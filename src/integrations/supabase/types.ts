@@ -461,6 +461,90 @@ export type Database = {
         }
         Relationships: []
       }
+      session_timers: {
+        Row: {
+          created_at: string
+          current_turn_user_id: string | null
+          id: string
+          is_active: boolean
+          round_number: number
+          session_id: string
+          turn_ends_at: string | null
+          turn_started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_turn_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          round_number?: number
+          session_id: string
+          turn_ends_at?: string | null
+          turn_started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_turn_user_id?: string | null
+          id?: string
+          is_active?: boolean
+          round_number?: number
+          session_id?: string
+          turn_ends_at?: string | null
+          turn_started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      session_tokens: {
+        Row: {
+          character_id: string | null
+          color: string
+          created_at: string
+          id: string
+          image_url: string | null
+          name: string
+          session_id: string
+          size: number
+          token_type: string
+          updated_at: string
+          user_id: string
+          x: number
+          y: number
+        }
+        Insert: {
+          character_id?: string | null
+          color?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name: string
+          session_id: string
+          size?: number
+          token_type?: string
+          updated_at?: string
+          user_id: string
+          x: number
+          y: number
+        }
+        Update: {
+          character_id?: string | null
+          color?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          name?: string
+          session_id?: string
+          size?: number
+          token_type?: string
+          updated_at?: string
+          user_id?: string
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
       stories: {
         Row: {
           content: string | null

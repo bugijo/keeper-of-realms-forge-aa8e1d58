@@ -32,6 +32,7 @@ import NpcCreation from './pages/creations/NpcCreation';
 import NotFound from './pages/NotFound';
 import TableDetailsView from './pages/table/TableDetailsView';
 import TableCreate from './pages/table/TableCreate';
+import TacticalCombat from './pages/TacticalCombat';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
         <Route path="/table/live/:id" element={<LiveSession />} />
         <Route path="/session/:id" element={<LiveSession />} /> {/* Alternative session route */}
         <Route path="/table/pre-session/:id" element={<PreSessionScreen tableId="demo" />} />
+        <Route path="/tactical-combat" element={<TacticalCombat />} />
 
         {/* Game entities routes */}
         <Route path="/maps" element={<MapsView />} />

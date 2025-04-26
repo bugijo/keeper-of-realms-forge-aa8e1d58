@@ -159,8 +159,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ sessionId, userId, participants }
                 }`}
               >
                 <div className="flex justify-between items-baseline mb-1">
-                  <span className="font-medium text-sm text-fantasy-gold">
+                  <span className={`font-medium text-sm ${message.type === 'dice' ? 'text-fantasy-gold' : 'text-fantasy-gold'}`}>
                     {getDisplayName(message.user_id)}
+                    {message.type === 'dice' && " (Dado)"}
                   </span>
                   <span className="text-xs text-fantasy-stone/70">
                     {formatMessageTime(message.created_at)}
@@ -170,6 +171,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ sessionId, userId, participants }
                 <p className="text-fantasy-stone whitespace-pre-wrap break-words">
                   {message.content}
                 </p>
+                
+                {message.type === 'dice' && message.metadata && (
+                  <div className="mt-1 p-1 bg-fantasy-dark/30 rounded text-center">
+                    <span className="font-bold text-fantasy-gold">
+                      {message.metadata.result}
+                    </span>
+                    <span className="text-xs text-fantasy-stone ml-1">
+                      ({message.metadata.dice_type})
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />

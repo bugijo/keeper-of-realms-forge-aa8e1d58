@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -9,7 +10,9 @@ import ChatPanel from '@/components/game/live/ChatPanel';
 import DicePanel from '@/components/game/live/DicePanel';
 import SessionHeader from '@/components/game/live/SessionHeader';
 import GameMasterPanel from '@/components/game/master/GameMasterPanel';
+import TurnTracker from '@/components/game/live/TurnTracker';
 import { Button } from '@/components/ui/button';
+import { MapToken } from '@/types/game';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -21,17 +24,6 @@ import {
   AlertDialogTitle, 
   AlertDialogTrigger 
 } from '@/components/ui/alert-dialog';
-
-export interface MapToken {
-  id: string;
-  name: string;
-  token_type: string;
-  x: number;
-  y: number;
-  size: number;
-  color: string;
-  image_url?: string;
-}
 
 interface Participant {
   id: string;
@@ -59,6 +51,7 @@ const LiveSession = () => {
   const [tokens, setTokens] = useState<MapToken[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [isPaused, setIsPaused] = useState(false);
+  const [activeMap, setActiveMap] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSessionData = async () => {
@@ -124,7 +117,19 @@ const LiveSession = () => {
           setParticipants(typedParticipants);
         }
 
-        const tableChannel = supabase
+        // Fetch session tokens from the database
+        const { data: tokensData, error: tokensError } = await supabase
+          .from('session_tokens')
+          .select('*')
+          .eq('session_id', id);
+          
+        if (tokensError) {
+          console.error("Erro ao buscar tokens:", tokensError);
+        } else if (tokensData) {
+          setTokens(tokensData as MapToken[]);
+        }
+
+        const tableStatusChannel = supabase
           .channel('table_status_changes')
           .on(
             'postgres_changes',
@@ -147,9 +152,37 @@ const LiveSession = () => {
             }
           )
           .subscribe();
+          
+        // Subscribe to token changes
+        const tokensChannel = supabase
+          .channel('tokens_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'session_tokens',
+              filter: `session_id=eq.${id}`
+            },
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                setTokens(prev => [...prev, payload.new as MapToken]);
+              } else if (payload.eventType === 'UPDATE') {
+                setTokens(prev => 
+                  prev.map(token => 
+                    token.id === payload.new.id ? { ...payload.new as MapToken } : token
+                  )
+                );
+              } else if (payload.eventType === 'DELETE') {
+                setTokens(prev => prev.filter(token => token.id !== payload.old.id));
+              }
+            }
+          )
+          .subscribe();
 
         return () => {
-          supabase.removeChannel(tableChannel);
+          supabase.removeChannel(tableStatusChannel);
+          supabase.removeChannel(tokensChannel);
         };
       } catch (error) {
         console.error('Erro ao carregar dados da sessão:', error);
@@ -172,7 +205,20 @@ const LiveSession = () => {
       return;
     }
     
-    console.log("Movendo token:", tokenId, "para posição:", newX, newY);
+    try {
+      const token = tokens.find(t => t.id === tokenId);
+      if (!token) return;
+      
+      const { error } = await supabase
+        .from('session_tokens')
+        .update({ x: newX, y: newY })
+        .eq('id', tokenId);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error("Erro ao mover token:", error);
+      toast.error("Não foi possível mover o token");
+    }
   };
 
   const addToken = async (tokenData: {
@@ -183,22 +229,48 @@ const LiveSession = () => {
     x: number;
     y: number;
   }) => {
+    if (!isGameMaster || !id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('session_tokens')
+        .insert({
+          session_id: id,
+          token_type: tokenData.type,
+          name: tokenData.name,
+          x: tokenData.x,
+          y: tokenData.y,
+          color: tokenData.color,
+          size: tokenData.size,
+          user_id: user?.id
+        });
+        
+      if (error) throw error;
+      
+      toast.success('Token adicionado');
+    } catch (error) {
+      console.error("Erro ao adicionar token:", error);
+      toast.error("Não foi possível adicionar o token");
+    }
+  };
+
+  const deleteToken = async (tokenId: string) => {
     if (!isGameMaster) return;
     
-    console.log("Adicionando token:", tokenData);
-    
-    const newToken: MapToken = {
-      id: `temp-${Date.now()}`,
-      name: tokenData.name,
-      token_type: tokenData.type,
-      x: tokenData.x,
-      y: tokenData.y,
-      color: tokenData.color,
-      size: tokenData.size
-    };
-    
-    setTokens(prev => [...prev, newToken]);
-    toast.success('Token adicionado');
+    try {
+      const { error } = await supabase
+        .from('session_tokens')
+        .delete()
+        .eq('id', tokenId);
+        
+      if (error) throw error;
+      
+      setTokens(prev => prev.filter(t => t.id !== tokenId));
+      toast.success('Token removido');
+    } catch (error) {
+      console.error("Erro ao remover token:", error);
+      toast.error("Não foi possível remover o token");
+    }
   };
 
   const toggleSessionPause = async () => {
@@ -242,7 +314,7 @@ const LiveSession = () => {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-pulse text-fantasy-purple">Carregando sess��o...</div>
+          <div className="animate-pulse text-fantasy-purple">Carregando sessão...</div>
         </div>
       </MainLayout>
     );
@@ -310,9 +382,10 @@ const LiveSession = () => {
             userId={user?.id || ''} 
             isPaused={isPaused}
             isGameMaster={isGameMaster}
+            participants={participants}
           />
           
-          <div className="flex-1 h-full overflow-hidden">
+          <div className="flex-1 relative h-full overflow-hidden">
             {isPaused && !isGameMaster && (
               <div className="absolute inset-0 bg-black/50 z-20 flex items-center justify-center">
                 <div className="text-center bg-fantasy-dark/90 p-6 rounded-lg border border-fantasy-purple max-w-md">
@@ -325,13 +398,24 @@ const LiveSession = () => {
                 </div>
               </div>
             )}
+            
+            {isGameMaster && (
+              <TurnTracker
+                sessionId={id || '''}
+                participants={participants}
+                isPaused={isPaused}
+              />
+            )}
+            
             <LiveSessionMap
-              tokens={tokens as any}
+              tokens={tokens}
               isGameMaster={isGameMaster}
               onTokenMove={handleTokenMove}
               onAddToken={addToken}
+              onDeleteToken={deleteToken}
               participants={participants}
               isPaused={isPaused && !isGameMaster}
+              userId={user?.id || ''}
             />
           </div>
           
