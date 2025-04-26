@@ -1,100 +1,64 @@
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate
+} from 'react-router-dom';
+import { useAuth } from './contexts/SupabaseAuthContext';
+import LandingPage from './pages/LandingPage';
+import SignUp from './pages/SignUp';
+import SignIn from './pages/SignIn';
 import Tables from './pages/Tables';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Character from './pages/Character';
-import CharacterView from './pages/CharacterView';
-import CharacterInventory from './pages/character/CharacterInventory';
-import ItemsView from './pages/items/ItemsView';
-import ItemCreation from './pages/creations/ItemCreation';
-import ItemsViewOld from './pages/ItemsView';
-import PlayerView from './pages/PlayerView';
-import GMView from './pages/GameMasterView';
+import GameMasterView from './pages/GameMasterView';
+import TablePlayerView from './pages/table/PlayerView';
+import GameMasterTable from './pages/table/GameMasterView';
 import LiveSession from './pages/LiveSession';
-import PreSessionScreen from './components/game/PreSessionScreen';
-import MapsView from './pages/maps/MapsView';
-import MonstersView from './pages/monsters/MonstersView';
-import NpcsView from './pages/npcs/NpcsView';
-import StoriesView from './pages/stories/StoriesView';
-import ItemView from './pages/items/ItemView';
-import Creations from './pages/Creations';
-import Missions from './pages/Missions';
-import Inventory from './pages/Inventory';
-import Shop from './pages/Shop';
-import CharacterCreation from './pages/creations/CharacterCreation';
-import MapCreation from './pages/creations/MapCreation';
-import StoryCreation from './pages/creations/StoryCreation';
-import MonsterCreation from './pages/creations/MonsterCreation';
-import NpcCreation from './pages/creations/NpcCreation';
-import NotFound from './pages/NotFound';
-import TableDetailsView from './pages/table/TableDetailsView';
-import TableCreate from './pages/table/TableCreate';
 import TacticalCombat from './pages/TacticalCombat';
+import CharacterSheetPage from './pages/CharacterSheetPage';
+
+// Importar a página de inventário
+import Inventory from './pages/Inventory';
 
 function App() {
+  const { session } = useAuth();
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Tables routes */}
-        <Route path="/tables" element={<Tables />} />
-        <Route path="/table/create" element={<TableCreate />} />
-        <Route path="/table/:id" element={<TableDetailsView />} />
-        <Route path="/table/player/:id" element={<PlayerView />} />
-        <Route path="/table/gm/:id" element={<GMView />} />
-        <Route path="/gm/:id" element={<GMView />} /> {/* Alternative GM route */}
-        <Route path="/table/live/:id" element={<LiveSession />} />
-        <Route path="/session/:id" element={<LiveSession />} /> {/* Alternative session route */}
-        <Route path="/table/pre-session/:id" element={<PreSessionScreen tableId="demo" />} />
-        <Route path="/tactical-combat" element={<TacticalCombat />} />
-
-        {/* Game entities routes */}
-        <Route path="/maps" element={<MapsView />} />
-        <Route path="/maps/:id" element={<MapsView />} />
-        <Route path="/monsters" element={<MonstersView />} />
-        <Route path="/monsters/:id" element={<MonstersView />} />
-        <Route path="/npcs" element={<NpcsView />} />
-        <Route path="/npcs/:id" element={<NpcsView />} />
-        <Route path="/stories" element={<StoriesView />} />
-        <Route path="/stories/:id" element={<StoriesView />} />
-        <Route path="/missions" element={<Missions />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route
+          path="/tables"
+          element={session ? <Tables /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/gm/:id"
+          element={session ? <GameMasterView /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/table/:id"
+          element={session ? <TablePlayerView /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/gm/table/:id"
+          element={session ? <GameMasterTable /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/session/:id"
+          element={session ? <LiveSession /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/combat"
+          element={session ? <TacticalCombat /> : <Navigate to="/signin" />}
+        />
+        <Route
+          path="/character/:id"
+          element={session ? <CharacterSheetPage /> : <Navigate to="/signin" />}
+        />
+        
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/shop" element={<Shop />} />
-
-        {/* Character routes */}
-        <Route path="/character" element={<CharacterInventory />} />
-        <Route path="/character/view/:id" element={<CharacterView />} />
-
-        {/* Items routes */}
-        <Route path="/items" element={<ItemsView />} />
-        <Route path="/items/view" element={<ItemsView />} />
-        <Route path="/items/view/:id" element={<ItemView />} />
-        
-        {/* Creations main page */}
-        <Route path="/creations" element={<Creations />} />
-        
-        {/* Individual creation routes */}
-        <Route path="/creations/characters" element={<CharacterCreation />} />
-        <Route path="/creations/characters/:id" element={<CharacterCreation />} />
-        <Route path="/creations/maps" element={<MapCreation />} />
-        <Route path="/creations/maps/:id" element={<MapCreation />} />
-        <Route path="/creations/stories" element={<StoryCreation />} />
-        <Route path="/creations/stories/:id" element={<StoryCreation />} />
-        <Route path="/creations/items" element={<ItemCreation />} />
-        <Route path="/creations/items/:id" element={<ItemCreation />} />
-        <Route path="/creations/monsters" element={<MonsterCreation />} />
-        <Route path="/creations/monsters/:id" element={<MonsterCreation />} />
-        <Route path="/creations/npcs" element={<NpcCreation />} />
-        <Route path="/creations/npcs/:id" element={<NpcCreation />} />
-        
-        {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

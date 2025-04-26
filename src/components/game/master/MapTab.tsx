@@ -7,13 +7,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import TacticalMapWithFog from '@/components/game/TacticalMapWithFog';
+import { MapToken } from '@/types/game';
 
 export interface MapTabProps {
   sessionId?: string;
   mapImageUrl?: string;
   fogOfWar?: { x: number, y: number }[];
   handleMapClick?: (x: number, y: number) => void;
-  mapTokens?: any[];
+  mapTokens?: MapToken[];
   handleTokenMove?: (tokenId: string, x: number, y: number) => void;
   maps?: any[];
   activeMap?: string | null;
@@ -67,8 +68,10 @@ const MapTab: React.FC<MapTabProps> = ({
           throw fogError;
         }
         
-        if (fogData) {
-          setFogPoints(fogData.grid_positions as FogPoint[]);
+        if (fogData && fogData.grid_positions) {
+          // Convertendo explicitamente o tipo
+          const gridPoints = fogData.grid_positions as {x: number, y: number}[];
+          setFogPoints(gridPoints);
         }
       } catch (error) {
         console.error('Erro ao carregar dados do mapa:', error);

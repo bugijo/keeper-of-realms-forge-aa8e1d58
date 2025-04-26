@@ -1,210 +1,222 @@
 
-import { useState, useEffect } from "react";
-import MainLayout from "@/components/layout/MainLayout";
-import { MedievalButton } from "@/components/rpg/MedievalButton";
-import { Link, useNavigate } from "react-router-dom";
-import { 
-  User2, 
-  Sword, 
-  MapPin, 
-  BookOpen, 
-  Skull, 
-  Table as TableIcon,
-  Search
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import MainLayout from '@/components/layout/MainLayout';
 import { toast } from 'sonner';
+import { useInventorySync } from '@/hooks/useInventorySync';
+import DraggableInventoryItem from '@/components/game/inventory/DraggableInventoryItem';
+import InventoryDropZone from '@/components/game/inventory/InventoryDropZone';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Package } from 'lucide-react';
 
-// Component to display the inventory
 const Inventory = () => {
-  const [search, setSearch] = useState("");
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const [counts, setCounts] = useState({
-    characters: 0,
-    items: 0,
-    maps: 0,
-    stories: 0,
-    monsters: 0,
-    npcs: 0
+  const [characters, setCharacters] = useState<any[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
+  const [otherCharacters, setOtherCharacters] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  // Usar o hook de sincronização de inventário
+  const {
+    inventory,
+    loading: inventoryLoading,
+    totalWeight,
+    encumbranceStatus,
+    transferItem
+  } = useInventorySync({
+    characterId: selectedCharacter || '',
+    isMaster: true
   });
-  const [loading, setLoading] = useState(true);
 
-  // Fetch counts of different entity types from the database
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchCharacters = async () => {
       if (!user) return;
 
-      setLoading(true);
       try {
-        // Fetch NPCs count
-        const { data: npcsData, error: npcsError } = await supabase
-          .from('npcs')
-          .select('id')
-          .eq('user_id', user.id);
+        setIsLoading(true);
         
-        if (npcsError) throw npcsError;
-
-        // Fetch characters count (assuming characters table exists)
-        const { data: charactersData, error: charactersError } = await supabase
+        // Buscar os personagens do usuário
+        const { data: userCharacters, error: userError } = await supabase
           .from('characters')
-          .select('id')
+          .select('id, name, class, race, level')
           .eq('user_id', user.id);
-
-        if (charactersError) throw charactersError;
-
-        // Fetch maps count
-        const { data: mapsData, error: mapsError } = await supabase
-          .from('maps')
-          .select('id')
-          .eq('user_id', user.id);
-
-        if (mapsError) throw mapsError;
-
-        // Fetch stories count
-        const { data: storiesData, error: storiesError } = await supabase
-          .from('stories')
-          .select('id')
-          .eq('user_id', user.id);
-
-        if (storiesError) throw storiesError;
-
-        // Update counts state
-        setCounts({
-          characters: charactersData?.length || 0,
-          items: 0,  // Placeholder until items table is created
-          maps: mapsData?.length || 0,
-          stories: storiesData?.length || 0,
-          monsters: 0,  // Placeholder until monsters table is created
-          npcs: npcsData?.length || 0
-        });
-
-      } catch (error: any) {
-        console.error("Error fetching inventory counts:", error);
-        toast.error("Erro ao carregar dados do inventário");
+          
+        if (userError) throw userError;
+        
+        if (userCharacters && userCharacters.length > 0) {
+          setCharacters(userCharacters);
+          setSelectedCharacter(userCharacters[0].id);
+        }
+        
+        // Buscar outros personagens para possibilitar transferências
+        const { data: otherChars, error: otherError } = await supabase
+          .from('characters')
+          .select('id, name, class, race, level, user_id')
+          .neq('user_id', user.id)
+          .limit(10);
+          
+        if (otherError) throw otherError;
+        
+        if (otherChars) {
+          setOtherCharacters(otherChars);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar personagens:', error);
+        toast.error('Erro ao buscar seus personagens');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchCounts();
+    
+    fetchCharacters();
   }, [user]);
-
-  // Categories with real counts
-  const inventoryCategories = [
-    {
-      title: "Personagens",
-      icon: User2,
-      description: "Heróis, vilões e todos os personagens que você criou",
-      count: counts.characters,
-      action: "Ver Personagens",
-      path: "/character"
-    },
-    {
-      title: "Itens & Armas",
-      icon: Sword,
-      description: "Armas mágicas, itens encantados e tesouros em seu inventário",
-      count: counts.items,
-      action: "Ver Itens",
-      path: "/items"
-    },
-    {
-      title: "Mapas",
-      icon: MapPin,
-      description: "Mapas de reinos, cidades e calabouços que você criou",
-      count: counts.maps,
-      action: "Ver Mapas",
-      path: "/maps"
-    },
-    {
-      title: "Histórias",
-      icon: BookOpen,
-      description: "Aventuras, missões e histórias que você elaborou",
-      count: counts.stories,
-      action: "Ver Histórias",
-      path: "/stories"
-    },
-    {
-      title: "Monstros",
-      icon: Skull,
-      description: "Criaturas e monstros para desafiar seus jogadores",
-      count: counts.monsters,
-      action: "Ver Monstros",
-      path: "/monsters"
-    },
-    {
-      title: "NPCs",
-      icon: TableIcon,
-      description: "NPCs e personagens não jogáveis",
-      count: counts.npcs,
-      action: "Ver NPCs",
-      path: "/npcs"
-    }
-  ];
   
+  const handleItemDrop = (item: any, targetCharacterId: string) => {
+    if (!item.id || !targetCharacterId) return;
+    
+    // Verifica se é uma transferência válida (não para o mesmo personagem)
+    if (item.character_id === targetCharacterId) {
+      toast.error('Não é possível transferir para o mesmo personagem');
+      return;
+    }
+    
+    // Transfere o item usando o hook de sincronização
+    transferItem(item.id, targetCharacterId)
+      .then(() => {
+        toast.success(`${item.name} transferido com sucesso`);
+      })
+      .catch((error) => {
+        toast.error('Erro ao transferir item');
+        console.error(error);
+      });
+  };
+
+  const getEncumbranceColor = () => {
+    switch (encumbranceStatus) {
+      case 'light': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'heavy': return 'text-orange-400';
+      case 'overencumbered': return 'text-red-400';
+      default: return 'text-green-400';
+    }
+  };
+
+  if (isLoading || inventoryLoading) {
+    return (
+      <MainLayout>
+        <div className="container mx-auto p-6">
+          <div className="animate-pulse text-fantasy-purple text-center">Carregando inventário...</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
-      <div className="container mx-auto pb-16">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-3xl font-medievalsharp text-white mb-1">Seu Inventário</h1>
-            <p className="text-fantasy-stone">Veja e gerencie todas as suas criações e itens</p>
-          </div>
+      <DndProvider backend={HTML5Backend}>
+        <div className="container mx-auto p-6">
+          <h1 className="text-3xl font-medievalsharp text-white mb-6">Inventário</h1>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-fantasy-stone" size={18} />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                className="pl-10 pr-4 py-2 w-full bg-fantasy-dark/30 border border-fantasy-purple/20 rounded-lg text-white focus:outline-none focus:border-fantasy-purple/60"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+          {characters.length === 0 ? (
+            <div className="fantasy-card p-6 text-center">
+              <p className="text-fantasy-stone mb-4">Você ainda não possui personagens criados.</p>
+              <Button className="fantasy-button primary">Criar Personagem</Button>
             </div>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="fantasy-card p-6 animate-pulse">
-                <div className="h-12 w-12 bg-fantasy-purple/30 rounded-full mb-4 mx-auto"></div>
-                <div className="h-6 bg-fantasy-dark/50 rounded mb-2 w-3/4 mx-auto"></div>
-                <div className="h-4 bg-fantasy-dark/30 rounded mb-4 w-full"></div>
-                <div className="h-4 bg-fantasy-dark/30 rounded mb-1 w-full"></div>
-                <div className="h-4 bg-fantasy-dark/30 rounded mb-4 w-3/4"></div>
-                <div className="h-8 bg-fantasy-dark/40 rounded-full mb-4 w-1/3 mx-auto"></div>
-                <div className="h-10 bg-fantasy-purple/20 rounded-lg w-full"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {inventoryCategories.map((category, index) => (
-              <div key={index} className="fantasy-card p-6 flex flex-col items-center">
-                <category.icon className="text-fantasy-purple w-12 h-12 mb-4" />
-                <h2 className="text-2xl font-medievalsharp text-fantasy-purple mb-2">{category.title}</h2>
-                <p className="text-center text-fantasy-stone mb-4">{category.description}</p>
-                
-                <div className="mt-auto w-full">
-                  <div className="bg-fantasy-dark/40 rounded-full py-2 px-4 text-center mb-4">
-                    <span className="font-medievalsharp text-fantasy-gold">{category.count} itens</span>
-                  </div>
-                  
-                  <button
-                    className="w-full hover:scale-103 active:scale-98 transition-transform bg-fantasy-purple text-white py-3 rounded-lg font-medievalsharp"
-                    onClick={() => navigate(category.path)}
-                  >
-                    {category.action}
-                  </button>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Seletor de Personagem */}
+              <div className="fantasy-card p-4 lg:col-span-3">
+                <div className="flex flex-wrap gap-2">
+                  {characters.map((char) => (
+                    <Button
+                      key={char.id}
+                      onClick={() => setSelectedCharacter(char.id)}
+                      variant={selectedCharacter === char.id ? "default" : "outline"}
+                      className={selectedCharacter === char.id ? "fantasy-button primary" : ""}
+                    >
+                      {char.name} ({char.race} {char.class})
+                    </Button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              
+              {/* Inventário do Personagem Selecionado */}
+              <div className="lg:col-span-2">
+                <div className="fantasy-card p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-medievalsharp text-fantasy-gold">
+                      Inventário
+                    </h2>
+                    <div className={`font-medievalsharp ${getEncumbranceColor()}`}>
+                      Peso: {totalWeight} / 150
+                    </div>
+                  </div>
+                  
+                  <InventoryDropZone characterId={selectedCharacter || ''} onItemDrop={handleItemDrop}>
+                    <ScrollArea className="h-[400px] pr-4">
+                      {inventory.length > 0 ? (
+                        <div className="space-y-2">
+                          {inventory.map((item) => (
+                            <DraggableInventoryItem
+                              key={item.id}
+                              item={item}
+                              canDrag={true}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 text-fantasy-stone">
+                          <Package size={48} className="mx-auto mb-2 opacity-50" />
+                          <p>Inventário vazio</p>
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </InventoryDropZone>
+                </div>
+              </div>
+              
+              {/* Lista de outros personagens para transferências */}
+              <div>
+                <div className="fantasy-card p-4">
+                  <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-4">
+                    Outros Personagens
+                  </h2>
+                  
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-4">
+                      {otherCharacters.map((char) => (
+                        <InventoryDropZone 
+                          key={char.id}
+                          characterId={char.id}
+                          onItemDrop={handleItemDrop}
+                        >
+                          <div className="p-3 border rounded-md border-fantasy-purple/30 bg-fantasy-dark/50">
+                            <h3 className="font-medievalsharp">{char.name}</h3>
+                            <p className="text-sm text-fantasy-stone">{char.race} {char.class}</p>
+                            <div className="mt-2 text-xs text-fantasy-stone/70">
+                              Arraste itens para cá para transferir
+                            </div>
+                          </div>
+                        </InventoryDropZone>
+                      ))}
+                      
+                      {otherCharacters.length === 0 && (
+                        <div className="text-center py-12 text-fantasy-stone">
+                          <p>Nenhum outro personagem disponível</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </DndProvider>
     </MainLayout>
   );
 };

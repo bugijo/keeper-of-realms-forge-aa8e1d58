@@ -183,9 +183,10 @@ const GameMasterView = () => {
             x: 5 + idx * 2,
             y: 5,
             color: getPlayerColor(idx),
-            label: (p.characterName || p.name).substring(0, 2),
+            name: p.characterName || p.name,
+            token_type: 'character',
             size: 1
-          }));
+          } as MapToken));
         
         setMapTokens(initialTokens);
         
@@ -276,7 +277,8 @@ const GameMasterView = () => {
         x: 10,
         y: 10,
         color: newCharacter.type === 'monster' ? 'rgb(220, 38, 38)' : 'rgb(217, 119, 6)',
-        label: newCharacter.name.substring(0, 2),
+        name: newCharacter.name,
+        token_type: newCharacter.type,
         size: newCharacter.type === 'monster' ? 1 : 0.8
       };
       
