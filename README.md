@@ -40,50 +40,83 @@ npm run build
 npm run test
 ```
 
-### Banco de Dados Supabase
+## Diagrama de Fluxo de Sessões
 
-O projeto utiliza Supabase como banco de dados principal. Certifique-se de configurar as seguintes tabelas:
-
-- characters
-- character_inventory
-- chat_messages
-- tables
-- table_participants
-- table_join_requests
-- profiles
-- notifications
-
-As políticas de segurança (RLS) devem ser configuradas para garantir que usuários só acessem seus próprios dados ou dados compartilhados.
-
-## Design e Documentação
-
-### Design no Figma
-
-[Link para o Design no Figma](https://www.figma.com/file/seu-projeto-de-design)
-
-### Documentação da API
-
-A documentação detalhada dos endpoints e estruturas de dados pode ser encontrada na pasta `/docs`.
-
-## Testes
-
-Para executar os testes, use os comandos:
-
-```bash
-# Testes unitários
-npm run test
-
-# Testes E2E com Cypress
-npm run cypress:open
+```mermaid
+sequenceDiagram
+    participant GM as Mestre do Jogo
+    participant API as Supabase
+    participant Player as Jogador
+    
+    GM->>API: Cria Mesa
+    API-->>GM: Retorna ID da Mesa
+    
+    GM->>API: Convida Jogadores
+    API-->>Player: Notifica sobre convite
+    
+    Player->>API: Aceita Convite
+    API-->>GM: Notifica aceitação
+    
+    GM->>API: Inicia Sessão
+    API-->>Player: Notifica início de sessão
+    
+    par Tempo Real
+        Player->>API: Atualiza posição no mapa
+        API-->>GM: Sincroniza posição
+        GM->>API: Revela área do mapa
+        API-->>Player: Atualiza visibilidade do mapa
+    end
+    
+    GM->>API: Finaliza sessão
+    API-->>Player: Notifica fim de sessão
 ```
 
-## Features Principais
+## Estrutura de Tabelas no Supabase
+
+### Principais Tabelas e Endpoints
+
+| Tabela | Descrição | Endpoint |
+|--------|-----------|----------|
+| `tables` | Mesas de jogo | `/tables` |
+| `table_participants` | Participantes das mesas | `/table_participants` |
+| `characters` | Personagens dos jogadores | `/characters` |
+| `character_inventory` | Inventário dos personagens | `/character_inventory` |
+| `session_tokens` | Tokens no mapa durante sessões | `/session_tokens` |
+| `fog_of_war` | Controle de névoa de guerra | `/fog_of_war` |
+| `chat_messages` | Mensagens no chat | `/chat_messages` |
+| `notifications` | Sistema de notificações | `/notifications` |
+| `maps` | Mapas das sessões | `/maps` |
+| `stories` | Narrativas e histórias | `/stories` |
+| `npcs` | NPCs do mundo | `/npcs` |
+| `monsters` | Monstros para combate | `/monsters` |
+| `items` | Itens do jogo | `/items` |
+| `profiles` | Perfis de usuários | `/profiles` |
+
+## Screenshots das Telas Principais
+
+### Painel do Mestre
+![Painel do Mestre](public/lovable-uploads/f6994451-b92c-48d9-be93-feaaf85bff8a.png)
+
+### Mapa Tático
+![Mapa Tático](public/lovable-uploads/03a33b04-e3b4-4b96-b0ab-e978d67fe3ee.png)
+
+### Chat Durante Sessão
+![Chat](public/lovable-uploads/85fed85e-846f-4915-b38f-351bb4efa9d3.png)
+
+### Sistema de Combate
+![Sistema de Combate](public/lovable-uploads/eff6f3ed-69ac-47c8-ada2-50d0852653dc.png)
+
+### Inventário
+![Inventário](public/lovable-uploads/c0ce5755-bcb5-423a-baec-11074d96c6cd.png)
+
+## Funcionalidades Principais
 
 - Gerenciamento de mesas e campanhas de RPG
 - Sistema de inventário com drag-and-drop
 - Chat em tempo real durante as sessões
 - Mapa tático com névoa de guerra
 - Notificações de sessões e eventos
+- Sistema de combate em turnos
 
 ## Licença
 

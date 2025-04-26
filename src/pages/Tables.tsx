@@ -1,669 +1,220 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { SearchX, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { 
-  Plus, 
-  Users, 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Edit,
-  Eye,
-  Check,
-  X
-} from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Componente de card de mesa com skeleton
+const TableCardSkeleton = () => {
+  return (
+    <div className="fantasy-card p-4 animate-pulse">
+      <div className="h-6 w-3/4 bg-gray-700 rounded mb-2"></div>
+      <div className="h-4 w-1/2 bg-gray-700 rounded mb-4"></div>
+      <div className="h-4 w-full bg-gray-700/50 rounded mb-2"></div>
+      <div className="h-4 w-3/4 bg-gray-700/50 rounded mb-4"></div>
+      <div className="flex justify-between mt-4">
+        <div className="h-8 w-20 bg-gray-700 rounded"></div>
+        <div className="h-8 w-20 bg-gray-700 rounded"></div>
+      </div>
+    </div>
+  );
+};
 
 const Tables = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [tables, setTables] = useState<any[]>([]);
-  const [myTables, setMyTables] = useState<any[]>([]);
-  const [participatingTables, setParticipatingTables] = useState<any[]>([]);
-  const [joinRequests, setJoinRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("discover");
-  
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const pageSize = 6;
-  
-  const queryClient = useQueryClient();
-  
-  const fetchTablesPage = async (pageNumber: number) => {
-    if (!hasMore && pageNumber > 1) return [];
-    
-    try {
-      const from = (pageNumber - 1) * pageSize;
-      const to = from + pageSize - 1;
-      
-      const { data, error, count } = await supabase
-        .from('tables')
-        .select('*', { count: 'exact' })
-        .eq('status', 'open')
-        .order('created_at', { ascending: false })
-        .range(from, to);
-        
-      if (error) throw error;
-      
-      if (count) {
-        setHasMore(from + data.length < count);
-      }
-      
-      return data || [];
-    } catch (err) {
-      console.error('Error fetching tables page:', err);
-      toast.error('Erro ao carregar mesas disponíveis');
-      return [];
-    }
-  };
-  
-  const { data: tablesData, isLoading: tablesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = 
-    useInfiniteQuery({
-      queryKey: ['tables'],
-      queryFn: ({ pageParam = 1 }) => fetchTablesPage(pageParam),
-      getNextPageParam: (lastPage, allPages) => {
-        return hasMore ? allPages.length + 1 : undefined;
-      },
-      staleTime: 300000, // 5 minutos de cache
-    });
-  
-  useEffect(() => {
-    if (tablesData) {
-      const allTables = tablesData.pages.flat();
-      setTables(allTables);
-    }
-  }, [tablesData]);
-  
-  const fetchMyTables = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('tables')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setMyTables(data || []);
-    } catch (err) {
-      console.error('Error fetching my tables:', err);
-      toast.error('Erro ao carregar suas mesas');
-    }
-  };
-  
-  const fetchParticipatingTables = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('table_participants')
-        .select('*, tables(*)')
-        .eq('user_id', user.id)
-        .order('joined_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      const participatingTablesData = data
-        ?.filter(item => item.tables?.user_id !== user.id)
-        .map(item => item.tables) || [];
-        
-      setParticipatingTables(participatingTablesData);
-    } catch (err) {
-      console.error('Error fetching participating tables:', err);
-      toast.error('Erro ao carregar mesas que você participa');
-    }
-  };
-  
-  const fetchJoinRequests = async () => {
-    if (!user) return;
-    
-    try {
-      const { data: userTables, error: tablesError } = await supabase
-        .from('tables')
-        .select('id')
-        .eq('user_id', user.id);
-        
-      if (tablesError) throw tablesError;
-      
-      if (userTables && userTables.length > 0) {
-        const tableIds = userTables.map(table => table.id);
-        
-        const { data: requests, error: requestsError } = await supabase
-          .from('table_join_requests')
-          .select('*, tables(name)')
-          .in('table_id', tableIds)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false });
-          
-        if (requestsError) throw requestsError;
-        
-        if (requests && requests.length > 0) {
-          const userIds = requests.map(request => request.user_id);
-          
-          const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, display_name')
-            .in('id', userIds);
-            
-          if (profilesError) throw profilesError;
-          
-          const requestsWithProfiles = requests.map(request => {
-            const profile = profiles?.find(p => p.id === request.user_id);
-            return {
-              ...request,
-              profiles: profile
-            };
-          });
-          
-          setJoinRequests(requestsWithProfiles || []);
-        } else {
-          setJoinRequests([]);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching join requests:', err);
-      toast.error('Erro ao carregar solicitações de participação');
-    }
-  };
+  const [filter, setFilter] = useState('');
 
-  const fetchAllTables = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tables')
-        .select('*')
-        .eq('status', 'open')
-        .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (error) throw error;
-      setTables(data || []);
-    } catch (err) {
-      console.error('Error fetching tables:', err);
-      toast.error('Erro ao carregar mesas disponíveis');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Implementação com useInfiniteQuery
+  const { 
+    data, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage, 
+    status 
+  } = useInfiniteQuery({
+    queryKey: ['tables'],
+    queryFn: async ({ pageParam = 0 }) => {
+      const start = pageParam * 10;
+      const end = start + 9;
 
-  useEffect(() => {
-    if (user) {
-      Promise.all([
-        fetchMyTables(),
-        fetchParticipatingTables(),
-        fetchJoinRequests(),
-      ]).finally(() => setLoading(false));
-    } else {
-      fetchAllTables();
-    }
-  }, [user]);
+      let query = supabase
+        .from('tables')
+        .select(`
+          id,
+          name,
+          description,
+          user_id,
+          system,
+          meeting_url,
+          profile:user_id (display_name),
+          participants:table_participants (count)
+        `, { count: 'exact' })
+        .range(start, end);
+
+      if (filter) {
+        query = query.ilike('name', `%${filter}%`);
+      }
+
+      const { data, error, count } = await query;
+      
+      if (error) throw error;
+      
+      return { 
+        tables: data, 
+        count,
+        nextPage: data.length === 10 ? pageParam + 1 : undefined 
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+  });
 
   const handleCreateTable = () => {
-    if (!user) {
-      toast.error('Você precisa estar logado para criar uma mesa');
-      navigate('/login');
-      return;
-    }
-    navigate('/table/create');
+    navigate('/create-table');
   };
-  
-  const handleJoinRequest = async (tableId: string) => {
-    if (!user) {
-      toast.error('Você precisa estar logado para solicitar participação');
-      navigate('/login');
-      return;
-    }
-    
-    setLoadingAction(tableId);
-    
+
+  const handleJoinTable = async (tableId: string) => {
     try {
-      const { data: existingRequest, error: checkError } = await supabase
-        .from('table_join_requests')
-        .select('*')
-        .eq('table_id', tableId)
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (checkError) throw checkError;
-      
-      if (existingRequest) {
-        toast.info('Você já solicitou participação nesta mesa');
-        return;
-      }
-      
       const { error } = await supabase
         .from('table_join_requests')
         .insert({
           table_id: tableId,
-          user_id: user.id,
+          user_id: user?.id,
           status: 'pending'
         });
         
       if (error) throw error;
       
-      toast.success('Solicitação de participação enviada');
-      fetchAllTables();
-    } catch (err) {
-      console.error('Error sending join request:', err);
-      toast.error('Erro ao enviar solicitação');
-    } finally {
-      setLoadingAction(null);
-    }
-  };
-  
-  const handleRequestAction = async (requestId: string, tableName: string, action: 'approve' | 'reject') => {
-    setLoadingAction(requestId);
-    
-    try {
-      if (action === 'approve') {
-        const { data: request, error: requestError } = await supabase
-          .from('table_join_requests')
-          .select('*')
-          .eq('id', requestId)
-          .single();
-          
-        if (requestError) throw requestError;
-        
-        const { error: participantError } = await supabase
-          .from('table_participants')
-          .insert({
-            table_id: request.table_id,
-            user_id: request.user_id,
-            role: 'player'
-          });
-          
-        if (participantError) throw participantError;
-      }
-      
-      const { error } = await supabase
-        .from('table_join_requests')
-        .update({ status: action === 'approve' ? 'approved' : 'rejected' })
-        .eq('id', requestId);
-        
-      if (error) throw error;
-      
-      toast.success(
-        action === 'approve' 
-          ? `Participante aprovado na mesa ${tableName}` 
-          : `Solicitação rejeitada para mesa ${tableName}`
-      );
-      
-      fetchJoinRequests();
-      
-      if (queryClient) {
-        queryClient.invalidateQueries({queryKey: ['pending-requests']});
-      }
-    } catch (err) {
-      console.error(`Error ${action === 'approve' ? 'approving' : 'rejecting'} request:`, err);
-      toast.error(`Erro ao ${action === 'approve' ? 'aprovar' : 'rejeitar'} solicitação`);
-    } finally {
-      setLoadingAction(null);
+      toast.success('Solicitação enviada!', {
+        description: 'Aguarde a aprovação do Mestre',
+      });
+    } catch (error) {
+      console.error('Erro ao solicitar entrada na mesa:', error);
+      toast.error('Erro ao solicitar entrada na mesa');
     }
   };
 
-  const handleSwitchToDiscoverTab = () => {
-    setActiveTab("discover");
-  };
-
-  const handleLoadMore = () => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+  const handleViewTable = (tableId: string, isGM: boolean) => {
+    if (isGM) {
+      navigate(`/gm/${tableId}`);
+    } else {
+      navigate(`/table/${tableId}`);
     }
   };
-
-  if (loading && !tablesData) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto py-16 flex flex-col items-center justify-center">
-          <Spinner size="lg" variant="shield" />
-          <p className="text-fantasy-stone mt-4">Carregando mesas...</p>
-        </div>
-      </MainLayout>
-    );
-  }
 
   return (
     <MainLayout>
-      <div className="container mx-auto py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8">
-          <h1 className="text-3xl font-medievalsharp text-fantasy-purple mb-4 md:mb-0">
-            Mesas de RPG
-          </h1>
-          <Button 
-            onClick={handleCreateTable} 
-            className="fantasy-button primary flex items-center gap-2"
-          >
-            <Plus size={16} />
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-medievalsharp text-white">Mesas</h1>
+          <Button onClick={handleCreateTable} className="fantasy-button primary">
+            <Plus size={16} className="mr-2" />
             Criar Mesa
           </Button>
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="discover">Descobrir</TabsTrigger>
-            {user && (
+        
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Buscar mesas..."
+            className="w-full p-2 rounded bg-fantasy-dark border border-fantasy-purple/30 text-fantasy-stone"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
+        
+        {status === 'pending' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <TableCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+        
+        {status === 'error' && (
+          <div className="text-center py-10">
+            <SearchX size={48} className="mx-auto mb-4 text-fantasy-stone/50" />
+            <p className="text-fantasy-stone text-lg">Ocorreu um erro ao carregar as mesas.</p>
+          </div>
+        )}
+        
+        {status === 'success' && (
+          <>
+            {data.pages.flatMap(page => page.tables).length === 0 ? (
+              <div className="text-center py-10">
+                <SearchX size={48} className="mx-auto mb-4 text-fantasy-stone/50" />
+                <p className="text-fantasy-stone text-lg">Nenhuma mesa encontrada.</p>
+              </div>
+            ) : (
               <>
-                <TabsTrigger value="my-tables">Minhas Mesas</TabsTrigger>
-                <TabsTrigger value="participating">Participando</TabsTrigger>
-                {joinRequests.length > 0 && (
-                  <TabsTrigger value="requests" className="relative">
-                    Solicitações
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {joinRequests.length}
-                    </span>
-                  </TabsTrigger>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {data.pages.flatMap(page => page.tables).map((table: any) => {
+                    const isGM = table.user_id === user?.id;
+                    
+                    return (
+                      <div key={table.id} className="fantasy-card p-4">
+                        <h2 className="text-xl font-medievalsharp text-white">{table.name}</h2>
+                        <p className="text-fantasy-stone/80 text-sm">Mestre: {table.profile?.display_name || "Desconhecido"}</p>
+                        <p className="mt-2 text-fantasy-stone line-clamp-3">{table.description || "Sem descrição"}</p>
+                        
+                        <div className="flex items-center mt-4 text-xs text-fantasy-stone/70">
+                          <span>{table.system || "Sistema não definido"}</span>
+                          <span className="mx-2">•</span>
+                          <span>{table.participants?.[0]?.count || 0} jogadores</span>
+                        </div>
+                        
+                        <div className="flex justify-between mt-4">
+                          {isGM ? (
+                            <Button 
+                              onClick={() => handleViewTable(table.id, true)}
+                              className="fantasy-button primary"
+                            >
+                              Gerenciar
+                            </Button>
+                          ) : (
+                            <Button 
+                              onClick={() => handleJoinTable(table.id)}
+                              className="fantasy-button secondary"
+                            >
+                              Solicitar Entrada
+                            </Button>
+                          )}
+                          
+                          <Button 
+                            onClick={() => handleViewTable(table.id, isGM)}
+                            className="fantasy-button ghost"
+                          >
+                            Ver Detalhes
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {hasNextPage && (
+                  <div className="text-center mt-6">
+                    <Button 
+                      onClick={() => fetchNextPage()} 
+                      className="fantasy-button secondary"
+                      disabled={isFetchingNextPage}
+                    >
+                      {isFetchingNextPage ? 'Carregando mais mesas...' : 'Carregar mais mesas'}
+                    </Button>
+                  </div>
                 )}
               </>
             )}
-          </TabsList>
-          
-          <TabsContent value="discover">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tablesLoading ? (
-                Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="fantasy-card p-6 animate-pulse">
-                    <div className="h-6 bg-fantasy-purple/20 rounded w-3/4 mb-4"></div>
-                    <div className="flex items-center mb-2">
-                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
-                      <div className="h-4 bg-fantasy-stone/20 rounded w-1/2"></div>
-                    </div>
-                    <div className="flex items-center mb-2">
-                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
-                      <div className="h-4 bg-fantasy-stone/20 rounded w-2/3"></div>
-                    </div>
-                    <div className="flex items-center mb-4">
-                      <div className="w-4 h-4 rounded-full bg-fantasy-gold/20 mr-2"></div>
-                      <div className="h-4 bg-fantasy-stone/20 rounded w-1/3"></div>
-                    </div>
-                    <div className="h-10 bg-fantasy-purple/20 rounded w-full"></div>
-                  </div>
-                ))
-              ) : tables.length > 0 ? (
-                tables.map(table => (
-                  <Link 
-                    to={`/table/${table.id}`} 
-                    key={table.id}
-                    className="fantasy-card p-6 hover:bg-fantasy-dark/40 transition-colors"
-                  >
-                    <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">
-                      {table.name}
-                    </h2>
-                    
-                    <div className="flex items-center text-fantasy-stone mb-2">
-                      <Users className="mr-2 text-fantasy-gold" size={16} />
-                      <span>
-                        {table.max_players || 5} vagas
-                      </span>
-                    </div>
-                    
-                    {table.weekday && table.time && (
-                      <div className="flex items-center text-fantasy-stone mb-2">
-                        <Calendar className="mr-2 text-fantasy-gold" size={16} />
-                        <span>{table.weekday} - {table.time}</span>
-                      </div>
-                    )}
-                    
-                    {table.system && (
-                      <div className="flex items-center text-fantasy-stone mb-2">
-                        <MapPin className="mr-2 text-fantasy-gold" size={16} />
-                        <span>{table.system}</span>
-                      </div>
-                    )}
-                    
-                    {table.status && (
-                      <div className="flex items-center text-fantasy-stone mb-4">
-                        <Clock className="mr-2 text-fantasy-gold" size={16} />
-                        <span>Status: {table.status}</span>
-                      </div>
-                    )}
-                    
-                    {user && user.id !== table.user_id && (
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleJoinRequest(table.id);
-                        }}
-                        disabled={loadingAction === table.id}
-                        className="fantasy-button secondary w-full"
-                      >
-                        {loadingAction === table.id ? (
-                          <Spinner size="sm" />
-                        ) : (
-                          'Solicitar Participação'
-                        )}
-                      </Button>
-                    )}
-                  </Link>
-                ))
-              ) : (
-                <div className="col-span-full text-center fantasy-card p-8">
-                  <h3 className="text-xl text-fantasy-stone mb-2">
-                    Nenhuma mesa disponível no momento
-                  </h3>
-                  <p className="text-fantasy-stone/70">
-                    Por que não criar uma nova mesa?
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            {hasNextPage && (
-              <div className="flex justify-center mt-8">
-                <Button 
-                  onClick={handleLoadMore} 
-                  disabled={isFetchingNextPage}
-                  className="fantasy-button secondary"
-                >
-                  {isFetchingNextPage ? <Spinner size="sm" /> : 'Carregar mais mesas'}
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-          
-          {user && (
-            <>
-              <TabsContent value="my-tables">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {myTables.length > 0 ? (
-                    myTables.map(table => (
-                      <div 
-                        key={table.id}
-                        className="fantasy-card p-6"
-                      >
-                        <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">
-                          {table.name}
-                        </h2>
-                        
-                        <div className="flex items-center text-fantasy-stone mb-2">
-                          <Users className="mr-2 text-fantasy-gold" size={16} />
-                          <span>{table.max_players || 5} vagas</span>
-                        </div>
-                        
-                        {table.weekday && table.time && (
-                          <div className="flex items-center text-fantasy-stone mb-2">
-                            <Calendar className="mr-2 text-fantasy-gold" size={16} />
-                            <span>{table.weekday} - {table.time}</span>
-                          </div>
-                        )}
-                        
-                        {table.status && (
-                          <div className="flex items-center text-fantasy-stone mb-4">
-                            <Clock className="mr-2 text-fantasy-gold" size={16} />
-                            <span>Status: {table.status}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-2">
-                          <Link 
-                            to={`/table/${table.id}`} 
-                            className="fantasy-button secondary flex-1 text-center flex items-center justify-center"
-                          >
-                            <Eye size={16} className="mr-2" />
-                            Visualizar
-                          </Link>
-                          <Link 
-                            to={`/gm/${table.id}`}
-                            className="fantasy-button primary flex-1 text-center flex items-center justify-center"
-                          >
-                            <Edit size={16} className="mr-2" />
-                            Painel
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center fantasy-card p-8">
-                      <h3 className="text-xl text-fantasy-stone mb-2">
-                        Você ainda não criou nenhuma mesa
-                      </h3>
-                      <Button 
-                        onClick={handleCreateTable} 
-                        className="fantasy-button primary mt-4"
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Criar Mesa
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="participating">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {participatingTables.length > 0 ? (
-                    participatingTables.map(table => (
-                      <div 
-                        key={table.id}
-                        className="fantasy-card p-6"
-                      >
-                        <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">
-                          {table.name}
-                        </h2>
-                        
-                        {table.weekday && table.time && (
-                          <div className="flex items-center text-fantasy-stone mb-2">
-                            <Calendar className="mr-2 text-fantasy-gold" size={16} />
-                            <span>{table.weekday} - {table.time}</span>
-                          </div>
-                        )}
-                        
-                        {table.system && (
-                          <div className="flex items-center text-fantasy-stone mb-2">
-                            <MapPin className="mr-2 text-fantasy-gold" size={16} />
-                            <span>{table.system}</span>
-                          </div>
-                        )}
-                        
-                        {table.status && (
-                          <div className="flex items-center text-fantasy-stone mb-4">
-                            <Clock className="mr-2 text-fantasy-gold" size={16} />
-                            <span>Status: {table.status}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex gap-2">
-                          <Link 
-                            to={`/table/${table.id}`} 
-                            className="fantasy-button secondary flex-1 text-center"
-                          >
-                            <Eye size={16} className="mr-2" />
-                            Detalhes
-                          </Link>
-                          <Link 
-                            to={`/table/player/${table.id}`}
-                            className="fantasy-button primary flex-1 text-center"
-                          >
-                            <Eye size={16} className="mr-2" />
-                            Ver Mesa
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-full text-center fantasy-card p-8">
-                      <h3 className="text-xl text-fantasy-stone mb-2">
-                        Você ainda não participa de nenhuma mesa
-                      </h3>
-                      <p className="text-fantasy-stone/70 mb-4">
-                        Explore as mesas disponíveis e solicite participação
-                      </p>
-                      <Button 
-                        onClick={handleSwitchToDiscoverTab} 
-                        className="fantasy-button secondary"
-                      >
-                        Descobrir Mesas
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              {joinRequests.length > 0 && (
-                <TabsContent value="requests">
-                  <div className="fantasy-card p-6">
-                    <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-4">
-                      Solicitações de Participação
-                    </h2>
-                    
-                    <div className="space-y-4">
-                      {joinRequests.map(request => (
-                        <div 
-                          key={request.id}
-                          className="p-4 border border-fantasy-gold/20 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4"
-                        >
-                          <div>
-                            <p className="text-fantasy-stone font-medium">
-                              {request.profiles?.display_name || 'Usuário'} 
-                            </p>
-                            <p className="text-fantasy-stone/70 text-sm">
-                              quer participar da mesa <span className="text-fantasy-gold">{request.tables?.name}</span>
-                            </p>
-                            <p className="text-fantasy-stone/50 text-xs">
-                              {new Date(request.created_at).toLocaleDateString('pt-BR')}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => handleRequestAction(request.id, request.tables?.name, 'approve')}
-                              disabled={loadingAction === request.id}
-                              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex items-center gap-1"
-                            >
-                              {loadingAction === request.id ? (
-                                <Spinner size="sm" />
-                              ) : (
-                                <>
-                                  <Check size={16} />
-                                  Aprovar
-                                </>
-                              )}
-                            </Button>
-                            <Button
-                              onClick={() => handleRequestAction(request.id, request.tables?.name, 'reject')}
-                              disabled={loadingAction === request.id}
-                              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded flex items-center gap-1"
-                            >
-                              <X size={16} />
-                              Rejeitar
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-              )}
-            </>
-          )}
-        </Tabs>
+          </>
+        )}
       </div>
     </MainLayout>
   );

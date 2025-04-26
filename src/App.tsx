@@ -16,6 +16,8 @@ import GameMasterTable from './pages/table/GameMasterView';
 import LiveSession from './pages/LiveSession';
 import TacticalCombat from './pages/TacticalCombat';
 import Inventory from './pages/Inventory';
+import NotFound from './pages/NotFound';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function App() {
   const { session } = useAuth();
@@ -33,7 +35,11 @@ function App() {
         />
         <Route
           path="/gm/:id"
-          element={session ? <GameMasterView /> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute requireGM={true} tableIdParam="id">
+              <GameMasterView />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/table/:id"
@@ -41,7 +47,11 @@ function App() {
         />
         <Route
           path="/gm/table/:id"
-          element={session ? <GameMasterTable /> : <Navigate to="/signin" />}
+          element={
+            <ProtectedRoute requireGM={true} tableIdParam="id">
+              <GameMasterTable />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/session/:id"
@@ -57,6 +67,8 @@ function App() {
         />
         
         <Route path="/inventory" element={<Inventory />} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/404" />} />
       </Routes>
     </Router>
   );

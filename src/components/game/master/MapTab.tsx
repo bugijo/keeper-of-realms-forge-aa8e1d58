@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -172,6 +171,16 @@ const MapTab: React.FC<MapTabProps> = ({
     }
   };
   
+  const tokenData = mapTokens.map(token => ({
+    id: token.id,
+    x: token.x,
+    y: token.y,
+    color: token.color,
+    name: token.name,
+    label: token.label || token.name, // Use o nome como label se não houver label definido
+    size: token.size
+  }));
+  
   return (
     <div>
       <h3 className="text-lg font-medievalsharp text-fantasy-gold mb-4">Controle do Mapa</h3>
@@ -229,7 +238,7 @@ const MapTab: React.FC<MapTabProps> = ({
           fogPoints={fogPoints}
           onMapClick={handleMapClick}
           isGameMaster={true}
-          tokens={mapTokens} // O tipo MapToken já está corrigido
+          tokens={tokenData}
           onTokenMove={handleTokenMove}
         />
       </div>

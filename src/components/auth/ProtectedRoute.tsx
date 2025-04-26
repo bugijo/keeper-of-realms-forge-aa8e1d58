@@ -52,18 +52,16 @@ export const ProtectedRoute = ({
         }
         
         const { data, error } = await supabase
-          .from('table_participants')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('table_id', tableId)
-          .eq('role', 'gm')
+          .from('tables')
+          .select('user_id')
+          .eq('id', tableId)
           .single();
           
         if (error) {
           console.error("Error checking GM status:", error);
           setIsGM(false);
         } else {
-          setIsGM(!!data);
+          setIsGM(data.user_id === user.id);
         }
       } catch (error) {
         console.error("Error checking GM status:", error);
@@ -90,13 +88,9 @@ export const ProtectedRoute = ({
   if (!user) {
     toast("Você precisa estar logado para acessar esta área", {
       description: "Redirecionando para o portal de entrada...",
-      action: {
-        label: "Fechar",
-        onClick: () => {},
-      },
     });
     
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/signin" replace state={{ from: location }} />;
   }
   
   if (requireGM && isGM === false) {
@@ -104,7 +98,7 @@ export const ProtectedRoute = ({
       description: "Apenas mestres podem acessar esta área",
     });
     
-    return <Navigate to="/tables" replace />;
+    return <Navigate to="/404" replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;

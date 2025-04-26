@@ -35,5 +35,5 @@ export interface MapToken {
   name: string;
   color: string;
   size: number;
-  label?: string; // Tornando label opcional
+  label?: string; // Mantendo label como opcional
 }
