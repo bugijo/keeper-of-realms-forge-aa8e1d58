@@ -10,10 +10,11 @@ import { useAuth } from './contexts/SupabaseAuthContext';
 import MainLayout from '@/components/layout/MainLayout';
 import { Toaster } from '@/components/ui/sonner';
 import Tables from './pages/Tables';
-import GameMasterView from './pages/GameMasterView';
+import GameMasterView from './pages/table/GameMasterView';
 import TablePlayerView from './pages/table/PlayerView';
 import GameMasterTable from './pages/table/GameMasterView';
 import LiveSession from './pages/LiveSession';
+import Session from './pages/Session'; // Add the new Session page
 import TacticalCombat from './pages/TacticalCombat';
 import Inventory from './pages/Inventory';
 import NotFound from './pages/NotFound';
@@ -77,6 +78,15 @@ function App() {
         
         <Route
           path="/session/:id"
+          element={
+            <ProtectedRoute>
+              <Session />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/live-session/:id"
           element={
             <ProtectedRoute>
               <LiveSession />
@@ -222,3 +232,4 @@ function App() {
 }
 
 export default App;
+
