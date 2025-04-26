@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Stage, Layer, Rect, Circle, Group, Text } from 'react-konva';
 import { Button } from '@/components/ui/button';
 import { 
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { TokenPosition } from '@/types/session';
 import { toast } from 'sonner';
+import debounce from 'lodash/debounce';
 import {
   Sheet,
   SheetContent,
@@ -46,7 +47,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
   const [containerRef, setContainerRef] = useState<HTMLDivElement | null>(null);
   const [newToken, setNewToken] = useState({
     name: '',
-    token_type: 'character' as 'character' | 'monster' | 'npc' | 'object',
+    token_type: 'character' as 'character' | 'monster' | 'npc' | 'object' | string,
     color: '#3b82f6',
     size: 1,
     x: 5,
@@ -56,6 +57,13 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
   
   const gridSize = 50;
   const stageRef = useRef<any>(null);
+  
+  const debouncedTokenMove = useCallback(
+    debounce((tokenId: string, x: number, y: number) => {
+      onTokenMove(tokenId, x, y);
+    }, 500),
+    [onTokenMove]
+  );
   
   useEffect(() => {
     if (!containerRef) return;
@@ -74,6 +82,12 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
       window.removeEventListener('resize', handleResize);
     };
   }, [containerRef]);
+
+  useEffect(() => {
+    return () => {
+      debouncedTokenMove.cancel();
+    };
+  }, [debouncedTokenMove]);
 
   const handleZoomIn = () => {
     setScale(prev => Math.min(prev + 0.1, 3));
@@ -130,12 +144,12 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
       y: gridY * gridSize
     });
     
-    onTokenMove(tokenId, gridX, gridY);
+    debouncedTokenMove(tokenId, gridX, gridY);
   };
 
   const handleCreateToken = () => {
     if (!newToken.name.trim()) {
-      toast.error('Token name is required');
+      toast.error('Nome do token é obrigatório');
       return;
     }
     
@@ -159,7 +173,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
     if (name === 'token_type') {
       setNewToken(prev => ({
         ...prev,
-        [name]: value as 'character' | 'monster' | 'npc' | 'object'
+        [name]: value as 'character' | 'monster' | 'npc' | 'object' | string
       }));
     } else {
       setNewToken(prev => ({
@@ -240,6 +254,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm text-fantasy-stone">Type</label>
                   <select
+                    name="token_type"
                     value={newToken.token_type}
                     onChange={handleTokenInputChange}
                     className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
@@ -255,8 +270,9 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                   <label className="text-sm text-fantasy-stone">Color</label>
                   <input
                     type="color"
+                    name="color"
                     value={newToken.color}
-                    onChange={(e) => setNewToken(prev => ({ ...prev, color: e.target.value }))}
+                    onChange={handleTokenInputChange}
                     className="w-full h-10 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded"
                   />
                 </div>
@@ -264,6 +280,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                 <div className="space-y-2">
                   <label className="text-sm text-fantasy-stone">Size</label>
                   <select
+                    name="size"
                     value={newToken.size}
                     onChange={(e) => setNewToken(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
                     className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
@@ -284,6 +301,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                       <label className="text-xs text-fantasy-stone">X</label>
                       <input
                         type="number"
+                        name="x"
                         value={newToken.x}
                         onChange={(e) => setNewToken(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
                         className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"
@@ -293,6 +311,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                       <label className="text-xs text-fantasy-stone">Y</label>
                       <input
                         type="number"
+                        name="y"
                         value={newToken.y}
                         onChange={(e) => setNewToken(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
                         className="w-full bg-fantasy-dark/50 border border-fantasy-purple/30 rounded p-2 text-white"

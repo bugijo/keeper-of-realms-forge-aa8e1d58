@@ -8,6 +8,7 @@ import PreSessionScreen from "@/components/game/PreSessionScreen";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
+import { withMasterAccess } from '@/hooks/withMasterAccess';
 
 const GameMasterView = () => {
   const { id } = useParams();
@@ -22,7 +23,6 @@ const GameMasterView = () => {
       
       try {
         setLoading(true);
-        console.log("Buscando dados da mesa com ID:", id);
         
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
@@ -32,19 +32,6 @@ const GameMasterView = () => {
           
         if (tableError) {
           throw tableError;
-        }
-        
-        console.log("Dados da mesa:", tableData);
-        console.log("User ID atual:", user.id);
-        console.log("Table user_id:", tableData.user_id);
-        
-        // Esta verificação agora é redundante porque já está no ProtectedRoute
-        // Mas mantemos como segunda camada de segurança
-        if (tableData.user_id !== user.id) {
-          console.warn("Usuário não é o criador da mesa");
-          toast.error('Você não tem permissão para acessar esta página');
-          navigate('/tables');
-          return;
         }
         
         setTableData(tableData);
@@ -124,4 +111,5 @@ const GameMasterView = () => {
   );
 };
 
-export default GameMasterView;
+// Exporta o componente com proteção de acesso de mestre
+export default withMasterAccess(GameMasterView);

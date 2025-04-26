@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ import GameMasterPanel from '@/components/session/GameMasterPanel';
 import ChatPanel from '@/components/session/ChatPanel';
 import TurnTracker from '@/components/session/TurnTracker';
 import { SessionParticipant, TokenPosition, SessionTurn, SessionMessage } from '@/types/session';
+import debounce from 'lodash/debounce';
 
 const Session = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +46,7 @@ const Session = () => {
 
         if (participantError) {
           console.error('Participation check error:', participantError);
-          throw new Error('You are not a participant in this session');
+          throw new Error('Você não é participante desta sessão');
         }
 
         setIsGameMaster(participantData.role === 'gm');
@@ -56,7 +58,7 @@ const Session = () => {
           .single();
 
         if (tableError) {
-          throw new Error('Failed to load session data');
+          throw new Error('Falha ao carregar dados da sessão');
         }
 
         setSessionData(tableData);
@@ -133,8 +135,8 @@ const Session = () => {
         }
       } catch (err: any) {
         console.error('Session loading error:', err);
-        setError(err.message || 'An error occurred while loading the session');
-        toast.error(err.message || 'Failed to load session');
+        setError(err.message || 'Ocorreu um erro ao carregar a sessão');
+        toast.error(err.message || 'Falha ao carregar sessão');
         navigate('/tables');
       } finally {
         setLoading(false);
@@ -147,6 +149,7 @@ const Session = () => {
   useEffect(() => {
     if (!id) return;
 
+    // Configurar realtime para atualizar tokens
     const tokenChannel = supabase
       .channel('session_tokens_changes')
       .on(
@@ -161,6 +164,9 @@ const Session = () => {
           if (payload.eventType === 'INSERT') {
             const newToken = {
               ...payload.new,
+              token_type: ['character', 'monster', 'npc', 'object'].includes(payload.new.token_type)
+                ? payload.new.token_type
+                : 'character',
               is_visible_to_players: true
             } as TokenPosition;
             
@@ -168,6 +174,9 @@ const Session = () => {
           } else if (payload.eventType === 'UPDATE') {
             const updatedToken = {
               ...payload.new,
+              token_type: ['character', 'monster', 'npc', 'object'].includes(payload.new.token_type)
+                ? payload.new.token_type
+                : 'character',
               is_visible_to_players: true
             } as TokenPosition;
             
@@ -181,6 +190,7 @@ const Session = () => {
       )
       .subscribe();
 
+    // Canal para atualizar status da sessão
     const tableChannel = supabase
       .channel('table_custom_data_changes')
       .on(
@@ -192,12 +202,12 @@ const Session = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          if ('session_paused' in payload.new) {
+          if (payload.new && 'session_paused' in payload.new) {
             setIsPaused(payload.new.session_paused);
             if (payload.new.session_paused) {
-              toast.info('Session paused by the Game Master');
+              toast.info('Sessão pausada pelo Mestre');
             } else {
-              toast.info('Session resumed by the Game Master');
+              toast.info('Sessão retomada pelo Mestre');
             }
           }
         }
@@ -223,7 +233,8 @@ const Session = () => {
     localStorage.setItem(`session_turn_${id}`, JSON.stringify(updatedTurn));
   };
 
-  const handleTokenMove = async (tokenId: string, x: number, y: number) => {
+  // Versão com debounce para evitar muitas chamadas
+  const debouncedTokenMove = debounce(async (tokenId: string, x: number, y: number) => {
     const token = tokens.find(t => t.id === tokenId);
     if (!token) return;
     
@@ -239,8 +250,18 @@ const Session = () => {
       if (error) throw error;
     } catch (error) {
       console.error('Error moving token:', error);
-      toast.error('Failed to move token');
+      toast.error('Falha ao mover token');
     }
+  }, 500);
+
+  const handleTokenMove = (tokenId: string, x: number, y: number) => {
+    // Atualiza a UI imediatamente
+    setTokens(prev => prev.map(token => 
+      token.id === tokenId ? { ...token, x, y } : token
+    ));
+    
+    // Chama a versão com debounce para o banco de dados
+    debouncedTokenMove(tokenId, x, y);
   };
 
   const handleTogglePause = async () => {
@@ -256,14 +277,14 @@ const Session = () => {
       if (error) throw error;
       
       setIsPaused(newPausedState);
-      toast.success(newPausedState ? 'Session paused' : 'Session resumed');
+      toast.success(newPausedState ? 'Sessão pausada' : 'Sessão retomada');
 
       if (sessionTurn) {
         updateSessionTurn({ is_paused: newPausedState });
       }
     } catch (error) {
       console.error('Error toggling session pause:', error);
-      toast.error('Failed to update session state');
+      toast.error('Falha ao atualizar estado da sessão');
     }
   };
 
@@ -277,10 +298,10 @@ const Session = () => {
         )
       );
       
-      toast.success(`Token ${isVisible ? 'shown to' : 'hidden from'} players`);
+      toast.success(`Token ${isVisible ? 'mostrado aos' : 'escondido dos'} jogadores`);
     } catch (error) {
       console.error('Error updating token visibility:', error);
-      toast.error('Failed to update token visibility');
+      toast.error('Falha ao atualizar visibilidade do token');
     }
   };
 
@@ -320,10 +341,10 @@ const Session = () => {
         setTokens(prev => [...prev, newToken]);
       }
       
-      toast.success('Token added');
+      toast.success('Token adicionado');
     } catch (error) {
       console.error('Error adding token:', error);
-      toast.error('Failed to add token');
+      toast.error('Falha ao adicionar token');
     }
   };
 
@@ -337,10 +358,10 @@ const Session = () => {
         .eq('id', tokenId);
 
       if (error) throw error;
-      toast.success('Token deleted');
+      toast.success('Token removido');
     } catch (error) {
       console.error('Error deleting token:', error);
-      toast.error('Failed to delete token');
+      toast.error('Falha ao excluir token');
     }
   };
 
@@ -353,7 +374,7 @@ const Session = () => {
     return (
       <MainLayout>
         <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-          <div className="animate-pulse text-fantasy-purple">Loading session...</div>
+          <div className="animate-pulse text-fantasy-purple">Carregando sessão...</div>
         </div>
       </MainLayout>
     );
@@ -368,7 +389,7 @@ const Session = () => {
             onClick={() => navigate('/tables')} 
             className="fantasy-button primary"
           >
-            Return to Tables
+            Retornar às mesas
           </button>
         </div>
       </MainLayout>
@@ -378,7 +399,7 @@ const Session = () => {
   return (
     <div className="flex h-screen flex-col bg-fantasy-dark">
       <header className="bg-fantasy-dark border-b border-fantasy-purple/30 p-3 flex justify-between items-center">
-        <h1 className="text-xl font-medievalsharp text-fantasy-gold">{sessionData?.name || 'RPG Session'}</h1>
+        <h1 className="text-xl font-medievalsharp text-fantasy-gold">{sessionData?.name || 'Sessão de RPG'}</h1>
         
         {isGameMaster && (
           <div className="flex items-center gap-2">
@@ -386,7 +407,7 @@ const Session = () => {
               onClick={handleTogglePause}
               className={`fantasy-button ${isPaused ? 'primary' : 'secondary'}`}
             >
-              {isPaused ? 'Resume Session' : 'Pause Session'}
+              {isPaused ? 'Retomar Sessão' : 'Pausar Sessão'}
             </button>
           </div>
         )}
@@ -409,8 +430,8 @@ const Session = () => {
           {isPaused && !isGameMaster && (
             <div className="absolute inset-0 bg-black/70 z-10 flex items-center justify-center">
               <div className="bg-fantasy-dark p-6 rounded-lg border border-fantasy-purple text-center max-w-md">
-                <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-3">Session Paused</h2>
-                <p className="text-fantasy-stone">The Game Master has paused the session. Please wait until they resume.</p>
+                <h2 className="text-xl font-medievalsharp text-fantasy-gold mb-3">Sessão Pausada</h2>
+                <p className="text-fantasy-stone">O Mestre da sessão pausou o jogo. Aguarde até que ele retome.</p>
               </div>
             </div>
           )}
