@@ -336,14 +336,7 @@ const LiveSession = () => {
           </div>
           
           {isGameMaster && (
-            <div className="flex items-center gap-2">
-              <GameMasterPanel 
-                sessionId={id || ''} 
-                userId={user?.id || ''} 
-                isPaused={isPaused}
-                onTogglePause={toggleSessionPause}
-              />
-              
+            <div className="flex items-center gap-2">              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="fantasy-button destructive">
@@ -401,7 +394,7 @@ const LiveSession = () => {
             
             {isGameMaster && (
               <TurnTracker
-                sessionId={id || '''}
+                sessionId={id || ''}
                 participants={participants}
                 isPaused={isPaused}
               />
@@ -424,6 +417,15 @@ const LiveSession = () => {
             userId={user?.id || ''}
             participants={participants}
           />
+
+          {isGameMaster && (
+            <GameMasterPanel 
+              sessionId={id || ''} 
+              userId={user?.id || ''} 
+              isPaused={isPaused}
+              onTogglePause={toggleSessionPause}
+            />
+          )}
         </div>
       </div>
     </MainLayout>

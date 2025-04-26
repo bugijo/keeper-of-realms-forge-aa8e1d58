@@ -10,23 +10,27 @@ import NotesTab from './NotesTab';
 import StoryTab from './StoryTab';
 import ChatTab from './ChatTab';
 import PlayersTab from './PlayersTab';
+import { GamePlayer } from '@/types/game';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface GameMasterPanelProps {
   sessionId: string;
   userId: string;
   isPaused?: boolean;
   onTogglePause?: () => void;
-}
-
-interface GamePlayer {
-  id: string;
-  name: string;
-  characterId: string | null;
-  characterName: string | null;
-  characterClass: string | null;
-  characterRace: string | null;
-  characterLevel: number | null;
-  online: boolean;
 }
 
 const GameMasterPanel: React.FC<GameMasterPanelProps> = ({ 
@@ -38,6 +42,16 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
   const [activeTab, setActiveTab] = useState('players');
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showProgressChart, setShowProgressChart] = useState(false);
+  
+  // Dados mockados para o gráfico - em produção, seria carregado do banco de dados
+  const campaignProgressData = [
+    { session: 'Sessão 1', xp: 100, discoveries: 2, combats: 1 },
+    { session: 'Sessão 2', xp: 250, discoveries: 3, combats: 2 },
+    { session: 'Sessão 3', xp: 400, discoveries: 1, combats: 3 },
+    { session: 'Sessão 4', xp: 700, discoveries: 4, combats: 2 },
+    { session: 'Sessão 5', xp: 1000, discoveries: 3, combats: 4 },
+  ];
   
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -99,7 +113,66 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     };
     
     fetchParticipants();
-  }, [sessionId]);
+    
+    // Set up realtime presence to monitor player online status
+    const channel = supabase.channel('room_' + sessionId);
+    
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        console.log('Online users:', state);
+        
+        // Update player online status based on presence data
+        Object.keys(state).forEach(key => {
+          const presences = state[key] as any[];
+          presences.forEach(presence => {
+            if (presence.user_id) {
+              setPlayers(prev => 
+                prev.map(player => 
+                  player.id === presence.user_id 
+                    ? { ...player, online: true } 
+                    : player
+                )
+              );
+            }
+          });
+        });
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('User joined:', key, newPresences);
+        // Handle user join event
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('User left:', key, leftPresences);
+        // Handle user leave event
+        leftPresences.forEach((presence: any) => {
+          if (presence.user_id) {
+            setPlayers(prev => 
+              prev.map(player => 
+                player.id === presence.user_id 
+                  ? { ...player, online: false } 
+                  : player
+              )
+            );
+          }
+        });
+      })
+      .subscribe(async (status) => {
+        if (status !== 'SUBSCRIBED') { return }
+      
+        // Send current user's presence
+        const presenceTrackStatus = await channel.track({ 
+          user_id: userId,
+          online_at: new Date().toISOString() 
+        });
+        
+        console.log('Presence tracking status:', presenceTrackStatus);
+      });
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sessionId, userId]);
   
   const notifyPlayers = async () => {
     try {
@@ -149,8 +222,13 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
     }
   };
   
+  const handleTogglePlayerStatus = async (playerId: string, status: string) => {
+    // Em uma implementação real, você enviaria essa mudança para o Supabase
+    toast.success(`Status do jogador alterado para: ${status}`);
+  };
+  
   return (
-    <div className="bg-fantasy-dark border border-fantasy-purple/30 w-96 h-full flex flex-col">
+    <div className="bg-fantasy-dark border border-fantasy-purple/30 w-80 h-full flex flex-col">
       <div className="p-3 border-b border-fantasy-purple/30 flex justify-between items-center">
         <h2 className="text-xl font-medievalsharp text-fantasy-gold">
           Painel do Mestre
@@ -189,19 +267,75 @@ const GameMasterPanel: React.FC<GameMasterPanelProps> = ({
         </TabsList>
         
         <TabsContent value="players" className="flex-1 overflow-y-auto p-4">
-          <PlayersTab players={players} />
+          <PlayersTab 
+            players={players} 
+            sessionId={sessionId}
+            onTogglePlayerStatus={handleTogglePlayerStatus}
+          />
+          
+          <div className="mt-6">
+            <Popover open={showProgressChart} onOpenChange={setShowProgressChart}>
+              <PopoverTrigger asChild>
+                <Button className="w-full fantasy-button secondary">
+                  Ver Progresso da Campanha
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 bg-fantasy-dark border-fantasy-purple/50" align="end">
+                <div className="p-4">
+                  <h3 className="text-sm font-medievalsharp text-fantasy-gold mb-2">Progresso da Campanha</h3>
+                  <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={campaignProgressData}
+                        margin={{ top: 5, right: 5, left: -20, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#372c45" />
+                        <XAxis dataKey="session" stroke="#8884d8" fontSize={10} />
+                        <YAxis stroke="#8884d8" fontSize={10} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'rgba(17, 14, 23, 0.95)',
+                            border: '1px solid rgba(138, 75, 175, 0.5)',
+                            borderRadius: '4px',
+                            color: '#fff'
+                          }} 
+                        />
+                        <Area type="monotone" dataKey="xp" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
+                        <Area type="monotone" dataKey="discoveries" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.3} />
+                        <Area type="monotone" dataKey="combats" stroke="#ffc658" fill="#ffc658" fillOpacity={0.3} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-fantasy-stone">
+                    <div className="flex items-center">
+                      <span className="inline-block w-3 h-3 mr-1 bg-indigo-400 rounded-sm"></span>
+                      <span>XP</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="inline-block w-3 h-3 mr-1 bg-green-400 rounded-sm"></span>
+                      <span>Descobertas</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="inline-block w-3 h-3 mr-1 bg-yellow-400 rounded-sm"></span>
+                      <span>Combates</span>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </TabsContent>
         
         <TabsContent value="map" className="flex-1 overflow-y-auto p-4">
-          <MapTab />
+          <MapTab sessionId={sessionId} />
         </TabsContent>
         
         <TabsContent value="chat" className="flex-1 overflow-y-auto p-4">
-          <ChatTab />
+          <ChatTab sessionId={sessionId} userId={userId} />
         </TabsContent>
         
         <TabsContent value="notes" className="flex-1 overflow-y-auto p-4">
-          <NotesTab />
+          <NotesTab sessionId={sessionId} userId={userId} />
         </TabsContent>
         
         <TabsContent value="story" className="flex-1 overflow-y-auto p-4">
