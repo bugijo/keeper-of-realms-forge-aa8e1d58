@@ -51,7 +51,7 @@ const GameMasterView = () => {
   }, [id, user, navigate]);
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/tables/join/${id}`;
+    const link = `${window.location.origin}/table/${id}`;
     navigator.clipboard.writeText(link);
     toast.success('Link de convite copiado!');
   };

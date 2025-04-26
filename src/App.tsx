@@ -29,6 +29,8 @@ import StoryCreation from './pages/creations/StoryCreation';
 import MonsterCreation from './pages/creations/MonsterCreation';
 import NpcCreation from './pages/creations/NpcCreation';
 import NotFound from './pages/NotFound';
+import TableDetailsView from './pages/table/TableDetailsView';
+import TableCreate from './pages/table/TableCreate';
 
 function App() {
   return (
@@ -40,9 +42,13 @@ function App() {
 
         {/* Tables routes */}
         <Route path="/tables" element={<Tables />} />
+        <Route path="/table/create" element={<TableCreate />} />
+        <Route path="/table/:id" element={<TableDetailsView />} />
         <Route path="/table/player/:id" element={<PlayerView />} />
         <Route path="/table/gm/:id" element={<GMView />} />
+        <Route path="/gm/:id" element={<GMView />} /> {/* Alternative GM route */}
         <Route path="/table/live/:id" element={<LiveSession />} />
+        <Route path="/session/:id" element={<LiveSession />} /> {/* Alternative session route */}
         <Route path="/table/pre-session/:id" element={<PreSessionScreen tableId="demo" />} />
 
         {/* Game entities routes */}

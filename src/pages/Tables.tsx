@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import MainLayout from '@/components/layout/MainLayout';
@@ -87,15 +88,40 @@ const Tables = () => {
       if (userTables && userTables.length > 0) {
         const tableIds = userTables.map(table => table.id);
         
+        // Modified join request query to avoid the profiles relationship error
         const { data: requests, error: requestsError } = await supabase
           .from('table_join_requests')
-          .select('*, profiles(display_name), tables(name)')
+          .select('*, tables(name)')
           .in('table_id', tableIds)
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
           
         if (requestsError) throw requestsError;
-        setJoinRequests(requests || []);
+        
+        // Fetch user display names separately to avoid the relationship error
+        if (requests && requests.length > 0) {
+          const userIds = requests.map(request => request.user_id);
+          
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, display_name')
+            .in('id', userIds);
+            
+          if (profilesError) throw profilesError;
+          
+          // Merge profile data with requests
+          const requestsWithProfiles = requests.map(request => {
+            const profile = profiles?.find(p => p.id === request.user_id);
+            return {
+              ...request,
+              profiles: profile
+            };
+          });
+          
+          setJoinRequests(requestsWithProfiles || []);
+        } else {
+          setJoinRequests([]);
+        }
       }
     } catch (err) {
       console.error('Error fetching join requests:', err);
