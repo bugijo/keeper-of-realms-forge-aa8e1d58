@@ -37,13 +37,25 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         setLoading(true);
         
         const { data, error } = await supabase
-          .from('session_messages')
+          .from('chat_messages')
           .select('*')
-          .eq('session_id', sessionId)
+          .eq('table_id', sessionId)
           .order('created_at', { ascending: true });
           
         if (error) throw error;
-        setMessages(data || []);
+        
+        // Convert to SessionMessage format
+        const formattedMessages: SessionMessage[] = (data || []).map((msg: any) => ({
+          id: msg.id,
+          session_id: sessionId,
+          user_id: msg.user_id,
+          content: msg.content,
+          type: msg.type || 'text',
+          metadata: msg.metadata,
+          created_at: msg.created_at
+        }));
+        
+        setMessages(formattedMessages);
       } catch (error) {
         console.error('Error loading messages:', error);
       } finally {
@@ -55,27 +67,37 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     
     // Set up realtime subscription
     const channel = supabase
-      .channel('session_messages_changes')
+      .channel('chat_messages_changes')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'session_messages',
-          filter: `session_id=eq.${sessionId}`
+          table: 'chat_messages',
+          filter: `table_id=eq.${sessionId}`
         },
         (payload) => {
-          const newMessage = payload.new as SessionMessage;
-          setMessages(prev => [...prev, newMessage]);
+          const newMsg = payload.new as any;
+          // Convert to SessionMessage format
+          const formattedMessage: SessionMessage = {
+            id: newMsg.id,
+            session_id: sessionId,
+            user_id: newMsg.user_id,
+            content: newMsg.content,
+            type: newMsg.type || 'text',
+            metadata: newMsg.metadata,
+            created_at: newMsg.created_at
+          };
+          setMessages(prev => [...prev, formattedMessage]);
           
           // Show toast for new messages that aren't from this user
-          if (newMessage.user_id !== userId && newMessage.type === 'text') {
-            const sender = participants.find(p => p.user_id === newMessage.user_id);
+          if (formattedMessage.user_id !== userId && formattedMessage.type === 'text') {
+            const sender = participants.find(p => p.user_id === formattedMessage.user_id);
             const senderName = sender?.display_name || sender?.character_name || 'Someone';
             toast(`New message from ${senderName}`, {
-              description: newMessage.content.length > 30
-                ? newMessage.content.substring(0, 30) + '...'
-                : newMessage.content
+              description: formattedMessage.content.length > 30
+                ? formattedMessage.content.substring(0, 30) + '...'
+                : formattedMessage.content
             });
           }
         }
@@ -99,9 +121,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     
     try {
       const { error } = await supabase
-        .from('session_messages')
+        .from('chat_messages')
         .insert({
-          session_id: sessionId,
+          table_id: sessionId,
           user_id: userId,
           content: newMessage,
           type: 'text'
@@ -156,9 +178,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       const rollResult = `${total} [${rolls.join(', ')}]${modifier !== 0 ? `${modifier > 0 ? '+' : ''}${modifier}` : ''}`;
       
       const { error } = await supabase
-        .from('session_messages')
+        .from('chat_messages')
         .insert({
-          session_id: sessionId,
+          table_id: sessionId,
           user_id: userId,
           content: rollText,
           type: 'dice',
