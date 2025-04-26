@@ -19,6 +19,12 @@ import Inventory from './pages/Inventory';
 import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
+import Creations from './pages/Creations';
+import CreationsCollection from './pages/CreationsCollection';
+import Shop from './pages/Shop';
+import ItemCreation from './pages/creations/ItemCreation';
+import MapCreation from './pages/creations/MapCreation';
+import StoryCreation from './pages/creations/StoryCreation';
 
 function App() {
   const { session } = useAuth();
@@ -96,6 +102,7 @@ function App() {
           }
         />
         
+        {/* Rotas de Inventário */}
         <Route 
           path="/inventory" 
           element={
@@ -103,6 +110,108 @@ function App() {
               <Inventory />
             </ProtectedRoute>
           } 
+        />
+        
+        {/* Rotas de Criações */}
+        <Route
+          path="/creations"
+          element={
+            <ProtectedRoute>
+              <Creations />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/characters"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/items"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/maps"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/stories"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/monsters"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/npcs"
+          element={
+            <ProtectedRoute>
+              <CreationsCollection />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Páginas de Criação específicas */}
+        <Route
+          path="/creations/items/new"
+          element={
+            <ProtectedRoute>
+              <ItemCreation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/maps/new"
+          element={
+            <ProtectedRoute>
+              <MapCreation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/creations/stories/new"
+          element={
+            <ProtectedRoute>
+              <StoryCreation />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Loja */}
+        <Route
+          path="/shop"
+          element={
+            <ProtectedRoute>
+              <Shop />
+            </ProtectedRoute>
+          }
         />
         
         <Route path="/404" element={<NotFound />} />

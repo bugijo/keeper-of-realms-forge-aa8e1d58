@@ -36,7 +36,7 @@ const CreationsCollection = () => {
   
   // Determine correct path for the "New" button
   const getCreationPath = (type: CreationType) => {
-    return `/creations/${type}s`;
+    return `/creations/${type}s/new`;
   };
   
   // Mock data - replace with API call

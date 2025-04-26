@@ -46,7 +46,11 @@ const CreationGrid = ({ creations, type, onDelete }: CreationGridProps) => {
   };
 
   const getEditPath = (type: CreationType, id: string) => {
-    return `/creations/${type}s/${id}`;
+    return `/creations/${type}s/${id}/edit`;
+  };
+
+  const getCreatePath = (type: CreationType) => {
+    return `/creations/${type}s/new`;
   };
 
   const formatDate = (dateString: string) => {
@@ -58,7 +62,7 @@ const CreationGrid = ({ creations, type, onDelete }: CreationGridProps) => {
     return (
       <div className="fantasy-card p-8 text-center">
         <p className="text-fantasy-stone mb-4">Nenhuma criação encontrada.</p>
-        <Link to={`/creations/${type}s`} className="text-fantasy-purple hover:text-fantasy-accent">
+        <Link to={getCreatePath(type)} className="text-fantasy-purple hover:text-fantasy-accent">
           Clique aqui para criar um novo {type === 'npc' ? 'NPC' : type}
         </Link>
       </div>
