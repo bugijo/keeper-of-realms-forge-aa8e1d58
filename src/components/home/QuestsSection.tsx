@@ -1,6 +1,7 @@
 
 import { motion } from "framer-motion";
 import { TrophyIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const featuredQuests = [
   {
@@ -24,7 +25,13 @@ const featuredQuests = [
 export const QuestsSection = () => {
   return (
     <section>
-      <h2 className="text-xl font-medievalsharp text-white mb-4">Missões em Destaque</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-medievalsharp text-white">Missões em Destaque</h2>
+        <Link to="/missions" className="text-fantasy-purple hover:text-fantasy-purple/80 text-sm">
+          Ver todas
+        </Link>
+      </div>
+      
       <div className="grid gap-4">
         {featuredQuests.map((quest, index) => (
           <motion.div

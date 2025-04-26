@@ -20,6 +20,9 @@ import NpcsView from './pages/NpcsView';
 import StoriesView from './pages/StoriesView';
 import ItemView from './pages/items/ItemView';
 import Creations from './pages/Creations';
+import Missions from './pages/Missions';
+import Inventory from './pages/Inventory';
+import Shop from './pages/Shop';
 
 function App() {
   return (
@@ -41,6 +44,9 @@ function App() {
         <Route path="/monsters" element={<MonstersView />} />
         <Route path="/npcs" element={<NpcsView />} />
         <Route path="/stories" element={<StoriesView />} />
+        <Route path="/missions" element={<Missions />} />
+        <Route path="/inventory" element={<Inventory />} />
+        <Route path="/shop" element={<Shop />} />
 
         {/* Character routes */}
         <Route path="/character" element={<Character />} />

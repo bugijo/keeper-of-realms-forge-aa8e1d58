@@ -24,6 +24,21 @@ const Home = () => {
             <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Itens</h2>
             <p className="text-fantasy-stone">Explore e crie itens e equipamentos</p>
           </Link>
+          
+          <Link to="/missions" className="fantasy-card p-6 hover:bg-fantasy-purple/10 transition-colors">
+            <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Missões</h2>
+            <p className="text-fantasy-stone">Complete missões e ganhe recompensas</p>
+          </Link>
+          
+          <Link to="/inventory" className="fantasy-card p-6 hover:bg-fantasy-purple/10 transition-colors">
+            <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Inventário</h2>
+            <p className="text-fantasy-stone">Veja e gerencie todas as suas criações</p>
+          </Link>
+          
+          <Link to="/shop" className="fantasy-card p-6 hover:bg-fantasy-purple/10 transition-colors">
+            <h2 className="text-xl font-medievalsharp text-fantasy-purple mb-2">Loja</h2>
+            <p className="text-fantasy-stone">Adquira itens e recursos para suas aventuras</p>
+          </Link>
         </div>
       </div>
     </MainLayout>

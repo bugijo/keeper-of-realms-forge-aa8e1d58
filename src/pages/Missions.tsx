@@ -3,6 +3,9 @@ import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card } from '@/components/ui/card';
 import { User, Star, Map, Package, Users } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Mission {
   id: string;
@@ -60,15 +63,34 @@ const missions: Mission[] = [
     description: 'Crie 3 itens mágicos para suas aventuras.',
     difficulty: 'Médio',
     category: 'item',
-    progress: 1,
+    progress: 3,
     total: 3,
     reward: '300 moedas de ouro',
     icon: <Package className="w-6 h-6 text-fantasy-gold" />,
+    completed: true
+  },
+  {
+    id: '5',
+    title: 'Construtor de Mundos',
+    description: 'Crie 10 NPCs para popular seu mundo de jogo.',
+    difficulty: 'Difícil',
+    category: 'npc',
+    progress: 7,
+    total: 10,
+    reward: '800 moedas de ouro + Item lendário',
+    icon: <Users className="w-6 h-6 text-fantasy-gold" />,
     completed: false
   }
 ];
 
 const Missions = () => {
+  const claimReward = (missionId: string, reward: string) => {
+    toast.success(`Recompensa recebida: ${reward}`, {
+      description: "As recompensas foram adicionadas ao seu inventário!"
+    });
+    // Aqui seria implementada a lógica para adicionar a recompensa ao inventário do jogador
+  };
+
   return (
     <MainLayout>
       <div className="container mx-auto py-6 px-4">
@@ -86,12 +108,10 @@ const Missions = () => {
               
               {/* Progress Bar */}
               <div className="mb-4">
-                <div className="w-full bg-fantasy-purple/10 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-fantasy-gold h-full transition-all duration-300"
-                    style={{ width: `${(mission.progress / mission.total) * 100}%` }}
-                  />
-                </div>
+                <Progress 
+                  value={(mission.progress / mission.total) * 100} 
+                  className="bg-fantasy-purple/10 h-2"
+                />
                 <p className="text-sm text-fantasy-stone mt-1 text-center">
                   {mission.progress}/{mission.total} completados
                 </p>
@@ -99,10 +119,17 @@ const Missions = () => {
               
               <div className="flex justify-between items-center">
                 <span className="text-sm text-fantasy-stone">Dificuldade: {mission.difficulty}</span>
-                {mission.completed && (
-                  <span className="text-sm text-fantasy-gold">Recompensa: {mission.reward}</span>
-                )}
+                <span className="text-sm text-fantasy-gold">Recompensa: {mission.reward}</span>
               </div>
+              
+              {mission.completed && (
+                <Button 
+                  className="w-full mt-4 bg-fantasy-gold hover:bg-fantasy-gold/80 text-fantasy-dark font-medievalsharp"
+                  onClick={() => claimReward(mission.id, mission.reward)}
+                >
+                  Receber Recompensa
+                </Button>
+              )}
             </Card>
           ))}
         </div>
