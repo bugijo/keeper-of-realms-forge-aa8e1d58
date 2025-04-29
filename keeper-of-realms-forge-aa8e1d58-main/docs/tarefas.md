@@ -13,16 +13,16 @@ Este documento lista as tarefas prioritárias, correções e melhorias necessár
 #### **A. Correções Críticas**  
 | **Módulo**       | **Tarefa**                                                                                   | **Status** |  
 |-------------------|---------------------------------------------------------------------------------------------|------------|  
-| **Navegação**     | Corrigir redirecionamentos quebrados (ex: Biblioteca de NPCs → erro 404).                   | Pendente   |  
-| **Combate**       | Implementar cálculo correto de distância no grid (1 quadrado = 5ft).                        | Pendente   |  
-| **Sincronização** | Garantir atualização em tempo real do inventário entre jogadores e mestre.                  | Em Progresso |  
+| **Navegação**     | Corrigir redirecionamentos quebrados (ex: Biblioteca de NPCs → erro 404).                   | Em Progresso |  
+| **Combate**       | Implementar cálculo correto de distância no grid (1 quadrado = 5ft).                        | Concluído  |  
+| **Sincronização** | Garantir atualização em tempo real do inventário entre jogadores e mestre.                  | Concluído  |  
 
 #### **B. Finalização de Funcionalidades**  
 | **Módulo**          | **Tarefa**                                                                                   | **Status** |  
 |----------------------|---------------------------------------------------------------------------------------------|------------|  
-| **Mapa Tático**      | Permitir arrastar tokens e aplicar Fog of War (névoa de guerra) controlável pelo mestre.     | Em Progresso |  
-| **Inventário**       | Implementar cálculo automático de peso e encumbrance (sobrecarga).                          | Pendente   |  
-| **Áudio**            | Implementar sistema de áudio para ambientação com playlists.                                | Pendente   |  
+| **Mapa Tático**      | Permitir arrastar tokens e aplicar Fog of War (névoa de guerra) controlável pelo mestre.     | Concluído  |  
+| **Inventário**       | Implementar cálculo automático de peso e encumbrance (sobrecarga).                          | Em Progresso |  
+| **Áudio**            | Implementar sistema de áudio para ambientação com playlists.                                | Concluído  |  
 | **Sessões**          | Sistema de agendamento e gerenciamento de sessões.                                          | Concluído  |  
 | **Personagens**      | Sistema de criação e compartilhamento de personagens.                                       | Concluído  |  
 
@@ -32,16 +32,16 @@ Este documento lista as tarefas prioritárias, correções e melhorias necessár
 
 #### **A. Interface do Mestre (Durante o Jogo)**  
 - **Dashboard de Controle Rápido:**  
-  - [ ] Adicionar botão de "Rolagem Secreta" (d20 com resultado visível apenas ao mestre).  
+  - [x] Adicionar botão de "Rolagem Secreta" (d20 com resultado visível apenas ao mestre).  
   - [ ] Implementar barra de busca rápida para regras (ex: "Ataque de Oportunidade").  
   - [x] Criar painel de status dos jogadores com informações básicas.  
-  - [ ] Implementar painel de status com HP, condições e recursos em tempo real.  
+  - [x] Implementar painel de status com HP, condições e recursos em tempo real.  
 
 - **Mapa Tático:**  
-  - [ ] Adicionar ferramentas de medição de área (ex: círculo para magias *Fireball*).  
-  - [ ] Permitir upload de mapas customizados com grid ajustável (hexagonal/quadrado).  
+  - [x] Adicionar ferramentas de medição de área (ex: círculo para magias *Fireball*).  
+  - [x] Permitir upload de mapas customizados com grid ajustável (hexagonal/quadrado).  
   - [x] Implementar sistema básico de tokens no mapa.  
-  - [ ] Aprimorar sistema de Fog of War com controles mais precisos.  
+  - [x] Aprimorar sistema de Fog of War com controles mais precisos.  
 
 #### **B. Interface do Jogador (Durante o Jogo)**  
 - **Modo de Foco:**  
@@ -49,9 +49,9 @@ Este documento lista as tarefas prioritárias, correções e melhorias necessár
   - [ ] Adicionar visualização rápida para detalhes de itens/magias sem abrir menus.  
 
 - **Ações Rápidas:**  
-  - [ ] Criar atalho para rolagens contextuais (ex: "Percepção" → rola d20 + modificador).  
+  - [x] Criar atalho para rolagens contextuais (ex: "Percepção" → rola d20 + modificador).  
   - [x] Implementar sistema básico de inventário.  
-  - [ ] Vincular inventário a ações rápidas (ex: arrastar item para o avatar → equipar).  
+  - [x] Vincular inventário a ações rápidas (ex: arrastar item para o avatar → equipar).  
 
 ---
 
@@ -60,15 +60,15 @@ Este documento lista as tarefas prioritárias, correções e melhorias necessár
 #### **A. Backend**  
 | **Tarefa**                                                                 | **Status**    | **Complexidade** |
 |----------------------------------------------------------------------------|---------------|------------------|
-| Revisar sincronização offline/online para evitar conflitos de dados.        | Pendente      | Alta             |
-| Otimizar consultas ao banco de dados para reduzir lag no carregamento.     | Em Progresso  | Média            |
-| Implementar sistema de tempo real para atualizações do mapa tático.        | Em Progresso  | Alta             |
+| Revisar sincronização offline/online para evitar conflitos de dados.        | Em Progresso  | Alta             |
+| Otimizar consultas ao banco de dados para reduzir lag no carregamento.     | Concluído     | Média            |
+| Implementar sistema de tempo real para atualizações do mapa tático.        | Concluído     | Alta             |
 
 #### **B. Frontend**  
 | **Tarefa**                                                                 | **Status**    | **Complexidade** |
 |----------------------------------------------------------------------------|---------------|------------------|
-| Reduzir tempo de carregamento da ficha de personagem para <1 segundo.      | Pendente      | Alta             |
-| Melhorar responsividade da interface para dispositivos móveis.             | Em Progresso  | Média            |
+| Reduzir tempo de carregamento da ficha de personagem para <1 segundo.      | Em Progresso  | Alta             |
+| Melhorar responsividade da interface para dispositivos móveis.             | Concluído     | Média            |
 | Implementar tema visual consistente em todos os componentes.               | Concluído     | Média            |
 
 ---
@@ -76,18 +76,18 @@ Este documento lista as tarefas prioritárias, correções e melhorias necessár
 ### **5. Validação do Sistema**  
 #### **Checklist de Testes (Pré-Beta)**  
 - **Combate:**  
-  - [ ] Iniciativa atualizada automaticamente após rolagem.  
-  - [ ] Modificadores de condições aplicados corretamente (ex: -2 em testes por envenenado).  
+  - [x] Iniciativa atualizada automaticamente após rolagem.  
+  - [x] Modificadores de condições aplicados corretamente (ex: -2 em testes por envenenado).  
   - [x] Sistema básico de combate com turnos implementado.  
 
 - **Inventário:**  
   - [ ] Peso total recalcula ao adicionar/remover itens.  
-  - [ ] Itens equipados alteram atributos do personagem (ex: armadura aumenta CA).  
+  - [x] Itens equipados alteram atributos do personagem (ex: armadura aumenta CA).  
   - [x] Transferência de itens entre personagens implementada.  
 
 - **Sincronização:**  
   - [x] Alterações no mapa tático visíveis para todos os jogadores.  
-  - [ ] Alterações no inventário do jogador refletem no dashboard do mestre em <2s.  
+  - [x] Alterações no inventário do jogador refletem no dashboard do mestre em <2s.  
 
 ---
 
@@ -116,6 +116,6 @@ Este documento deve ser usado como guia para priorizar tarefas de desenvolviment
 
 --- 
 
-**Versão do Documento:** 1.2  
-**Última Atualização:** 2023-11-15  
+**Versão do Documento:** 1.4  
+**Última Atualização:** 2024-08-20  
 **Responsável:** Equipe Dungeon Kreeper
