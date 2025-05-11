@@ -1,0 +1,262 @@
+
+/* Estilos específicos para a página de inventário */
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(30, 20, 60, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(108, 43, 217, 0.1);
+}
+
+.inventory-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: rgba(108, 43, 217, 0.3);
+}
+
+.inventory-item .item-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.inventory-item .item-image {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.25rem;
+  background-color: rgba(15, 10, 26, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.inventory-item .item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.inventory-item .item-details h3 {
+  font-family: 'MedievalSharp', cursive;
+  margin-bottom: 0.25rem;
+  color: white;
+}
+
+.inventory-item .item-details .item-meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--fantasy-stone);
+}
+
+.inventory-item .item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inventory-item .item-actions button {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  color: var(--fantasy-stone);
+  transition: all 0.2s;
+}
+
+.inventory-item .item-actions button:hover {
+  background-color: rgba(108, 43, 217, 0.1);
+  color: white;
+}
+
+.inventory-item .item-actions button.edit-button:hover {
+  color: var(--fantasy-purple);
+}
+
+.inventory-item .item-actions button.delete-button:hover {
+  color: #ef4444;
+}
+
+.inventory-item .item-actions button.equip-button {
+  border: 1px solid rgba(108, 43, 217, 0.3);
+  padding: 0.25rem 0.5rem;
+}
+
+.inventory-item .item-actions button.equip-button:hover {
+  background-color: rgba(108, 43, 217, 0.2);
+}
+
+.inventory-item .item-actions button.equipped {
+  background-color: rgba(108, 43, 217, 0.3);
+  color: white;
+}
+
+/* Raridades de itens */
+.inventory-item.common {
+  background-color: rgba(30, 20, 60, 0.3);
+}
+
+.inventory-item.uncommon {
+  background-color: rgba(16, 64, 43, 0.3);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.inventory-item.uncommon:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.inventory-item.rare {
+  background-color: rgba(30, 58, 138, 0.3);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.inventory-item.rare:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.inventory-item.epic {
+  background-color: rgba(91, 33, 182, 0.3);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.inventory-item.epic:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.inventory-item.legendary {
+  background-color: rgba(120, 53, 15, 0.3);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.inventory-item.legendary:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+/* Classe de botão fantasy */
+.fantasy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  font-family: 'MedievalSharp', cursive;
+}
+
+.fantasy-button.primary {
+  background-color: var(--fantasy-purple);
+  color: white;
+}
+
+.fantasy-button.primary:hover {
+  background-color: rgba(108, 43, 217, 0.8);
+  box-shadow: 0 0 10px rgba(108, 43, 217, 0.4);
+}
+
+.fantasy-button.secondary {
+  border: 1px solid var(--fantasy-purple);
+  color: var(--fantasy-purple);
+  background-color: transparent;
+}
+
+.fantasy-button.secondary:hover {
+  background-color: rgba(108, 43, 217, 0.1);
+}
+
+/* Encumbrance colors */
+.text-green-400 {
+  color: #4ade80;
+}
+
+.text-yellow-400 {
+  color: #facc15;
+}
+
+.text-orange-400 {
+  color: #fb923c;
+}
+
+.text-red-400 {
+  color: #f87171;
+}
+
+/* Estilos para o personagem selecionado */
+.character-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-family: 'MedievalSharp', cursive;
+  transition: all 0.2s;
+}
+
+.character-button.selected {
+  background-color: var(--fantasy-purple);
+  color: white;
+}
+
+.character-button:not(.selected) {
+  background-color: transparent;
+  border: 1px solid rgba(108, 43, 217, 0.3);
+  color: var(--fantasy-stone);
+}
+
+.character-button:not(.selected):hover {
+  border-color: var(--fantasy-purple);
+  color: white;
+  background-color: rgba(108, 43, 217, 0.1);
+}
+
+/* Toast notificação */
+.toast-success #toastIcon {
+  color: #4ade80;
+}
+
+.toast-error #toastIcon {
+  color: #f87171;
+}
+
+/* Animações para o toast */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: slideIn 0.3s forwards;
+}
+
+.toast-exit {
+  animation: slideOut 0.3s forwards;
+}
+
+/* Previsualização de imagem */
+#imagePreview {
+  background-size: cover;
+  background-position: center;
+}
+
+#imagePreview.has-image {
+  display: block !important;
+}

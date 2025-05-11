@@ -1,0 +1,300 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reino das Aventuras</title>
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-fantasy-dark text-white min-h-screen">
+  <header class="border-b border-fantasy-purple/20">
+    <div class="container mx-auto p-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <a href="index.html" class="font-medievalsharp text-2xl text-fantasy-gold">Reino das Aventuras</a>
+      </div>
+      <nav class="hidden md:flex space-x-4">
+        <a href="tables.html" class="text-fantasy-stone hover:text-white transition-colors">Mesas</a>
+        <a href="character.html" class="text-fantasy-stone hover:text-white transition-colors">Personagens</a>
+        <a href="inventory.html" class="text-fantasy-stone hover:text-white transition-colors">Inventário</a>
+        <a href="#" id="loginButton" class="text-fantasy-stone hover:text-white transition-colors">Entrar</a>
+      </nav>
+      <button class="md:hidden" id="mobileMenuButton">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    <div class="hidden md:hidden p-4 border-t border-fantasy-purple/20" id="mobileMenu">
+      <a href="tables.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Mesas</a>
+      <a href="character.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Personagens</a>
+      <a href="inventory.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Inventário</a>
+      <a href="#" id="mobileLoginButton" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Entrar</a>
+    </div>
+  </header>
+
+  <main class="container mx-auto py-6">
+    <!-- Seção de Boas-vindas -->
+    <section class="mb-8">
+      <div class="fantasy-card p-6 opacity-0" id="welcomeSection">
+        <h1 class="text-2xl font-medievalsharp text-fantasy-gold mb-2">
+          Bem-vindo Aventureiro!
+        </h1>
+        <p class="text-fantasy-stone">
+          Prepare-se para uma jornada épica no mundo do RPG!
+        </p>
+      </div>
+    </section>
+
+    <!-- Ações Rápidas -->
+    <section class="mb-8">
+      <h2 class="text-xl font-medievalsharp text-white mb-4">Ações Rápidas</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="tables.html" class="fantasy-card p-4 hover:bg-fantasy-purple/10 transition-colors">
+          <div class="flex flex-col items-center text-center opacity-0 quick-action" data-delay="0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-fantasy-gold mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <h3 class="font-medievalsharp text-white mb-1">Encontrar Mesa</h3>
+            <p class="text-xs text-fantasy-stone">Encontre uma mesa para jogar</p>
+          </div>
+        </a>
+        <a href="character.html" class="fantasy-card p-4 hover:bg-fantasy-purple/10 transition-colors">
+          <div class="flex flex-col items-center text-center opacity-0 quick-action" data-delay="1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-fantasy-gold mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+              <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
+            </svg>
+            <h3 class="font-medievalsharp text-white mb-1">Criar Personagem</h3>
+            <p class="text-xs text-fantasy-stone">Crie seu próprio herói</p>
+          </div>
+        </a>
+        <a href="tutorial.html" class="fantasy-card p-4 hover:bg-fantasy-purple/10 transition-colors">
+          <div class="flex flex-col items-center text-center opacity-0 quick-action" data-delay="2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-fantasy-gold mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <h3 class="font-medievalsharp text-white mb-1">Tutorial</h3>
+            <p class="text-xs text-fantasy-stone">Aprenda a jogar</p>
+          </div>
+        </a>
+        <a href="dice.html" class="fantasy-card p-4 hover:bg-fantasy-purple/10 transition-colors">
+          <div class="flex flex-col items-center text-center opacity-0 quick-action" data-delay="3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-fantasy-gold mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 16.5v.75a.75.75 0 00.75.75h.75m-1.5-1.5h1.5m-1.5 0v-.75a.75.75 0 01.75-.75h.75m-1.5 1.5v1.5m12-1.5v.75a.75.75 0 01-.75.75h-.75m1.5-1.5h-1.5m1.5 0v-.75a.75.75 0 00-.75-.75h-.75m1.5 1.5v1.5m-9-1.5v.75a.75.75 0 01-.75.75h-.75m1.5-1.5h-1.5m1.5 0v-.75a.75.75 0 00-.75-.75h-.75m1.5 1.5v1.5m6-1.5v.75a.75.75 0 00.75.75h.75m-1.5-1.5h1.5m-1.5 0v-.75a.75.75 0 01.75-.75h.75m-1.5 1.5v1.5"></path>
+            </svg>
+            <h3 class="font-medievalsharp text-white mb-1">Rolar Dados</h3>
+            <p class="text-xs text-fantasy-stone">Teste sua sorte</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Seção de Criação -->
+    <section class="mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-white">Criações Recentes</h2>
+        <a href="#" class="text-fantasy-purple hover:text-fantasy-purple/80 text-sm">Ver todas</a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="fantasy-card p-4">
+          <div class="flex justify-between items-start">
+            <h3 class="text-lg font-medievalsharp text-white">Personagens</h3>
+            <a href="character.html" class="text-xs px-2 py-1 rounded bg-fantasy-purple/20 text-fantasy-purple">
+              Novo
+            </a>
+          </div>
+          <p class="text-fantasy-stone text-sm mt-2">Crie e gerencie seus personagens de RPG.</p>
+        </div>
+        <div class="fantasy-card p-4">
+          <div class="flex justify-between items-start">
+            <h3 class="text-lg font-medievalsharp text-white">Histórias</h3>
+            <a href="#" class="text-xs px-2 py-1 rounded bg-fantasy-purple/20 text-fantasy-purple">
+              Novo
+            </a>
+          </div>
+          <p class="text-fantasy-stone text-sm mt-2">Desenvolva narrativas épicas para suas aventuras.</p>
+        </div>
+        <div class="fantasy-card p-4">
+          <div class="flex justify-between items-start">
+            <h3 class="text-lg font-medievalsharp text-white">Itens</h3>
+            <a href="items.html" class="text-xs px-2 py-1 rounded bg-fantasy-purple/20 text-fantasy-purple">
+              Novo
+            </a>
+          </div>
+          <p class="text-fantasy-stone text-sm mt-2">Crie itens mágicos e equipamentos para suas aventuras.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção de Missões -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-white">Missões em Destaque</h2>
+        <a href="missions.html" class="text-fantasy-purple hover:text-fantasy-purple/80 text-sm">
+          Ver todas
+        </a>
+      </div>
+      
+      <div class="grid gap-4">
+        <div class="fantasy-card p-4 opacity-0 mission-item" data-index="0">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-lg font-medievalsharp text-white">Participar de 1 Mesa</h3>
+            <span class="bg-fantasy-purple text-white text-xs px-3 py-1 rounded-full">
+              Iniciante
+            </span>
+          </div>
+          
+          <p class="text-sm text-fantasy-stone mb-3">Junte-se a sua primeira mesa de RPG!</p>
+          
+          <div class="mb-2">
+            <div class="w-full bg-fantasy-dark/70 h-3 rounded-full">
+              <div class="bg-gradient-to-r from-fantasy-purple to-fantasy-accent h-full rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="text-center text-fantasy-gold/80 mt-1 text-sm">
+              0/1
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm text-fantasy-stone">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-fantasy-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+              <path d="M4 22h16"></path>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+            <span>200 XP</span>
+            <span class="text-fantasy-gold">•</span>
+            <span>50 💎</span>
+          </div>
+        </div>
+
+        <div class="fantasy-card p-4 opacity-0 mission-item" data-index="1">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-lg font-medievalsharp text-white">Criar um Personagem</h3>
+            <span class="bg-fantasy-purple text-white text-xs px-3 py-1 rounded-full">
+              Criativo
+            </span>
+          </div>
+          
+          <p class="text-sm text-fantasy-stone mb-3">Crie seu primeiro herói!</p>
+          
+          <div class="mb-2">
+            <div class="w-full bg-fantasy-dark/70 h-3 rounded-full">
+              <div class="bg-gradient-to-r from-fantasy-purple to-fantasy-accent h-full rounded-full" style="width: 0%"></div>
+            </div>
+            <div class="text-center text-fantasy-gold/80 mt-1 text-sm">
+              0/1
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm text-fantasy-stone">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-fantasy-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+              <path d="M4 22h16"></path>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+            <span>100 XP</span>
+            <span class="text-fantasy-gold">•</span>
+            <span>20 💎</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de Login -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="loginModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-fantasy-gold">Entrar no Reino</h2>
+        <button id="closeLoginModal" class="text-fantasy-stone hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="loginForm">
+        <div class="space-y-4">
+          <div>
+            <label for="email" class="block text-fantasy-gold mb-1">Email</label>
+            <input type="email" id="email" class="w-full p-2 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded text-white" required>
+          </div>
+          <div>
+            <label for="password" class="block text-fantasy-gold mb-1">Senha</label>
+            <input type="password" id="password" class="w-full p-2 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded text-white" required>
+          </div>
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-fantasy-purple hover:bg-fantasy-purple/80 text-white font-medievalsharp p-2 rounded">
+              Entrar
+            </button>
+          </div>
+          <div class="text-center text-fantasy-stone">
+            <p>Não tem uma conta? <a href="#" id="showSignup" class="text-fantasy-purple hover:underline">Registre-se</a></p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Registro -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="signupModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-fantasy-gold">Junte-se ao Reino</h2>
+        <button id="closeSignupModal" class="text-fantasy-stone hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="signupForm">
+        <div class="space-y-4">
+          <div>
+            <label for="signup-name" class="block text-fantasy-gold mb-1">Nome</label>
+            <input type="text" id="signup-name" class="w-full p-2 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded text-white" required>
+          </div>
+          <div>
+            <label for="signup-email" class="block text-fantasy-gold mb-1">Email</label>
+            <input type="email" id="signup-email" class="w-full p-2 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded text-white" required>
+          </div>
+          <div>
+            <label for="signup-password" class="block text-fantasy-gold mb-1">Senha</label>
+            <input type="password" id="signup-password" class="w-full p-2 bg-fantasy-dark/50 border border-fantasy-purple/30 rounded text-white" required>
+          </div>
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-fantasy-purple hover:bg-fantasy-purple/80 text-white font-medievalsharp p-2 rounded">
+              Criar Conta
+            </button>
+          </div>
+          <div class="text-center text-fantasy-stone">
+            <p>Já tem uma conta? <a href="#" id="showLogin" class="text-fantasy-purple hover:underline">Faça login</a></p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="border-t border-fantasy-purple/20 py-6 mt-12">
+    <div class="container mx-auto text-center text-fantasy-stone">
+      <p>&copy; 2025 Reino das Aventuras. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/animations.js"></script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventário - Reino das Aventuras</title>
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/inventory.css">
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-fantasy-dark text-white min-h-screen">
+  <header class="border-b border-fantasy-purple/20">
+    <div class="container mx-auto p-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <a href="index.html" class="font-medievalsharp text-2xl text-fantasy-gold">Reino das Aventuras</a>
+      </div>
+      <nav class="hidden md:flex space-x-4">
+        <a href="tables.html" class="text-fantasy-stone hover:text-white transition-colors">Mesas</a>
+        <a href="character.html" class="text-fantasy-stone hover:text-white transition-colors">Personagens</a>
+        <a href="inventory.html" class="text-fantasy-stone hover:text-white transition-colors">Inventário</a>
+        <a href="#" id="loginButton" class="text-fantasy-stone hover:text-white transition-colors">Entrar</a>
+        <span id="userDisplay" class="text-fantasy-gold hidden"></span>
+      </nav>
+      <button class="md:hidden" id="mobileMenuButton">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    <div class="hidden md:hidden p-4 border-t border-fantasy-purple/20" id="mobileMenu">
+      <a href="tables.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Mesas</a>
+      <a href="character.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Personagens</a>
+      <a href="inventory.html" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Inventário</a>
+      <a href="#" id="mobileLoginButton" class="block py-2 text-fantasy-stone hover:text-white transition-colors">Entrar</a>
+      <span id="mobileUserDisplay" class="text-fantasy-gold hidden"></span>
+    </div>
+  </header>
+
+  <main class="container mx-auto p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-medievalsharp text-white">Inventário</h1>
+      <button id="addItemButton" class="fantasy-button primary flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Adicionar Item
+      </button>
+    </div>
+    
+    <div id="noCharactersMessage" class="fantasy-card p-6 text-center hidden">
+      <p class="text-fantasy-stone mb-4">Você ainda não possui personagens criados.</p>
+      <a href="character.html" class="fantasy-button primary">Criar Personagem</a>
+    </div>
+
+    <div id="inventoryContent" class="grid grid-cols-1 gap-6">
+      <!-- Seletor de Personagem -->
+      <div class="fantasy-card p-4">
+        <div id="characterSelector" class="flex flex-wrap gap-2">
+          <!-- Os personagens serão carregados dinamicamente aqui -->
+        </div>
+      </div>
+      
+      <!-- Inventário do Personagem Selecionado -->
+      <div class="fantasy-card p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-medievalsharp text-fantasy-gold">
+            Inventário
+          </h2>
+          <div id="encumbranceDisplay" class="font-medievalsharp text-green-400">
+            Peso: 0 / 150
+          </div>
+        </div>
+        
+        <div class="inventory-scroll-area h-[500px] pr-4 overflow-y-auto">
+          <div id="inventoryItems" class="space-y-2">
+            <!-- Os itens serão carregados dinamicamente aqui -->
+          </div>
+          <div id="emptyInventory" class="text-center py-12 text-fantasy-stone">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <p>Inventário vazio</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para adicionar/editar item -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="itemModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="modalTitle" class="font-medievalsharp text-fantasy-gold">Adicionar Item</h2>
+        <button id="closeItemModal" class="text-fantasy-stone hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <form id="itemForm" class="space-y-4">
+        <input type="hidden" id="itemId">
+        <div class="grid grid-cols-1 gap-4">
+          <div>
+            <label for="name" class="block text-fantasy-gold mb-1">Nome</label>
+            <input type="text" id="name" required>
+          </div>
+          
+          <div>
+            <label for="description" class="block text-fantasy-gold mb-1">Descrição</label>
+            <textarea id="description" rows="3"></textarea>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="quantity" class="block text-fantasy-gold mb-1">Quantidade</label>
+              <input type="number" id="quantity" min="1" value="1" required>
+            </div>
+            
+            <div>
+              <label for="weight" class="block text-fantasy-gold mb-1">Peso</label>
+              <input type="number" id="weight" step="0.1" min="0" value="0" required>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="value" class="block text-fantasy-gold mb-1">Valor</label>
+              <input type="number" id="value" min="0" value="0">
+            </div>
+            
+            <div>
+              <label for="type" class="block text-fantasy-gold mb-1">Tipo</label>
+              <select id="type">
+                <option value="weapon">Arma</option>
+                <option value="armor">Armadura</option>
+                <option value="potion">Poção</option>
+                <option value="scroll">Pergaminho</option>
+                <option value="wondrous">Item Maravilhoso</option>
+                <option value="tool">Ferramenta</option>
+                <option value="treasure">Tesouro</option>
+                <option value="item" selected>Item Geral</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label for="rarity" class="block text-fantasy-gold mb-1">Raridade</label>
+            <select id="rarity">
+              <option value="common" selected>Comum</option>
+              <option value="uncommon">Incomum</option>
+              <option value="rare">Raro</option>
+              <option value="epic">Épico</option>
+              <option value="legendary">Lendário</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="imageUpload" class="block text-fantasy-gold mb-1">Imagem</label>
+            <div class="flex items-center gap-2">
+              <input type="file" id="imageUpload" accept="image/*">
+              <div id="imagePreview" class="h-10 w-10 hidden bg-fantasy-dark/50 border border-fantasy-purple/20 rounded"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="cancelItemForm" class="px-4 py-2 border border-fantasy-stone text-fantasy-stone rounded hover:bg-fantasy-stone/20 transition-colors">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 bg-fantasy-purple text-white rounded hover:bg-fantasy-purple/80 transition-colors">
+            <span id="submitButtonText">Adicionar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de confirmação para excluir item -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="deleteConfirmModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <h2 class="font-medievalsharp text-fantasy-gold mb-4">Confirmar Exclusão</h2>
+      <p class="text-fantasy-stone mb-6">Tem certeza que deseja remover <span id="deleteItemName">este item</span>?</p>
+      <div class="flex justify-end gap-4">
+        <button id="cancelDelete" class="px-4 py-2 border border-fantasy-stone text-fantasy-stone rounded hover:bg-fantasy-stone/20 transition-colors">
+          Cancelar
+        </button>
+        <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+          Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Login e Registro (mesmo do index.html) -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="loginModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-fantasy-gold">Entrar no Reino</h2>
+        <button id="closeLoginModal" class="text-fantasy-stone hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="loginForm">
+        <div class="space-y-4">
+          <div>
+            <label for="email" class="block text-fantasy-gold mb-1">Email</label>
+            <input type="email" id="email" required>
+          </div>
+          <div>
+            <label for="password" class="block text-fantasy-gold mb-1">Senha</label>
+            <input type="password" id="password" required>
+          </div>
+          <div>
+            <button type="submit" class="w-full bg-fantasy-purple hover:bg-fantasy-purple/80 text-white font-medievalsharp p-2 rounded">
+              Entrar
+            </button>
+          </div>
+          <div class="text-center text-fantasy-stone">
+            <p>Não tem uma conta? <a href="#" id="showSignup" class="text-fantasy-purple hover:underline">Registre-se</a></p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Registro -->
+  <div class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50" id="signupModal">
+    <div class="bg-fantasy-dark border border-fantasy-purple/30 p-6 rounded-lg max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-medievalsharp text-fantasy-gold">Junte-se ao Reino</h2>
+        <button id="closeSignupModal" class="text-fantasy-stone hover:text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="signupForm">
+        <div class="space-y-4">
+          <div>
+            <label for="signup-name" class="block text-fantasy-gold mb-1">Nome</label>
+            <input type="text" id="signup-name" required>
+          </div>
+          <div>
+            <label for="signup-email" class="block text-fantasy-gold mb-1">Email</label>
+            <input type="email" id="signup-email" required>
+          </div>
+          <div>
+            <label for="signup-password" class="block text-fantasy-gold mb-1">Senha</label>
+            <input type="password" id="signup-password" required>
+          </div>
+          <div>
+            <button type="submit" class="w-full bg-fantasy-purple hover:bg-fantasy-purple/80 text-white font-medievalsharp p-2 rounded">
+              Criar Conta
+            </button>
+          </div>
+          <div class="text-center text-fantasy-stone">
+            <p>Já tem uma conta? <a href="#" id="showLogin" class="text-fantasy-purple hover:underline">Faça login</a></p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast de notificação -->
+  <div id="toast" class="fixed bottom-4 right-4 bg-fantasy-dark border border-fantasy-purple/30 p-4 rounded-lg shadow-lg hidden">
+    <div class="flex items-center gap-2">
+      <svg id="toastIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      <span id="toastMessage" class="text-white"></span>
+    </div>
+  </div>
+
+  <footer class="border-t border-fantasy-purple/20 py-6 mt-12">
+    <div class="container mx-auto text-center text-fantasy-stone">
+      <p>&copy; 2025 Reino das Aventuras. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/inventory.js"></script>
+</body>
+</html>
