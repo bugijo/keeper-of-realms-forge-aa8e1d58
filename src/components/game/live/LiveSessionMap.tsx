@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Circle, Text, Group } from 'react-konva';
 import { Button } from '@/components/ui/button';
@@ -450,6 +449,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
         </div>
       )}
       
+      {/* Here's the fix - use correct children syntax for Stage */}
       <Stage
         width={stageSize.width}
         height={stageSize.height}
