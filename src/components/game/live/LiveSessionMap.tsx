@@ -456,6 +456,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
         onWheel={handleWheel}
         draggable
         onClick={handleGridClick}
+        scale={{ x: scale, y: scale }}
       >
         <Layer>
           {/* Background */}
@@ -469,25 +470,24 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
           
           {/* Grid */}
           {showGrid && Array.from({ length: stageSize.width * 2 / gridSize }).map((_, i) => (
-            <Rect
-              key={`vertical-${i}`}
-              x={i * gridSize - stageSize.width / 2}
-              y={-stageSize.height / 2}
-              width={1}
-              height={stageSize.height * 2}
-              fill="rgba(255, 255, 255, 0.1)"
-            />
-          ))}
-          
-          {showGrid && Array.from({ length: stageSize.height * 2 / gridSize }).map((_, i) => (
-            <Rect
-              key={`horizontal-${i}`}
-              x={-stageSize.width / 2}
-              y={i * gridSize - stageSize.height / 2}
-              width={stageSize.width * 2}
-              height={1}
-              fill="rgba(255, 255, 255, 0.1)"
-            />
+            <React.Fragment key={`grid-v-${i}`}>
+              <Rect
+                key={`vertical-${i}`}
+                x={i * gridSize - stageSize.width / 2}
+                y={-stageSize.height / 2}
+                width={1}
+                height={stageSize.height * 2}
+                fill="rgba(255, 255, 255, 0.1)"
+              />
+              <Rect
+                key={`horizontal-${i}`}
+                x={-stageSize.width / 2}
+                y={i * gridSize - stageSize.height / 2}
+                width={stageSize.width * 2}
+                height={1}
+                fill="rgba(255, 255, 255, 0.1)"
+              />
+            </React.Fragment>
           ))}
           
           {/* Fog of War */}

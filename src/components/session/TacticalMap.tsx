@@ -502,9 +502,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
                     strokeWidth={1}
                     x={size / 2 - 5}
                     y={-size / 5}
-                  >
-                    <EyeOff size={size / 8} />
-                  </Circle>
+                  />
                 )}
               </Group>
             );

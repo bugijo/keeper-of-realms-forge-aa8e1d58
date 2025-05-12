@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,15 +12,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import NotificationBell from './NotificationBell';
+import { toast } from 'sonner';
 
 const MainHeader = () => {
-  const { user, logOut } = useAuth(); // Changed from logout to logOut to match context
+  const { user, logOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
-      await logOut(); // Changed from logout to logOut
+      await logOut();
+      toast.success("🌙 As tochas foram apagadas! Até a próxima aventura!");
+      navigate('/signin');
     } catch (error) {
       console.error('Erro ao sair:', error);
+      toast.error("Erro ao fazer logout");
     }
   };
 
@@ -41,7 +46,7 @@ const MainHeader = () => {
           </nav>
         </div>
         <div className="flex items-center space-x-4">
-          {user && (
+          {user ? (
             <>
               <NotificationBell />
               <DropdownMenu>
@@ -69,8 +74,7 @@ const MainHeader = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          )}
-          {!user && (
+          ) : (
             <Link to="/signin">
               <Button variant="outline" className="fantasy-button secondary">
                 Entrar

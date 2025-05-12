@@ -14,9 +14,8 @@ import GameMasterView from './pages/table/GameMasterView';
 import TablePlayerView from './pages/table/PlayerView';
 import GameMasterTable from './pages/table/GameMasterView';
 import LiveSession from './pages/LiveSession';
-import Session from './pages/Session'; // Add the new Session page
+import Session from './pages/Session';
 import TacticalCombat from './pages/TacticalCombat';
-import Inventory from './pages/Inventory';
 import NotFound from './pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
@@ -26,6 +25,8 @@ import Shop from './pages/Shop';
 import ItemCreation from './pages/creations/ItemCreation';
 import MapCreation from './pages/creations/MapCreation';
 import StoryCreation from './pages/creations/StoryCreation';
+import Login from './pages/Login';
+import Inventory from './pages/Inventory';
 
 function App() {
   const { session } = useAuth();
@@ -36,7 +37,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/signup" element={<MainLayout><h1>Cadastro</h1></MainLayout>} />
-        <Route path="/signin" element={<MainLayout><h1>Login</h1></MainLayout>} />
+        <Route path="/signin" element={<Login />} />
         
         {/* Rota protegida por autenticação usando o componente de proteção */}
         <Route
@@ -232,4 +233,3 @@ function App() {
 }
 
 export default App;
-
