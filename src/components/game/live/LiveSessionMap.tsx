@@ -449,7 +449,7 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
         </div>
       )}
       
-      {/* Here's the fix - use correct children syntax for Stage */}
+      {/* Fix for the Stage component */}
       <Stage
         width={stageSize.width}
         height={stageSize.height}

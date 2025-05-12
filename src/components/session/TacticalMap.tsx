@@ -420,7 +420,7 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
         </div>
       )}
 
-      {/* Here's the fix - use correct children syntax for Stage with Layer as direct child */}
+      {/* Fixed Stage component structure */}
       <Stage
         width={stageSize.width}
         height={stageSize.height}
