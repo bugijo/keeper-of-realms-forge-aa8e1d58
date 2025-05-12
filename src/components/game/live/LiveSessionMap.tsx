@@ -454,8 +454,6 @@ const LiveSessionMap: React.FC<LiveSessionMapProps> = ({
         width={stageSize.width}
         height={stageSize.height}
         onWheel={handleWheel}
-        scaleX={scale}
-        scaleY={scale}
         draggable
         onClick={handleGridClick}
       >

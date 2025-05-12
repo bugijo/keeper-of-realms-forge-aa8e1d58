@@ -424,7 +424,6 @@ const TacticalMap: React.FC<TacticalMapProps> = ({
       <Stage
         width={stageSize.width}
         height={stageSize.height}
-        ref={stageRef}
         draggable
         onWheel={handleWheel}
         scale={{ x: scale, y: scale }}
